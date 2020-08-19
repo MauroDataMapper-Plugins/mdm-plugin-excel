@@ -40,15 +40,7 @@ class ExcelPlugin extends AbstractModule {
     public static final Integer CONTENT_HEADER_ROWS = 2
     public static final Integer CONTENT_ID_COLUMN = 0
 
-    public static final String DATAFLOWS_SHEET_NAME = 'DataFlows'
-    public static final Integer DATAFLOWS_HEADER_ROWS = 2
-    public static final Integer DATAFLOWS_ID_COLUMN = 1
-
-    public static final Integer DATAFLOWCOMPONENT_HEADER_ROWS = 2
-    public static final Integer DATAFLOWCOMPONENT_ID_COLUMN = 2
-
     public static final String DATAMODEL_TEMPLATE_FILENAME = 'Template_DataModel_Import_File.xlsx'
-    public static final String DATAFLOW_TEMPLATE_FILENAME = 'Template_DataFlow_Import_File.xlsx'
 
     public static final String DATACLASS_PATH_SPLIT_REGEX = ~/\|/
 
@@ -62,8 +54,6 @@ class ExcelPlugin extends AbstractModule {
         {->
             excelImporterService(ExcelDataModelImporterService)
             excelExporterService(ExcelDataModelExporterService)
-            excelDataFlowImporterService(ExcelDataFlowImporterService)
-            excelDataFlowExporterService(ExcelDataFlowExporterService)
         }
     }
 
