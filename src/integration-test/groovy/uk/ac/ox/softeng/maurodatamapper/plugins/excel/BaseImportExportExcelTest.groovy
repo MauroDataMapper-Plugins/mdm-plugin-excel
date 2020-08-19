@@ -17,11 +17,11 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import ox.softeng.metadatacatalogue.core.catalogue.CatalogueItem
-import ox.softeng.metadatacatalogue.core.facet.Metadata
-import ox.softeng.metadatacatalogue.core.spi.importer.ImporterPlugin
-import ox.softeng.metadatacatalogue.core.spi.importer.parameter.ImporterPluginParameters
-import ox.softeng.metadatacatalogue.plugins.test.BaseImportPluginTest
+import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
+import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.ImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.ImporterProviderServiceParameters
+import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseImportPluginTest
 
 import org.grails.datastore.gorm.GormEntity
 
@@ -36,7 +36,7 @@ import static org.junit.Assert.fail
 /**
  * @since 09/03/2018
  */
-abstract class BaseImportExportExcelTest<D extends GormEntity, P extends ImporterPluginParameters, T extends ImporterPlugin<D, P>>
+abstract class BaseImportExportExcelTest<D extends GormEntity, P extends ImporterProviderServiceParameters, T extends ImporterProviderService<D, P>>
     extends BaseImportPluginTest<D, P, T> {
 
     protected void checkMetadata(CatalogueItem catalogueItem, String key, String value) {

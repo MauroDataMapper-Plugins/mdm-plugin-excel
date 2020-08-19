@@ -17,9 +17,10 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import ox.softeng.metadatacatalogue.core.api.exception.ApiException
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClass
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+
 import com.google.common.base.Strings
 import org.junit.Test
 

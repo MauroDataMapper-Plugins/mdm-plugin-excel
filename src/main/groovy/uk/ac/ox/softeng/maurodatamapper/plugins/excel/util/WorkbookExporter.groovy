@@ -17,6 +17,8 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.util
 
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.DataRow
+
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellStyle
@@ -28,7 +30,7 @@ import org.apache.poi.ss.util.CellUtil
 import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFColor
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder
+import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide
 import org.slf4j.Logger
 
 import static uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin.BORDER_COLOUR
@@ -74,7 +76,7 @@ trait WorkbookExporter implements WorkbookHandler {
         workbook
     }
 
-    void loadDataRowsIntoSheet(Sheet sheet, List<uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.DataRow> dataRows) {
+    void loadDataRowsIntoSheet(Sheet sheet, List<DataRow> dataRows) {
         logger.debug('Loading DataRows into sheet')
 
         addMetadataHeadersToSheet(sheet, dataRows, 3)
@@ -85,7 +87,7 @@ trait WorkbookExporter implements WorkbookHandler {
         }
     }
 
-    void addMetadataHeadersToSheet(Sheet sheet, List<uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.DataRow> dataRows, int cellStyleColumn = 0) {
+    void addMetadataHeadersToSheet(Sheet sheet, List<DataRow> dataRows, int cellStyleColumn = 0) {
         Map<String, Set<String>> metadataMapping = getMetadataNamespaceAndKeys(dataRows)
 
         Row firstRow = sheet.getRow(0)
@@ -102,8 +104,7 @@ trait WorkbookExporter implements WorkbookHandler {
                 nsColumnIndex++
             } else {
 
-                CellRangeAddress mergeRegion = new CellRangeAddress(uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.DataRow.METADATA_NAMESPACE_ROW, uk.
-                    ac.ox.softeng.maurodatamapper.plugins.excel.row.DataRow.METADATA_NAMESPACE_ROW,
+                CellRangeAddress mergeRegion = new CellRangeAddress(DataRow.METADATA_NAMESPACE_ROW, DataRow.METADATA_NAMESPACE_ROW,
                                                                     namespaceHeader.columnIndex,
                                                                     namespaceHeader.columnIndex + keys.size() - 1)
                 sheet.addMergedRegion(mergeRegion)
@@ -183,10 +184,10 @@ trait WorkbookExporter implements WorkbookHandler {
             setBorderLeft(BorderStyle.THIN)
             setBorderBottom(BorderStyle.THIN)
             setBorderTop(BorderStyle.THIN)
-            setBorderColor(XSSFCellBorder.BorderSide.LEFT, borderColour)
-            setBorderColor(XSSFCellBorder.BorderSide.TOP, borderColour)
-            setBorderColor(XSSFCellBorder.BorderSide.RIGHT, borderColour)
-            setBorderColor(XSSFCellBorder.BorderSide.BOTTOM, borderColour)
+            setBorderColor(BorderSide.LEFT, borderColour)
+            setBorderColor(BorderSide.TOP, borderColour)
+            setBorderColor(BorderSide.RIGHT, borderColour)
+            setBorderColor(BorderSide.BOTTOM, borderColour)
             it
         }
     }
@@ -203,10 +204,10 @@ trait WorkbookExporter implements WorkbookHandler {
             setBorderLeft(BorderStyle.THIN)
             setBorderBottom(BorderStyle.THIN)
             setBorderTop(BorderStyle.THIN)
-            setBorderColor(XSSFCellBorder.BorderSide.LEFT, borderColour)
-            setBorderColor(XSSFCellBorder.BorderSide.TOP, borderColour)
-            setBorderColor(XSSFCellBorder.BorderSide.RIGHT, borderColour)
-            setBorderColor(XSSFCellBorder.BorderSide.BOTTOM, borderColour)
+            setBorderColor(BorderSide.LEFT, borderColour)
+            setBorderColor(BorderSide.TOP, borderColour)
+            setBorderColor(BorderSide.RIGHT, borderColour)
+            setBorderColor(BorderSide.BOTTOM, borderColour)
             it
         }
     }

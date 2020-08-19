@@ -17,12 +17,12 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import ox.softeng.metadatacatalogue.core.spi.importer.parameter.DataModelFileImporterPluginParameters
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
 
 /**
  * @since 01/03/2018
  */
-class ExcelFileImporterParameters extends DataModelFileImporterPluginParameters {
+class ExcelFileImporterParameters extends DataModelFileImporterProviderServiceParameters {
 
     // So we don't ask for the DataModel name
     String dataModelName

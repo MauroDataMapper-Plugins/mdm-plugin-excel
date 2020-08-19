@@ -17,11 +17,11 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClass
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModel
-import ox.softeng.metadatacatalogue.core.rest.controller.ImportParameterGroup
-import ox.softeng.metadatacatalogue.core.spi.importer.ImporterService
-import ox.softeng.metadatacatalogue.core.type.catalogue.DataModelType
+import uk.ac.ox.softeng.maurodatamapper.core.importer.ImporterService
+import uk.ac.ox.softeng.maurodatamapper.core.rest.transport.importer.ImportParameterGroup
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals

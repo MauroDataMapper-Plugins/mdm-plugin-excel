@@ -17,17 +17,17 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import ox.softeng.metadatacatalogue.core.api.exception.ApiException
-import ox.softeng.metadatacatalogue.core.catalogue.CatalogueItem
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClass
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClassService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataElementService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModel
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModelService
-import ox.softeng.metadatacatalogue.core.spi.exporter.DataModelExporterPlugin
-import ox.softeng.metadatacatalogue.core.user.CatalogueUser
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
+import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElementService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelExporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.ContentDataRow
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.DataModelDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.util.WorkbookExporter
+import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import org.apache.poi.ss.usermodel.FillPatternType
 import org.apache.poi.ss.usermodel.Row
@@ -36,6 +36,7 @@ import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFColor
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 
 import static ExcelPlugin.ALTERNATING_COLUMN_COLOUR
@@ -48,7 +49,7 @@ import static ExcelPlugin.DATAMODEL_TEMPLATE_FILENAME
 /**
  * @since 01/03/2018
  */
-class ExcelDataModelExporterService implements DataModelExporterPlugin, WorkbookExporter {
+class ExcelDataModelExporterService extends DataModelExporterProviderService implements WorkbookExporter {
 
     @Autowired
     DataModelService dataModelService
@@ -75,20 +76,20 @@ class ExcelDataModelExporterService implements DataModelExporterPlugin, Workbook
     }
 
     @Override
-    ByteArrayOutputStream exportDataModel(CatalogueUser currentUser, DataModel dataModel) throws ApiException {
+    ByteArrayOutputStream exportDataModel(User currentUser, DataModel dataModel) throws ApiException {
         exportDataModels(currentUser, [dataModel])
     }
 
     @Override
-    ByteArrayOutputStream exportDataModels(CatalogueUser currentUser, List<DataModel> dataModels) throws ApiException {
+    ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
 
         logger.info('Exporting DataModels to Excel')
         XSSFWorkbook workbook = null
         try {
             workbook = loadWorkbookFromFilename(DATAMODEL_TEMPLATE_FILENAME) as XSSFWorkbook
 
-            workbook = loadDataModelDataRowsIntoWorkbook(dataModels.collect {new uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue
-                .DataModelDataRow(it)}, workbook)
+            workbook = loadDataModelDataRowsIntoWorkbook(
+                dataModels.collect {new DataModelDataRow(it)}, workbook)
 
             if (workbook) {
                 ByteArrayOutputStream os = new ByteArrayOutputStream()
@@ -102,7 +103,7 @@ class ExcelDataModelExporterService implements DataModelExporterPlugin, Workbook
         null
     }
 
-    XSSFWorkbook loadDataModelDataRowsIntoWorkbook(List<uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.DataModelDataRow> dataModelDataRows, XSSFWorkbook workbook) {
+    XSSFWorkbook loadDataModelDataRowsIntoWorkbook(List<DataModelDataRow> dataModelDataRows, XSSFWorkbook workbook) {
         XSSFColor cellColour = new XSSFColor(ALTERNATING_COLUMN_COLOUR)
         cellColour.setTint(CELL_COLOUR_TINT)
 
@@ -142,7 +143,6 @@ class ExcelDataModelExporterService implements DataModelExporterPlugin, Workbook
             } else {
                 logger.warn('No content rows to add for DataModel')
             }
-
         }
         removeTemplateSheet(workbook)
     }
@@ -162,6 +162,11 @@ class ExcelDataModelExporterService implements DataModelExporterPlugin, Workbook
     }
 
     @Override
+    Logger getLogger() {
+        return null
+    }
+
+    @Override
     Integer configureExtraRowStyle(Row row, int metadataColumnIndex, int lastColumnIndex, XSSFCellStyle defaultStyle,
                                    XSSFCellStyle colouredStyle, XSSFCellStyle mainCellStyle, XSSFCellStyle borderCellStyle,
                                    XSSFCellStyle metadataBorderStyle, XSSFCellStyle metadataColouredBorderStyle, boolean colourRow) {
@@ -170,14 +175,11 @@ class ExcelDataModelExporterService implements DataModelExporterPlugin, Workbook
             boolean internalColourRow = colourRow
             for (int m = mergedRegion.firstRow; m <= mergedRegion.lastRow; m++) {
                 Row internalRow = row.sheet.getRow(m)
-                setRowStyle(internalRow, mainCellStyle, borderCellStyle, 0, uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.
-                    EnumerationValueDataRow.KEY_COL_INDEX, metadataColumnIndex)
+                setRowStyle(internalRow, mainCellStyle, borderCellStyle, 0, EnumerationValueDataRow.KEY_COL_INDEX, metadataColumnIndex)
                 setRowStyle(internalRow, internalColourRow ? colouredStyle : defaultStyle,
-                            internalColourRow ? metadataColouredBorderStyle : metadataBorderStyle,
-                            uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.EnumerationValueDataRow.KEY_COL_INDEX, uk.ac.ox.softeng.
-                    maurodatamapper.plugins.excel.row.catalogue.EnumerationValueDataRow.VALUE_COL_INDEX + 1, metadataColumnIndex)
-                setRowStyle(internalRow, mainCellStyle, borderCellStyle, uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.
-                    EnumerationValueDataRow.VALUE_COL_INDEX + 1, lastColumnIndex,
+                            internalColourRow ? metadataColouredBorderStyle : metadataBorderStyle, EnumerationValueDataRow.KEY_COL_INDEX,
+                            EnumerationValueDataRow.VALUE_COL_INDEX + 1, metadataColumnIndex)
+                setRowStyle(internalRow, mainCellStyle, borderCellStyle, EnumerationValueDataRow.VALUE_COL_INDEX + 1, lastColumnIndex,
                             metadataColumnIndex)
 
                 internalColourRow = !internalColourRow

@@ -17,13 +17,15 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue
 
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.EnumerationValue
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.EnumerationDataRow
+
 import org.apache.poi.ss.usermodel.Row
 
 /**
  * @since 01/03/2018
  */
-class EnumerationValueDataRow extends uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.EnumerationDataRow {
+class EnumerationValueDataRow extends EnumerationDataRow {
 
     public static final int KEY_COL_INDEX = 8
     public static final int VALUE_COL_INDEX = 9

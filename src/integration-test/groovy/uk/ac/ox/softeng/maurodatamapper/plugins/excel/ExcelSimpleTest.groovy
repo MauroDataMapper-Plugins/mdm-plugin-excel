@@ -18,25 +18,21 @@
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
 import org.junit.Test
+
 import static org.junit.Assert.assertEquals
 
 class ExcelSimpleTest {
 
-
     @Test
     void testSheetKey() {
         Map<String, String> results = [
-            "My Model": "MM",
-            "GEL: CancerSchema-v1.0.1": "GC101",
+            "My Model"                  : "MM",
+            "GEL: CancerSchema-v1.0.1"  : "GC101",
             "[GEL: CancerSchema-v1.0.1]": "GC101"
         ]
 
         results.each {entry ->
             assertEquals(ExcelSimpleDataModelExporterService.createSheetKey(entry.key), entry.value)
         }
-
-
-
     }
-
 }

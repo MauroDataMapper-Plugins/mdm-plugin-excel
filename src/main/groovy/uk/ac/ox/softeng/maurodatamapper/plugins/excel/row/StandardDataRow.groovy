@@ -17,7 +17,7 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row
 
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.EnumerationType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 
 import org.apache.poi.ss.usermodel.Row
 

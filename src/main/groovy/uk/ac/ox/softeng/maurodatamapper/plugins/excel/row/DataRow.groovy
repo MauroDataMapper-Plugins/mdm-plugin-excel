@@ -17,6 +17,7 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row
 
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column.MetadataColumn
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.util.CellHandler
 
 import org.apache.poi.ss.usermodel.Cell
@@ -35,7 +36,7 @@ abstract class DataRow implements CellHandler {
 
     Row row
 
-    List<uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column.MetadataColumn> metadata
+    List<MetadataColumn> metadata
 
     DataRow() {
         metadata = []
@@ -73,7 +74,7 @@ abstract class DataRow implements CellHandler {
             String namespace = secondHeader ? firstHeader ?: getCellValueAsString(firstRow, mergeRegion?.firstColumn) : null
             String key = secondHeader ?: firstHeader
 
-            metadata += new uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column.MetadataColumn(namespace: namespace, key: key, value: getCellValueAsString(it))
+            metadata += new MetadataColumn(namespace: namespace, key: key, value: getCellValueAsString(it))
         }
     }
 
@@ -99,20 +100,19 @@ abstract class DataRow implements CellHandler {
                     }
 
                     addCellToRow(row, keyHeader.columnIndex, md.value, true)
-
                 }
             }
         }
     }
 
     void addToMetadata(String key, String value) {
-        metadata += new uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column.MetadataColumn(key: key, value: value)
+        metadata += new MetadataColumn(key: key, value: value)
     }
 
     static Map<String, Set<String>> getMetadataNamespaceAndKeys(List<DataRow> dataRows) {
         dataRows.collect {it.metadata}
-            .flatten()
-            .groupBy {it.namespace}
-            .collectEntries {[it.key, it.value.key as Set]}.findAll {it.value} as Map<String, Set<String>>
+                .flatten()
+                .groupBy {it.namespace}
+                .collectEntries {[it.key, it.value.key as Set]}.findAll {it.value} as Map<String, Set<String>>
     }
 }

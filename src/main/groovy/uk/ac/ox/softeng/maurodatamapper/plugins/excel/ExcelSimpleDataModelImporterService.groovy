@@ -17,33 +17,34 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import org.apache.poi.openxml4j.util.ZipSecureFile
-import ox.softeng.metadatacatalogue.core.api.exception.ApiBadRequestException
-import ox.softeng.metadatacatalogue.core.api.exception.ApiException
-import ox.softeng.metadatacatalogue.core.api.exception.ApiInternalException
-import ox.softeng.metadatacatalogue.core.api.exception.ApiUnauthorizedException
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClass
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClassService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataElement
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataElementService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.DataType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.EnumerationType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.EnumerationTypeService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.EnumerationValue
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.PrimitiveType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.PrimitiveTypeService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.ReferenceType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.ReferenceTypeService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModel
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModelService
-import ox.softeng.metadatacatalogue.core.facet.Metadata
-import ox.softeng.metadatacatalogue.core.spi.importer.DataModelImporterPlugin
-import ox.softeng.metadatacatalogue.core.spi.importer.parameter.FileParameter
-import ox.softeng.metadatacatalogue.core.traits.domain.MetadataAware
-import ox.softeng.metadatacatalogue.core.type.catalogue.DataModelType
-import ox.softeng.metadatacatalogue.core.user.CatalogueUser
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiInternalException
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
+import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
+import uk.ac.ox.softeng.maurodatamapper.core.model.facet.MetadataAware
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElementService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationTypeService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveTypeService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceTypeService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.security.User
+
 import org.apache.poi.EncryptedDocumentException
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException
+import org.apache.poi.openxml4j.util.ZipSecureFile
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.DataFormatter
 import org.apache.poi.ss.usermodel.Row
@@ -55,7 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired
 /**
  * @since 01/03/2018
  */
-class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<ExcelSimpleFileImporterParameters> {
+class ExcelSimpleDataModelImporterService extends DataModelImporterProviderService<ExcelSimpleFileImporterParameters> {
 
     @Autowired
     DataModelService dataModelService
@@ -93,12 +94,12 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
     }
 
     @Override
-    DataModel importDataModel(CatalogueUser currentUser, ExcelSimpleFileImporterParameters params) {
+    DataModel importDataModel(User currentUser, ExcelSimpleFileImporterParameters params) {
         importDataModels(currentUser, params)?.first()
     }
 
     @Override
-    List<DataModel> importDataModels(CatalogueUser currentUser, ExcelSimpleFileImporterParameters importerParameters) {
+    List<DataModel> importDataModels(User currentUser, ExcelSimpleFileImporterParameters importerParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         if (importerParameters.importFile.fileContents.size() == 0) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
         logger.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)
@@ -113,13 +114,13 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
             Sheet dataModelsSheet = workbook.getSheet("DataModels")
             Sheet enumerationsSheet = workbook.getSheet("Enumerations")
 
-            if(!dataModelsSheet) {
+            if (!dataModelsSheet) {
                 throw new ApiInternalException('EFS02', "The Excel file does not include a sheet called 'DataModels'")
             }
             Map<String, DataType> dataTypes = [:]
-            List<Map<String, String>> sheetValues =[]
+            List<Map<String, String>> sheetValues = []
             Map<String, Map<String, EnumerationType>> enumerationTypes = [:]
-            if(enumerationsSheet) {
+            if (enumerationsSheet) {
                 enumerationTypes = calculateEnumerationTypes(sheetValues)
             }
 
@@ -130,17 +131,14 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
                 addMetadataFromExtraColumns(dataModel, ExcelSimplePlugin.DATAMODEL_SHEET_COLUMNS, row)
                 String sheetKey = row["Sheet Key"]
                 Sheet modelSheet = workbook.getSheet(sheetKey)
-                if(!dataModelsSheet) {
+                if (!dataModelsSheet) {
                     throw new ApiInternalException('EFS06', "The Excel file does not include a sheet called ${sheetKey} referenced for " +
                                                             "model'${dataModel.label}'")
                 }
-                addClassesAndElements(dataModel, modelSheet, enumerationTypes[dataModel.label]?:[:])
+                addClassesAndElements(dataModel, modelSheet, enumerationTypes[dataModel.label] ?: [:])
 
                 dataModels.add(dataModel)
             }
-
-
-
 
             return dataModels
         } finally {
@@ -165,6 +163,7 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
             throw new ApiInternalException('EFS04', "Excel file ${filename} could not be read", ex)
         }
     }
+
     void closeWorkbook(Workbook workbook) {
         if (workbook != null) {
             try {
@@ -220,19 +219,18 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
         return returnValues
     }
 
-    void addMetadataFromExtraColumns(MetadataAware entity, List<String> expectedColumns, Map<String, String> columnValues)
-    {
-        columnValues.keySet().each { columnName ->
-            if(!expectedColumns.contains(columnName)) {
+    void addMetadataFromExtraColumns(MetadataAware entity, List<String> expectedColumns, Map<String, String> columnValues) {
+        columnValues.keySet().each {columnName ->
+            if (!expectedColumns.contains(columnName)) {
                 String key = columnName
                 String namespace = this.getNamespace()
-                if(key.contains(":")) {
+                if (key.contains(":")) {
                     String[] components = key.split(":")
                     namespace = components[0]
                     key = components[1]
                 }
                 entity.addToMetadata(new Metadata(namespace: namespace, key: key,
-                                                     value: columnValues[columnName]))
+                                                  value: columnValues[columnName]))
             }
         }
     }
@@ -245,9 +243,9 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
         //String sheetKey = columnValues["Sheet Key"]
         String type = columnValues["Type"]
         DataModelType dataModelType
-        if(type.toLowerCase().replaceAll("[ _]","") == "dataasset") {
+        if (type.toLowerCase().replaceAll("[ _]", "") == "dataasset") {
             dataModelType = DataModelType.DATA_ASSET
-        } else if(type.toLowerCase().replaceAll("[ _]","") == "datastandard") {
+        } else if (type.toLowerCase().replaceAll("[ _]", "") == "datastandard") {
             dataModelType = DataModelType.DATA_STANDARD
         } else {
             throw new ApiBadRequestException('SEIS03', "Invalid Data Model Type for Model '${label}'")
@@ -261,8 +259,6 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
 
         return dataModel
     }
-
-
 
     Map<String, Map<String, EnumerationType>> calculateEnumerationTypes(List<Map<String, String>> sheetValues) {
 
@@ -296,7 +292,7 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
     void addClassesAndElements(DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
         List<Map<String, String>> sheetValues = getSheetValues(ExcelSimplePlugin.MODEL_SHEET_COLUMNS, dataModelSheet)
         Map<String, DataType> modelDataTypes = [:]
-        sheetValues.each { row ->
+        sheetValues.each {row ->
 
             String dataClassPath = row["DataClass Path"]
             DataClass parentDataClass = getOrCreateClassFromPath(dataModel, dataClassPath)
@@ -307,17 +303,17 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
             String typeName = row["DataType Name"]
             String typeReference = row["DataType Reference"]
             MetadataAware createdElement = null
-            if(!name || name=="") {
+            if (!name || name == "") {
                 // We're dealing with a data class
                 createdElement = parentDataClass
-                if(description != "") {
+                if (description != "") {
                     parentDataClass.description = description
                 }
-                if(minMult) {
+                if (minMult) {
                     parentDataClass.minMultiplicity = Integer.parseInt(minMult)
                 }
-                if(maxMult) {
-                    if(maxMult == "*") {
+                if (maxMult) {
+                    if (maxMult == "*") {
                         parentDataClass.maxMultiplicity = -1
                     } else {
                         parentDataClass.maxMultiplicity = Integer.parseInt(maxMult)
@@ -326,24 +322,23 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
             } else {
                 // We're dealing with a data element
                 DataElement newDataElement = new DataElement(label: name, description: description)
-                if(minMult) {
+                if (minMult) {
                     newDataElement.minMultiplicity = Integer.parseInt(minMult)
                 }
-                if(maxMult) {
-                    if(maxMult == "*") {
+                if (maxMult) {
+                    if (maxMult == "*") {
                         newDataElement.maxMultiplicity = -1
                     } else {
                         newDataElement.maxMultiplicity = Integer.parseInt(maxMult)
                     }
                 }
                 DataType elementDataType
-                if(enumerationTypes[typeName]) {
+                if (enumerationTypes[typeName]) {
                     elementDataType = enumerationTypes[typeName]
-                } else if( modelDataTypes[typeName]) {
+                } else if (modelDataTypes[typeName]) {
                     elementDataType = modelDataTypes[typeName]
-                }
-                else {
-                    if(typeReference) {
+                } else {
+                    if (typeReference) {
                         DataClass referenceDataClass = getOrCreateClassFromPath(dataModel, typeReference)
                         elementDataType = new ReferenceType(label: typeName)
                         referenceDataClass.addToReferenceTypes(elementDataType)
@@ -358,7 +353,6 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
                 createdElement = newDataElement
             }
             addMetadataFromExtraColumns(createdElement, ExcelSimplePlugin.MODEL_SHEET_COLUMNS, row)
-
         }
         modelDataTypes.values().each {
             dataModel.addToDataTypes(it)
@@ -366,23 +360,17 @@ class ExcelSimpleDataModelImporterService implements DataModelImporterPlugin<Exc
         enumerationTypes.values().each {
             dataModel.addToDataTypes(it)
         }
-
     }
 
     DataClass getOrCreateClassFromPath(DataModel dataModel, String path) {
         List<String> pathComponents = path.split("\\|")
         DataClass parentDataClass = dataClassService.findOrCreateDataClassByPath(dataModel, pathComponents, "",
-                                                                                                  null,
-                                                                                                  null, null)
+                                                                                 null,
+                                                                                 null, null)
         return parentDataClass
-
-
     }
-
 
     String getCellValueAsString(Cell cell) {
         cell ? dataFormatter.formatCellValue(cell).replaceAll(/’/, '\'').replaceAll(/—/, '-').trim() : ''
     }
-
-
 }

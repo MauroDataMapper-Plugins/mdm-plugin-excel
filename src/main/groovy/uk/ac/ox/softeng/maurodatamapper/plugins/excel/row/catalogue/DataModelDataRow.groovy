@@ -17,8 +17,8 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue
 
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModel
-
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.StandardDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column.MetadataColumn
 
 import org.apache.poi.ss.usermodel.Row
@@ -26,7 +26,7 @@ import org.apache.poi.ss.usermodel.Row
 /**
  * @since 01/03/2018
  */
-class DataModelDataRow extends uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.StandardDataRow {
+class DataModelDataRow extends StandardDataRow {
 
     String sheetKey
     String name
@@ -50,7 +50,7 @@ class DataModelDataRow extends uk.ac.ox.softeng.maurodatamapper.plugins.excel.ro
             sheetKey = dataModel.label.toUpperCase()
         } else {
             words.each {word ->
-                if(word.length() > 0) {
+                if (word.length() > 0) {
                     sheetKey += word[0].toUpperCase()
                 }
             }

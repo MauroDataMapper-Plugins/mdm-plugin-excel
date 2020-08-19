@@ -17,13 +17,13 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import ox.softeng.metadatacatalogue.core.spi.module.AbstractModule
+import uk.ac.ox.softeng.maurodatamapper.provider.plugin.AbstractMauroDataMapperPlugin
 
 /**
  * @since 17/08/2017
  */
 @SuppressWarnings('SpellCheckingInspection')
-class ExcelSimplePlugin extends AbstractModule {
+class ExcelSimplePlugin extends AbstractMauroDataMapperPlugin {
 
     @Override
     String getName() {
@@ -35,7 +35,6 @@ class ExcelSimplePlugin extends AbstractModule {
         {->
             excelSimpleImporterService(ExcelSimpleDataModelImporterService)
             excelSimpleExporterService(ExcelSimpleDataModelExporterService)
-
         }
     }
 
@@ -43,5 +42,4 @@ class ExcelSimplePlugin extends AbstractModule {
     static ENUM_SHEET_COLUMNS = ["DataModel Name", "Name", "Description", "Key", "Value"]
     static MODEL_SHEET_COLUMNS = ["DataClass Path", "Name", "Description", "Minimum Multiplicity", "Maximum Multiplicity", "DataType Name",
                                   "DataType Reference"]
-
 }

@@ -17,14 +17,12 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClass
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataElement
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.DataType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.EnumerationType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModel
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModelService
-import ox.softeng.metadatacatalogue.core.spi.importer.parameter.FileParameter
-import ox.softeng.metadatacatalogue.core.type.catalogue.DataModelType
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -67,7 +65,6 @@ abstract class BaseDataModelImportExportExcelTest
         checkEnumeration dataModel, 'yesno', 'an eumeration', [y: 'yes', n: 'no']
         checkEnumeration dataModel, 'possibly', null, ['0': 'lazy', '1': 'not lazy', '2': 'very lazy']
         checkDataType dataModel, 'child', null
-
     }
 
     protected void verifySimpleDataModelContent(DataModel dataModel) {

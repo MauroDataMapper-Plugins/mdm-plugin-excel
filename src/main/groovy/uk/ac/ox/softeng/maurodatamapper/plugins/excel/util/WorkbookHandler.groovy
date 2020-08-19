@@ -17,11 +17,13 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.util
 
-import org.apache.poi.openxml4j.util.ZipSecureFile
-import ox.softeng.metadatacatalogue.core.api.exception.ApiException
-import ox.softeng.metadatacatalogue.core.api.exception.ApiInternalException
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiInternalException
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.StandardDataRow
+
 import org.apache.poi.EncryptedDocumentException
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException
+import org.apache.poi.openxml4j.util.ZipSecureFile
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.usermodel.Workbook
@@ -54,8 +56,8 @@ trait WorkbookHandler extends CellHandler {
         }
     }
 
-    public <K extends uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.StandardDataRow> List<K> loadDataRows(Class<K> dataRowClass, String filename, String sheetName, int numberOfHeaderRows,
-                                                                                                               int idCellNumber) throws ApiException {
+    public <K extends StandardDataRow> List<K> loadDataRows(Class<K> dataRowClass, String filename, String sheetName, int numberOfHeaderRows,
+                                                            int idCellNumber) throws ApiException {
         Workbook workbook = null
         try {
             logger.info 'Loading {}s from sheet [{}] in file [{}]', dataRowClass.simpleName, sheetName, filename
@@ -66,8 +68,8 @@ trait WorkbookHandler extends CellHandler {
         }
     }
 
-    public <K extends uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.StandardDataRow> List<K> loadDataRows(Workbook workbook, Class<K> dataRowClass, String filename, String sheetName,
-                                                                                                               int numberOfHeaderRows, int idCellNumber) throws ApiException {
+    public <K extends StandardDataRow> List<K> loadDataRows(Workbook workbook, Class<K> dataRowClass, String filename, String sheetName,
+                                                            int numberOfHeaderRows, int idCellNumber) throws ApiException {
 
         Sheet sheet = workbook.getSheet(sheetName)
         if (!sheet) throw new ApiInternalException('EFS05', "No sheet named [${sheetName}] present in [${filename}]")
@@ -123,15 +125,13 @@ trait WorkbookHandler extends CellHandler {
         }
     }
 
-
     void autoSizeColumns(Sheet sheet, Integer... columns) {
         columns.each {sheet.autoSizeColumn(it, true)}
     }
 
     void autoSizeHeaderColumnsAfter(Sheet sheet, Integer columnIndex) {
         sheet.getRow(0)
-            .findAll {it.columnIndex >= columnIndex && getCellValueAsString(it)}
-            .each {sheet.autoSizeColumn(it.columnIndex, true)}
+             .findAll {it.columnIndex >= columnIndex && getCellValueAsString(it)}
+             .each {sheet.autoSizeColumn(it.columnIndex, true)}
     }
-
 }

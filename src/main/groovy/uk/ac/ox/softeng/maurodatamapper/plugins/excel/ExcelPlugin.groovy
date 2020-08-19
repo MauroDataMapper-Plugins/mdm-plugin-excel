@@ -17,7 +17,7 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import ox.softeng.metadatacatalogue.core.spi.module.AbstractModule
+import uk.ac.ox.softeng.maurodatamapper.provider.plugin.AbstractMauroDataMapperPlugin
 
 import java.awt.Color
 
@@ -25,7 +25,7 @@ import java.awt.Color
  * @since 17/08/2017
  */
 @SuppressWarnings('SpellCheckingInspection')
-class ExcelPlugin extends AbstractModule {
+class ExcelPlugin extends AbstractMauroDataMapperPlugin {
 
     public static final String HEADER_COLUMN_COLOUR = '#5B9BD5'
     public static final Color ALTERNATING_COLUMN_COLOUR = Color.decode('#7BABF5')
@@ -56,5 +56,4 @@ class ExcelPlugin extends AbstractModule {
             excelExporterService(ExcelDataModelExporterService)
         }
     }
-
 }

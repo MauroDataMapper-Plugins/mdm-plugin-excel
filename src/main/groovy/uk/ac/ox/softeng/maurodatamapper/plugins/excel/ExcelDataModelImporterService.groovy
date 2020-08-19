@@ -17,31 +17,30 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import ox.softeng.metadatacatalogue.core.api.exception.ApiBadRequestException
-import ox.softeng.metadatacatalogue.core.api.exception.ApiUnauthorizedException
-import ox.softeng.metadatacatalogue.core.catalogue.CatalogueItem
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClass
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClassService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataElement
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataElementService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.DataType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.EnumerationType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.EnumerationTypeService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.PrimitiveTypeService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.ReferenceTypeService
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModel
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModelService
-import ox.softeng.metadatacatalogue.core.spi.importer.DataModelImporterPlugin
-import ox.softeng.metadatacatalogue.core.spi.importer.parameter.FileParameter
-import ox.softeng.metadatacatalogue.core.type.catalogue.DataModelType
-import ox.softeng.metadatacatalogue.core.user.CatalogueUser
-
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
+import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElementService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationTypeService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveTypeService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceTypeService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.ContentDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.DataModelDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column.MetadataColumn
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.util.WorkbookHandler
+import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import org.apache.poi.ss.usermodel.Workbook
+import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 
 import static ExcelPlugin.CONTENT_HEADER_ROWS
@@ -53,7 +52,7 @@ import static ExcelPlugin.DATAMODELS_SHEET_NAME
 /**
  * @since 01/03/2018
  */
-class ExcelDataModelImporterService implements DataModelImporterPlugin<ExcelFileImporterParameters>, WorkbookHandler {
+class ExcelDataModelImporterService extends DataModelImporterProviderService<ExcelFileImporterParameters> implements WorkbookHandler {
 
     @Autowired
     DataModelService dataModelService
@@ -89,12 +88,12 @@ class ExcelDataModelImporterService implements DataModelImporterPlugin<ExcelFile
     }
 
     @Override
-    DataModel importDataModel(CatalogueUser currentUser, ExcelFileImporterParameters params) {
+    DataModel importDataModel(User currentUser, ExcelFileImporterParameters params) {
         importDataModels(currentUser, params)?.first()
     }
 
     @Override
-    List<DataModel> importDataModels(CatalogueUser currentUser, ExcelFileImporterParameters importerParameters) {
+    List<DataModel> importDataModels(User currentUser, ExcelFileImporterParameters importerParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         if (importerParameters.importFile.fileContents.size() == 0) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
         logger.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)
@@ -119,7 +118,7 @@ class ExcelDataModelImporterService implements DataModelImporterPlugin<ExcelFile
         }
     }
 
-    List<DataModel> loadDataModels(List<DataModelDataRow> dataRows, CatalogueUser catalogueUser, Workbook workbook, String filename) {
+    List<DataModel> loadDataModels(List<DataModelDataRow> dataRows, User catalogueUser, Workbook workbook, String filename) {
         List<DataModel> dataModels = []
 
         dataRows.each {dataRow ->
@@ -145,7 +144,7 @@ class ExcelDataModelImporterService implements DataModelImporterPlugin<ExcelFile
         dataModels
     }
 
-    DataModel loadSheetDataRowsIntoDataModel(List<ContentDataRow> dataRows, DataModel dataModel, CatalogueUser catalogueUser) {
+    DataModel loadSheetDataRowsIntoDataModel(List<ContentDataRow> dataRows, DataModel dataModel, User catalogueUser) {
 
         // Load DataClasses
         loadDataClassRows(dataRows, dataModel, catalogueUser)
@@ -156,7 +155,7 @@ class ExcelDataModelImporterService implements DataModelImporterPlugin<ExcelFile
         dataModel
     }
 
-    void loadDataClassRows(List<ContentDataRow> dataRows, DataModel dataModel, CatalogueUser catalogueUser) {
+    void loadDataClassRows(List<ContentDataRow> dataRows, DataModel dataModel, User catalogueUser) {
         logger.info('Loading DataClass rows for DataModel {}', dataModel.label)
 
         // Where not DataElement name then the row is DataClass specific data, otherwise we just need to make sure all the DataClasses exist
@@ -179,7 +178,7 @@ class ExcelDataModelImporterService implements DataModelImporterPlugin<ExcelFile
         }
     }
 
-    void loadDataElementRows(List<ContentDataRow> dataRows, DataModel dataModel, CatalogueUser catalogueUser) {
+    void loadDataElementRows(List<ContentDataRow> dataRows, DataModel dataModel, User catalogueUser) {
         dataRows.each {dataRow ->
 
             DataClass parentDataClass = dataClassService.findDataClassByPath(dataModel, dataRow.dataClassPathList)
@@ -194,7 +193,6 @@ class ExcelDataModelImporterService implements DataModelImporterPlugin<ExcelFile
                 dataRow.mergedContentRows.each {mcr ->
                     ((EnumerationType) dataType).addToEnumerationValues(mcr.key, mcr.value, catalogueUser)
                 }
-
             } else if (dataRow.referenceToDataClassPath) {
                 DataClass referenceClass = dataClassService.findDataClassByPath(dataModel, dataRow.referenceToDataClassPathList)
                 dataType = referenceTypeService.findOrCreateDataTypeForDataModel(dataModel, referenceClass.label, dataRow.dataTypeDescription,
@@ -217,10 +215,15 @@ class ExcelDataModelImporterService implements DataModelImporterPlugin<ExcelFile
         dataModel
     }
 
-    void addMetadataToCatalogueItem(CatalogueItem catalogueItem, List<MetadataColumn> metadata, CatalogueUser catalogueUser) {
+    void addMetadataToCatalogueItem(CatalogueItem catalogueItem, List<MetadataColumn> metadata, User catalogueUser) {
         metadata.each {md ->
             logger.trace('Adding Metadata {}', md.key)
             catalogueItem.addToMetadata(md.namespace ?: namespace, md.key, md.value, catalogueUser)
         }
+    }
+
+    @Override
+    Logger getLogger() {
+        return null
     }
 }

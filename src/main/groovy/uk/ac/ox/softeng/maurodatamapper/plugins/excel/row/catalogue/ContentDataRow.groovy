@@ -17,12 +17,12 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue
 
-import ox.softeng.metadatacatalogue.core.catalogue.CatalogueItem
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClass
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataElement
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.DataType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.EnumerationType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.ReferenceType
+import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.StandardDataRow
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column.MetadataColumn
+
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.util.CellRangeAddress
@@ -33,7 +33,7 @@ import static uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin.DATACLA
 /**
  * @since 01/03/2018
  */
-class ContentDataRow extends uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.StandardDataRow<EnumerationValueDataRow> {
+class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
 
     String dataClassPath
     String dataElementName
@@ -43,7 +43,6 @@ class ContentDataRow extends uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.
     String dataTypeName
     String dataTypeDescription
     String referenceToDataClassPath
-
 
     ContentDataRow() {
         super(EnumerationValueDataRow)
@@ -55,7 +54,7 @@ class ContentDataRow extends uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.
         description = catalogueItem.description
 
         catalogueItem.metadata.each {md ->
-            metadata += new uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column.MetadataColumn(namespace: md.namespace, key: md.key, value: md.value)
+            metadata += new MetadataColumn(namespace: md.namespace, key: md.key, value: md.value)
         }
 
         if (catalogueItem.instanceOf(DataClass)) {
