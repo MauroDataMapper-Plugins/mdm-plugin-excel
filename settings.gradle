@@ -1,0 +1,3 @@
+// Change this to match the name of the folder
+// If this file is not present Jenkins will distribute jars to the wrong project name
+rootProject.name = 'mdm-plugin-template'
