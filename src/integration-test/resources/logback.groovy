@@ -74,7 +74,6 @@ appender("FILE", FileAppender) {
 }
 root(INFO, ['STDOUT', 'FILE'])
 
-
 logger('uk.ac.ox.softeng', DEBUG)
 
 logger('org.springframework.jdbc.core.JdbcTemplate', DEBUG)

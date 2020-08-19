@@ -5,5 +5,8 @@ dependencies {
     implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
 
+    implementation group: 'org.apache.poi', name: 'poi', version: poiVersion
+    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: poiVersion
+
     testImplementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-testing-utils', version: mdmPluginTestUtilsVersion
 }
