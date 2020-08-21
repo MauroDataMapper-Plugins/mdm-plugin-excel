@@ -38,9 +38,12 @@ import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.beans.factory.annotation.Autowired
 
+import groovy.util.logging.Slf4j
+
 /**
  * @since 01/03/2018
  */
+@Slf4j
 class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProviderService {
 
     @Autowired
@@ -85,7 +88,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
     @Override
     ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
 
-        logger.info('Exporting DataModels to Excel')
+        log.info('Exporting DataModels to Excel')
         XSSFWorkbook workbook = null
         try {
             workbook = new XSSFWorkbook()
@@ -145,7 +148,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
             if (workbook) {
                 ByteArrayOutputStream os = new ByteArrayOutputStream(1000000)
                 workbook.write(os)
-                logger.info('DataModels exported')
+                log.info('DataModels exported')
                 return os
             }
         } finally {

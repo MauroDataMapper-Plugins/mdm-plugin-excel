@@ -24,6 +24,8 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import com.google.common.base.Strings
 import org.junit.Test
 
+import groovy.util.logging.Slf4j
+
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -34,6 +36,7 @@ import static org.junit.Assert.assertNotNull
 /**
  * @since 01/03/2018
  */
+@Slf4j
 @SuppressWarnings('SpellCheckingInspection')
 class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
 
@@ -100,7 +103,7 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
         ExcelFileImporterProviderServiceParameters params = createImportParameters(filename)
         List<DataModel> importedModels = importDomains(params, expectedCount)
 
-        getLogger().debug('DataModel to export: {}', importedModels[0].getId())
+        log.debug('DataModel to export: {}', importedModels[0].getId())
         // Rather than use the one returned from the import, we want to check whats actually been saved into the DB
 
         Path outPath = Paths.get('build/tmp/', outFileName)
@@ -108,13 +111,13 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
         if (importedModels.size() == 1) testExport(importedModels[0].getId(), outPath)
         else testExport(importedModels.id, outPath)
 
-        getLogger().info('>>> Importing')
+        log.info('>>> Importing')
         params = createImportParameters(outPath)
         importDomains(params, expectedCount, false)
     }
 
     private void testExport(UUID dataModelId, Path outPath) throws IOException, ApiException {
-        getLogger().info('>>> Exporting Single')
+        log.info('>>> Exporting Single')
         ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
         ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomain(catalogueUser, dataModelId)
         assertNotNull('Should have an exported model', byteArrayOutputStream)
@@ -126,7 +129,7 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
     }
 
     private void testExport(List<UUID> dataModelIds, Path outPath) throws IOException, ApiException {
-        getLogger().info('>>> Exporting Multiple')
+        log.info('>>> Exporting Multiple')
         ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
         ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomains(catalogueUser, dataModelIds)
         assertNotNull('Should have an exported model', byteArrayOutputStream)

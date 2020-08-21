@@ -23,12 +23,13 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.util.CellHandler
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.util.CellRangeAddress
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+
+import groovy.util.logging.Slf4j
 
 /**
  * @since 02/03/2018
  */
+@Slf4j
 abstract class DataRow implements CellHandler {
 
     public static final Integer METADATA_NAMESPACE_ROW = 0
@@ -47,10 +48,6 @@ abstract class DataRow implements CellHandler {
     }
 
     abstract void setAndInitialise(Row row)
-
-    Logger getLogger() {
-        LoggerFactory.getLogger(getClass())
-    }
 
     Row buildRow(Row row) {
         row
@@ -89,7 +86,7 @@ abstract class DataRow implements CellHandler {
                 CellRangeAddress mergeRegion = getMergeRegion(namespaceHeader)
 
                 mds.each {md ->
-                    logger.debug('Adding {}:{}', md.namespace, md.key)
+                    log.debug('Adding {}:{}', md.namespace, md.key)
 
                     Cell keyHeader
 

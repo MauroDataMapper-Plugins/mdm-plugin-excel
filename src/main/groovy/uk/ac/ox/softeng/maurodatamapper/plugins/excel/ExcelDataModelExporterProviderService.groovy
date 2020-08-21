@@ -36,8 +36,9 @@ import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFColor
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
+
+import groovy.util.logging.Slf4j
 
 import static ExcelPlugin.ALTERNATING_COLUMN_COLOUR
 import static ExcelPlugin.CELL_COLOUR_TINT
@@ -49,6 +50,7 @@ import static ExcelPlugin.DATAMODEL_TEMPLATE_FILENAME
 /**
  * @since 01/03/2018
  */
+@Slf4j
 class ExcelDataModelExporterProviderService extends DataModelExporterProviderService implements WorkbookExporter {
 
     @Autowired
@@ -83,7 +85,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
     @Override
     ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
 
-        logger.info('Exporting DataModels to Excel')
+        log.info('Exporting DataModels to Excel')
         XSSFWorkbook workbook = null
         try {
             workbook = loadWorkbookFromFilename(DATAMODEL_TEMPLATE_FILENAME) as XSSFWorkbook
@@ -94,7 +96,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
             if (workbook) {
                 ByteArrayOutputStream os = new ByteArrayOutputStream()
                 workbook.write(os)
-                logger.info('DataModels exported')
+                log.info('DataModels exported')
                 return os
             }
         } finally {
@@ -120,37 +122,37 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
         dataModelDataRows.each {dataModelDataRow ->
 
-            logger.debug('Loading DataModel {} into workbook', dataModelDataRow.name)
+            log.debug('Loading DataModel {} into workbook', dataModelDataRow.name)
 
             // We need to allow for potential sheet name already exists
             Sheet contentSheet = createComponentSheetFromTemplate(workbook, dataModelDataRow.sheetKey)
             dataModelDataRow.sheetKey = contentSheet.sheetName
 
-            logger.debug('Adding DataModel row')
+            log.debug('Adding DataModel row')
             dataModelDataRow.buildRow(dataModelSheet.createRow(dataModelSheet.lastRowNum + 1))
 
-            logger.debug('Configuring {} sheet style', dataModelSheet.sheetName)
+            log.debug('Configuring {} sheet style', dataModelSheet.sheetName)
             configureSheetStyle(dataModelSheet, dataModelDataRow.firstMetadataColumn, DATAMODELS_HEADER_ROWS, defaultStyle, colouredStyle)
 
-            logger.debug('Adding DataModel content to sheet {}', dataModelDataRow.sheetKey)
+            log.debug('Adding DataModel content to sheet {}', dataModelDataRow.sheetKey)
             List<ContentDataRow> contentDataRows = createContentDataRows(dataModelDataRow.dataModel.childDataClasses.sort {it.label})
 
             if (contentDataRows) {
                 loadDataRowsIntoSheet(contentSheet, contentDataRows)
 
-                logger.debug('Configuring {} sheet style', contentSheet.sheetName)
+                log.debug('Configuring {} sheet style', contentSheet.sheetName)
                 configureSheetStyle(contentSheet, contentDataRows.first().firstMetadataColumn, CONTENT_HEADER_ROWS, defaultStyle, colouredStyle)
             } else {
-                logger.warn('No content rows to add for DataModel')
+                log.warn('No content rows to add for DataModel')
             }
         }
         removeTemplateSheet(workbook)
     }
 
     List<ContentDataRow> createContentDataRows(List<CatalogueItem> catalogueItems, List<ContentDataRow> contentDataRows = []) {
-        logger.debug('Creating content DataRows')
+        log.debug('Creating content DataRows')
         catalogueItems.each {item ->
-            logger.trace('Creating content {}:{}', item.domainType, item.label)
+            log.trace('Creating content {}:{}', item.domainType, item.label)
             ContentDataRow dataRow = new ContentDataRow(item)
             contentDataRows += dataRow
             if (item.instanceOf(DataClass)) {
@@ -159,11 +161,6 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
             }
         }
         contentDataRows
-    }
-
-    @Override
-    Logger getLogger() {
-        return null
     }
 
     @Override

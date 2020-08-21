@@ -31,7 +31,8 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFColor
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide
-import org.slf4j.Logger
+
+import groovy.util.logging.Slf4j
 
 import static uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin.BORDER_COLOUR
 import static uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin.BORDER_COLOUR_TINT
@@ -41,9 +42,8 @@ import static uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.DataRow.getMeta
 /**
  * @since 13/03/2018
  */
+@Slf4j
 trait WorkbookExporter implements WorkbookHandler {
-
-    abstract Logger getLogger()
 
     abstract Integer configureExtraRowStyle(Row row, int metadataColumnIndex, int lastColumnIndex, XSSFCellStyle defaultStyle,
                                             XSSFCellStyle colouredStyle, XSSFCellStyle mainCellStyle, XSSFCellStyle borderCellStyle,
@@ -70,19 +70,19 @@ trait WorkbookExporter implements WorkbookHandler {
     }
 
     XSSFWorkbook removeTemplateSheet(XSSFWorkbook workbook) {
-        logger.debug('Removing the template sheet')
+        log.debug('Removing the template sheet')
         workbook.removeSheetAt(workbook.getSheetIndex(templateContentSheet))
         workbook.setActiveSheet(0)
         workbook
     }
 
     void loadDataRowsIntoSheet(Sheet sheet, List<DataRow> dataRows) {
-        logger.debug('Loading DataRows into sheet')
+        log.debug('Loading DataRows into sheet')
 
         addMetadataHeadersToSheet(sheet, dataRows, 3)
 
         dataRows.each {dataRow ->
-            logger.debug('Adding to row {}', sheet.lastRowNum + 1)
+            log.debug('Adding to row {}', sheet.lastRowNum + 1)
             dataRow.buildRow(sheet.createRow(sheet.lastRowNum + 1))
         }
     }

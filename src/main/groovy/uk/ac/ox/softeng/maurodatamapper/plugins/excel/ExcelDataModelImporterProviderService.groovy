@@ -40,8 +40,9 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.util.WorkbookHandler
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import org.apache.poi.ss.usermodel.Workbook
-import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
+
+import groovy.util.logging.Slf4j
 
 import static ExcelPlugin.CONTENT_HEADER_ROWS
 import static ExcelPlugin.CONTENT_ID_COLUMN
@@ -52,6 +53,7 @@ import static ExcelPlugin.DATAMODELS_SHEET_NAME
 /**
  * @since 01/03/2018
  */
+@Slf4j
 class ExcelDataModelImporterProviderService extends DataModelImporterProviderService<ExcelFileImporterProviderServiceParameters> implements WorkbookHandler {
 
     @Autowired
@@ -96,7 +98,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     List<DataModel> importDataModels(User currentUser, ExcelFileImporterProviderServiceParameters importerParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         if (importerParameters.importFile.fileContents.size() == 0) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
-        logger.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)
+        log.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)
 
         FileParameter importFile = importerParameters.importFile
 
@@ -122,14 +124,14 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
         List<DataModel> dataModels = []
 
         dataRows.each {dataRow ->
-            logger.debug('Creating DataModel {}', dataRow.name)
+            log.debug('Creating DataModel {}', dataRow.name)
             DataModel dataModel = dataModelService.createDataModel(catalogueUser, dataRow.name, dataRow.description, dataRow.author,
                                                                    dataRow.organisation, DataModelType.findForLabel(dataRow.type))
 
             addMetadataToCatalogueItem dataModel, dataRow.metadata, catalogueUser
 
             if (!workbook.getSheet(dataRow.sheetKey)) {
-                logger.warn('DataModel {} with key {} will not be imported as it has no corresponding sheet', dataRow.name, dataRow.sheetKey)
+                log.warn('DataModel {} with key {} will not be imported as it has no corresponding sheet', dataRow.name, dataRow.sheetKey)
                 return
             }
 
@@ -156,7 +158,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     }
 
     void loadDataClassRows(List<ContentDataRow> dataRows, DataModel dataModel, User catalogueUser) {
-        logger.info('Loading DataClass rows for DataModel {}', dataModel.label)
+        log.info('Loading DataClass rows for DataModel {}', dataModel.label)
 
         // Where not DataElement name then the row is DataClass specific data, otherwise we just need to make sure all the DataClasses exist
         // Sort the rows so we generate them in path descending order, this will ensure we create any specific data before we create children
@@ -169,7 +171,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
             Integer min = dataRow.dataElementName ? 1 : dataRow.minMultiplicity
             Integer max = dataRow.dataElementName ? 1 : dataRow.maxMultiplicity
 
-            logger.debug('Creating DataClass [{}]', dataRow.dataClassPath)
+            log.debug('Creating DataClass [{}]', dataRow.dataClassPath)
             DataClass dataClass = dataClassService.findOrCreateDataClassByPath(dataModel, dataRow.dataClassPathList, description, catalogueUser,
                                                                                min, max)
             if (!dataRow.dataElementName) {
@@ -185,7 +187,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
             DataType dataType = null
 
             if (dataRow.mergedContentRows) {
-                logger.debug('DataElement is an EnumerationType')
+                log.debug('DataElement is an EnumerationType')
 
                 dataType = enumerationTypeService.findOrCreateDataTypeForDataModel(dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription,
                                                                                    catalogueUser)
@@ -202,7 +204,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
                     dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, catalogueUser)
             }
 
-            logger.debug('Adding DataElement [{}] to DataClass [{}] with DataType [{}]', dataRow.dataElementName, parentDataClass?.label,
+            log.debug('Adding DataElement [{}] to DataClass [{}] with DataType [{}]', dataRow.dataElementName, parentDataClass?.label,
                          dataType?.label)
             DataElement dataElement = dataElementService.findOrCreateDataElementForDataClass(
                 parentDataClass, dataRow.dataElementName, dataRow.description, catalogueUser, dataType, dataRow.minMultiplicity,
@@ -217,13 +219,8 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
     void addMetadataToCatalogueItem(CatalogueItem catalogueItem, List<MetadataColumn> metadata, User catalogueUser) {
         metadata.each {md ->
-            logger.trace('Adding Metadata {}', md.key)
+            log.trace('Adding Metadata {}', md.key)
             catalogueItem.addToMetadata(md.namespace ?: namespace, md.key, md.value, catalogueUser)
         }
-    }
-
-    @Override
-    Logger getLogger() {
-        return null
     }
 }

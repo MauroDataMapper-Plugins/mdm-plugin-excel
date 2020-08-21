@@ -29,14 +29,14 @@ import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.ss.util.CellRangeAddress
-import org.slf4j.Logger
+
+import groovy.util.logging.Slf4j
 
 /**
  * @since 14/03/2018
  */
+@Slf4j
 trait WorkbookHandler extends CellHandler {
-
-    abstract Logger getLogger()
 
     Workbook loadWorkbookFromFilename(String filename) throws ApiException {
         loadWorkbookFromInputStream filename, getClass().classLoader.getResourceAsStream(filename)
@@ -60,7 +60,7 @@ trait WorkbookHandler extends CellHandler {
                                                             int idCellNumber) throws ApiException {
         Workbook workbook = null
         try {
-            logger.info 'Loading {}s from sheet [{}] in file [{}]', dataRowClass.simpleName, sheetName, filename
+            log.info 'Loading {}s from sheet [{}] in file [{}]', dataRowClass.simpleName, sheetName, filename
             workbook = loadWorkbookFromFilename(filename)
             return loadDataRows(workbook, dataRowClass, filename, sheetName, numberOfHeaderRows, idCellNumber)
         } finally {
@@ -78,7 +78,7 @@ trait WorkbookHandler extends CellHandler {
             it.firstColumn == idCellNumber && it.lastRow != it.firstRow
         }.sort {it.firstRow}
 
-        logger.trace('{} merged regions found, reduced down to {} useable regions', sheet.mergedRegions.size(), mergedRegions.size())
+        log.trace('{} merged regions found, reduced down to {} useable regions', sheet.mergedRegions.size(), mergedRegions.size())
 
         List<K> dataRows = []
         Iterator<Row> rowIterator = sheet.rowIterator()
@@ -90,7 +90,7 @@ trait WorkbookHandler extends CellHandler {
         while (rowIterator.hasNext()) {
             Row row = rowIterator.next()
             if (getCellValueAsString(row.getCell(idCellNumber))) {
-                logger.trace('Examining row {} at {}', getCellValueAsString(row.getCell(idCellNumber)), row.rowNum)
+                log.trace('Examining row {} at {}', getCellValueAsString(row.getCell(idCellNumber)), row.rowNum)
 
                 K dataRow = dataRowClass.newInstance()
                 dataRow.setAndInitialise(row)
@@ -99,19 +99,19 @@ trait WorkbookHandler extends CellHandler {
                 if (mergedRegions) {
                     Integer lastRowIndexOfMerge = mergedRegions.find {it.firstRow == row.rowNum}?.lastRow
                     if (lastRowIndexOfMerge) {
-                        logger.trace('Merged region for {} from {} to {}(inclusive)', getCellValueAsString(row.getCell(idCellNumber)), row.rowNum,
+                        log.trace('Merged region for {} from {} to {}(inclusive)', getCellValueAsString(row.getCell(idCellNumber)), row.rowNum,
                                      lastRowIndexOfMerge)
                         dataRow.addToMergedContentRows(row)
                         while (rowIterator.hasNext() && row.rowNum < lastRowIndexOfMerge) {
                             row = rowIterator.next()
                             dataRow.addToMergedContentRows(row)
                         }
-                        logger.trace('Data row has {} extra content', dataRow.mergedContentRows.size())
+                        log.trace('Data row has {} extra content', dataRow.mergedContentRows.size())
                     }
                 }
             }
         }
-        logger.debug('Loaded {} data rows from sheet [{}] in [{}]', dataRows.size(), sheet.sheetName, filename)
+        log.debug('Loaded {} data rows from sheet [{}] in [{}]', dataRows.size(), sheet.sheetName, filename)
         dataRows
     }
 

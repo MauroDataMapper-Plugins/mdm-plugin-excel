@@ -53,9 +53,12 @@ import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.springframework.beans.factory.annotation.Autowired
 
+import groovy.util.logging.Slf4j
+
 /**
  * @since 01/03/2018
  */
+@Slf4j
 class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProviderService<ExcelSimpleFileImporterProviderServiceParameters> {
 
     @Autowired
@@ -102,7 +105,7 @@ class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProvi
     List<DataModel> importDataModels(User currentUser, ExcelSimpleFileImporterProviderServiceParameters importerParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         if (importerParameters.importFile.fileContents.size() == 0) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
-        logger.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)
+        log.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)
 
         FileParameter importFile = importerParameters.importFile
 
