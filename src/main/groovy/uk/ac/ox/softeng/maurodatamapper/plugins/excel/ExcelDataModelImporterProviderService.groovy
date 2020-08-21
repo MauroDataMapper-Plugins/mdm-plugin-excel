@@ -52,7 +52,7 @@ import static ExcelPlugin.DATAMODELS_SHEET_NAME
 /**
  * @since 01/03/2018
  */
-class ExcelDataModelImporterService extends DataModelImporterProviderService<ExcelFileImporterParameters> implements WorkbookHandler {
+class ExcelDataModelImporterProviderService extends DataModelImporterProviderService<ExcelFileImporterProviderServiceParameters> implements WorkbookHandler {
 
     @Autowired
     DataModelService dataModelService
@@ -88,12 +88,12 @@ class ExcelDataModelImporterService extends DataModelImporterProviderService<Exc
     }
 
     @Override
-    DataModel importDataModel(User currentUser, ExcelFileImporterParameters params) {
+    DataModel importDataModel(User currentUser, ExcelFileImporterProviderServiceParameters params) {
         importDataModels(currentUser, params)?.first()
     }
 
     @Override
-    List<DataModel> importDataModels(User currentUser, ExcelFileImporterParameters importerParameters) {
+    List<DataModel> importDataModels(User currentUser, ExcelFileImporterProviderServiceParameters importerParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         if (importerParameters.importFile.fileContents.size() == 0) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
         logger.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)

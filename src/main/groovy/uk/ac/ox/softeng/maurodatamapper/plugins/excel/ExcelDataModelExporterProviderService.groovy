@@ -49,7 +49,7 @@ import static ExcelPlugin.DATAMODEL_TEMPLATE_FILENAME
 /**
  * @since 01/03/2018
  */
-class ExcelDataModelExporterService extends DataModelExporterProviderService implements WorkbookExporter {
+class ExcelDataModelExporterProviderService extends DataModelExporterProviderService implements WorkbookExporter {
 
     @Autowired
     DataModelService dataModelService

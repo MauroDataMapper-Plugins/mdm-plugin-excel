@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue
  * @since 01/03/2018
  */
 @SuppressWarnings('SpellCheckingInspection')
-class ExcelImporterServiceTest extends BaseDataModelImportExportExcelTest {
+class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
 
     @Test
     void testImporterParametersAreCorrect() {
@@ -54,7 +54,7 @@ class ExcelImporterServiceTest extends BaseDataModelImportExportExcelTest {
 
     @Test
     void performSimpleImport() {
-        ExcelFileImporterParameters importerParameters = createImportParameters('simpleImport.xlsx')
+        ExcelFileImporterProviderServiceParameters importerParameters = createImportParameters('simpleImport.xlsx')
         DataModel imported = importDomain(importerParameters)
 
         verifySimpleDataModel DataModel.get(imported.id)
@@ -63,7 +63,7 @@ class ExcelImporterServiceTest extends BaseDataModelImportExportExcelTest {
 
     @Test
     void performSimpleImportWithComplexMetadata() {
-        ExcelFileImporterParameters importerParameters = createImportParameters('simpleImportComplexMetadata.xlsx')
+        ExcelFileImporterProviderServiceParameters importerParameters = createImportParameters('simpleImportComplexMetadata.xlsx')
         DataModel imported = importDomain(importerParameters)
 
         DataModel dataModel = DataModel.get(imported.id)
@@ -106,7 +106,7 @@ class ExcelImporterServiceTest extends BaseDataModelImportExportExcelTest {
 
     @Test
     void performMultipleDataModelImport() {
-        ExcelFileImporterParameters importerParameters = createImportParameters('multiDataModelImport.xlsx')
+        ExcelFileImporterProviderServiceParameters importerParameters = createImportParameters('multiDataModelImport.xlsx')
         List<DataModel> importedModels = importDomains(importerParameters, 3)
 
         assertEquals('Number of DataModels imported', 3, importedModels.size())

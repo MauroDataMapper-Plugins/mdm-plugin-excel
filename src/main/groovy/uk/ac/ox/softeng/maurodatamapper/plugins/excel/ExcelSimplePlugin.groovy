@@ -33,8 +33,8 @@ class ExcelSimplePlugin extends AbstractMauroDataMapperPlugin {
     @Override
     Closure doWithSpring() {
         {->
-            excelSimpleImporterService(ExcelSimpleDataModelImporterService)
-            excelSimpleExporterService(ExcelSimpleDataModelExporterService)
+            excelSimpleDataModelImporterProviderService(ExcelSimpleDataModelImporterProviderService)
+            excelSimpleDataModelExporterProviderService(ExcelSimpleDataModelExporterProviderService)
         }
     }
 

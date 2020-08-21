@@ -22,7 +22,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.Da
 /**
  * @since 01/03/2018
  */
-class ExcelFileImporterParameters extends DataModelFileImporterProviderServiceParameters {
+class ExcelSimpleFileImporterProviderServiceParameters extends DataModelFileImporterProviderServiceParameters {
 
     // So we don't ask for the DataModel name
     String dataModelName

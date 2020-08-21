@@ -56,7 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired
 /**
  * @since 01/03/2018
  */
-class ExcelSimpleDataModelImporterService extends DataModelImporterProviderService<ExcelSimpleFileImporterParameters> {
+class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProviderService<ExcelSimpleFileImporterProviderServiceParameters> {
 
     @Autowired
     DataModelService dataModelService
@@ -94,12 +94,12 @@ class ExcelSimpleDataModelImporterService extends DataModelImporterProviderServi
     }
 
     @Override
-    DataModel importDataModel(User currentUser, ExcelSimpleFileImporterParameters params) {
+    DataModel importDataModel(User currentUser, ExcelSimpleFileImporterProviderServiceParameters params) {
         importDataModels(currentUser, params)?.first()
     }
 
     @Override
-    List<DataModel> importDataModels(User currentUser, ExcelSimpleFileImporterParameters importerParameters) {
+    List<DataModel> importDataModels(User currentUser, ExcelSimpleFileImporterProviderServiceParameters importerParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         if (importerParameters.importFile.fileContents.size() == 0) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
         logger.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)

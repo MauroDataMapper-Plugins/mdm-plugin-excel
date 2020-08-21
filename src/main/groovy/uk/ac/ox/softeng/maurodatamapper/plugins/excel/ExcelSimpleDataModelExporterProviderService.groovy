@@ -41,7 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired
 /**
  * @since 01/03/2018
  */
-class ExcelSimpleDataModelExporterService extends DataModelExporterProviderService {
+class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProviderService {
 
     @Autowired
     DataModelService dataModelService

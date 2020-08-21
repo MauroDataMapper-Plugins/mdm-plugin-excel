@@ -35,7 +35,7 @@ import static org.junit.Assert.assertNotNull
  * @since 01/03/2018
  */
 @SuppressWarnings('SpellCheckingInspection')
-class ExcelExporterServiceTest extends BaseDataModelImportExportExcelTest {
+class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
 
     @Test
     void testSimpleExport() {
@@ -97,7 +97,7 @@ class ExcelExporterServiceTest extends BaseDataModelImportExportExcelTest {
 
     private List<DataModel> testExportViaImport(String filename, String outFileName, int expectedCount = 1) throws IOException, ApiException {
         // Import model first
-        ExcelFileImporterParameters params = createImportParameters(filename)
+        ExcelFileImporterProviderServiceParameters params = createImportParameters(filename)
         List<DataModel> importedModels = importDomains(params, expectedCount)
 
         getLogger().debug('DataModel to export: {}', importedModels[0].getId())
@@ -115,7 +115,7 @@ class ExcelExporterServiceTest extends BaseDataModelImportExportExcelTest {
 
     private void testExport(UUID dataModelId, Path outPath) throws IOException, ApiException {
         getLogger().info('>>> Exporting Single')
-        ExcelDataModelExporterService exporterService = applicationContext.getBean(ExcelDataModelExporterService)
+        ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
         ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomain(catalogueUser, dataModelId)
         assertNotNull('Should have an exported model', byteArrayOutputStream)
 
@@ -127,7 +127,7 @@ class ExcelExporterServiceTest extends BaseDataModelImportExportExcelTest {
 
     private void testExport(List<UUID> dataModelIds, Path outPath) throws IOException, ApiException {
         getLogger().info('>>> Exporting Multiple')
-        ExcelDataModelExporterService exporterService = applicationContext.getBean(ExcelDataModelExporterService)
+        ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
         ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomains(catalogueUser, dataModelIds)
         assertNotNull('Should have an exported model', byteArrayOutputStream)
 

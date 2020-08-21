@@ -17,13 +17,22 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
+import org.junit.Test
 
-/**
- * @since 01/03/2018
- */
-class ExcelSimpleFileImporterParameters extends DataModelFileImporterProviderServiceParameters {
+import static org.junit.Assert.assertEquals
 
-    // So we don't ask for the DataModel name
-    String dataModelName
+class ExcelSimpleDataModelExporterProviderServiceTest {
+
+    @Test
+    void testSheetKey() {
+        Map<String, String> results = [
+            "My Model"                  : "MM",
+            "GEL: CancerSchema-v1.0.1"  : "GC101",
+            "[GEL: CancerSchema-v1.0.1]": "GC101"
+        ]
+
+        results.each {entry ->
+            assertEquals(ExcelSimpleDataModelExporterProviderService.createSheetKey(entry.key), entry.value)
+        }
+    }
 }

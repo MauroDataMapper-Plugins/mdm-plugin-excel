@@ -33,8 +33,8 @@ import static org.junit.Assert.assertNotNull
 /**
  * @since 01/03/2018
  */
-abstract class BaseDataModelImportExportExcelTest
-    extends BaseImportExportExcelTest<DataModel, ExcelFileImporterParameters, ExcelDataModelImporterService> {
+abstract class BaseExcelDataModelImporterExporterProviderServiceTest
+    extends BaseImporterExporterProviderServiceTest<DataModel, ExcelFileImporterProviderServiceParameters, ExcelDataModelImporterProviderService> {
 
     @Override
     DataModel saveDomain(DataModel domain) {
@@ -140,8 +140,8 @@ abstract class BaseDataModelImportExportExcelTest
         dataType
     }
 
-    protected ExcelFileImporterParameters createImportParameters(Path path) throws IOException {
-        ExcelFileImporterParameters params = new ExcelFileImporterParameters(finalised: false)
+    protected ExcelFileImporterProviderServiceParameters createImportParameters(Path path) throws IOException {
+        ExcelFileImporterProviderServiceParameters params = new ExcelFileImporterProviderServiceParameters(finalised: false)
         FileParameter file = new FileParameter(path.toString(), 'application/vnd.ms-excel', Files.readAllBytes(path))
 
         params.setImportFile(file)
