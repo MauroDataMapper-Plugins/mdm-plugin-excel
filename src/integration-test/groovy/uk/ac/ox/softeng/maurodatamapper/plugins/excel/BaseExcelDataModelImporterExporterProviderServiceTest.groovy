@@ -17,8 +17,11 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
+import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
@@ -48,7 +51,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertEquals('DataModel description', 'this is a simple test with only 1 DataModel', dataModel.description)
         assertEquals('DataModel author', 'tester', dataModel.author)
         assertEquals('DataModel organisation', 'Oxford', dataModel.organisation)
-        assertEquals('DataModel type', DataModelType.DATA_STANDARD, dataModel.type)
+        assertEquals('DataModel type', DataModelType.DATA_STANDARD.toString(), dataModel.modelType)
 
         assertEquals('DataModel Metadata count', mdCount, dataModel.metadata.size())
 
@@ -87,13 +90,13 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     protected void checkDataElement(DataClass parent, String label, String description, String dataType, int min = 1, int max = 1,
                                     Map<String, String> metadata = [:]) {
-        DataElement dataElement = parent.childDataElements.find {it.label == label}
+        DataElement dataElement = parent.dataElements.find {it.label == label}
         assertNotNull("${label} dataelement exists", dataElement)
         assertEquals("${label} dataelement description", description, dataElement.description)
         assertEquals("${label} dataelement datatype", dataType, dataElement.dataType.label)
         assertEquals("${label} dataelement min multiplicity", min, dataElement.minMultiplicity)
         assertEquals("${label} dataelement max multiplicity", max, dataElement.maxMultiplicity)
-        assertEquals("${label} dataelement Metadata count", metadata.size(), dataElement.metadata?.size() ?: 0)
+        assertEquals("${label} dataelement Metadata count", metadata.size(), Metadata.countByCatalogueItemId(dataElement.id))
         metadata.each {k, v ->
             checkMetadata(dataElement, k, v)
         }
@@ -107,18 +110,18 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     protected DataClass checkDataClass(DataClass parent, String label, int elementCount, String description = null, int min = 1, int max = 1,
                                        Map<String, String> metadata = [:]) {
-        DataClass dataClass = parent.childDataClasses.find {it.label == label}
+        DataClass dataClass = parent.dataClasses.find {it.label == label}
         checkDataClassData(dataClass, label, elementCount, description, min, max, metadata)
     }
 
     protected DataClass checkDataClassData(DataClass dataClass, String label, int elementCount, String description = null, int min = 1, int max = 1,
                                            Map<String, String> metadata = [:]) {
         assertNotNull("${label} dataclass exists", dataClass)
-        assertEquals("${label} dataclass has number of elements", elementCount, dataClass.childDataElements.size())
+        assertEquals("${label} dataclass has number of elements", elementCount, dataClass.dataElements.size())
         assertEquals("${label} dataclass description", description, dataClass.description)
         assertEquals("${label} dataclass min multiplicity", min, dataClass.minMultiplicity)
         assertEquals("${label} dataclass max multiplicity", max, dataClass.maxMultiplicity)
-        assertEquals("${label} dataclass Metadata count", metadata.size(), dataClass.metadata?.size() ?: 0)
+        assertEquals("${label} dataclass Metadata count", metadata.size(), Metadata.countByCatalogueItemId(dataClass.id))
         metadata.each {k, v ->
             checkMetadata(dataClass, k, v)
         }

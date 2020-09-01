@@ -49,7 +49,7 @@ abstract class BaseImporterExporterProviderServiceTest<D extends GormEntity, P e
             k = parts[1]
         }
 
-        Metadata md = catalogueItem.findMetadataByNamespaceAndKey(ns, k)
+        Metadata md = Metadata.findByCatalogueItemIdAndNamespaceAndKey(catalogueItem.id, ns, k)
         assertNotNull("${catalogueItem.label} Metadata ${key} exists", md)
         assertEquals("${catalogueItem.label} Metadata ${key} value", value, md.value)
     }
