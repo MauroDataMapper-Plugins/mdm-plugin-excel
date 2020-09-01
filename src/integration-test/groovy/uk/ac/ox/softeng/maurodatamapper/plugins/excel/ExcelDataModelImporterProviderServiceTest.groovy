@@ -43,7 +43,7 @@ class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImport
 
         assertEquals('Number of parameter groups', 2, importParameters.size())
 
-        assertEquals('Number of standard parameters', 3, importParameters[0].size())
+        assertEquals('Number of standard parameters', 4, importParameters[0].size())
         assertEquals('Number of source parameters', 1, importParameters[1].size())
 
         assertTrue 'Has ImportFile parameter', importParameters[1].first().name == 'importFile'
