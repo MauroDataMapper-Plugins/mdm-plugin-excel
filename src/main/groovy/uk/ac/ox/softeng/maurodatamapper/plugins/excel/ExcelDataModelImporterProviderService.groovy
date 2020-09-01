@@ -19,10 +19,12 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
+import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
@@ -42,7 +44,7 @@ import uk.ac.ox.softeng.maurodatamapper.security.User
 import org.apache.poi.ss.usermodel.Workbook
 import org.springframework.beans.factory.annotation.Autowired
 
-import groovy.util.logging.Slf4j
+import groovy.transform.CompileStatic
 
 import static ExcelPlugin.CONTENT_HEADER_ROWS
 import static ExcelPlugin.CONTENT_ID_COLUMN
@@ -53,7 +55,7 @@ import static ExcelPlugin.DATAMODELS_SHEET_NAME
 /**
  * @since 01/03/2018
  */
-@Slf4j
+@CompileStatic
 class ExcelDataModelImporterProviderService extends DataModelImporterProviderService<ExcelFileImporterProviderServiceParameters> implements WorkbookHandler {
 
     @Autowired
@@ -125,8 +127,9 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
         dataRows.each {dataRow ->
             log.debug('Creating DataModel {}', dataRow.name)
-            DataModel dataModel = dataModelService.createDataModel(catalogueUser, dataRow.name, dataRow.description, dataRow.author,
-                                                                   dataRow.organisation, DataModelType.findForLabel(dataRow.type))
+            DataModel dataModel = dataModelService.createAndSaveDataModel(
+                catalogueUser, Folder.findOrCreateByLabel('random', [createdBy: catalogueUser.emailAddress]),
+                DataModelType.findForLabel(dataRow.type), dataRow.name, dataRow.description, dataRow.author, dataRow.organisation)
 
             addMetadataToCatalogueItem dataModel, dataRow.metadata, catalogueUser
 
@@ -172,8 +175,9 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
             Integer max = dataRow.dataElementName ? 1 : dataRow.maxMultiplicity
 
             log.debug('Creating DataClass [{}]', dataRow.dataClassPath)
-            DataClass dataClass = dataClassService.findOrCreateDataClassByPath(dataModel, dataRow.dataClassPathList, description, catalogueUser,
-                                                                               min, max)
+            // TODO(adjl): Compose this functinoality from other methods instead of publicising findOrCreateDataClassByPath()
+            DataClass dataClass = dataClassService.findOrCreateDataClassByPath(
+                dataModel, dataRow.dataClassPathList, description, catalogueUser, min, max)
             if (!dataRow.dataElementName) {
                 addMetadataToCatalogueItem dataClass, dataRow.metadata, catalogueUser
             }
@@ -222,5 +226,13 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
             log.trace('Adding Metadata {}', md.key)
             catalogueItem.addToMetadata(md.namespace ?: namespace, md.key, md.value, catalogueUser)
         }
+    }
+
+    @Override // TODO(adjl): Investigate why casting `as User` in DataModelImporterProviderService doesn't work
+    DataModel importDomain(User currentUser, ExcelFileImporterProviderServiceParameters params) {
+        DataModel dataModel = importDataModel(currentUser, params)
+        if (!dataModel) return null
+        if (params.modelName) dataModel.label = params.modelName
+        checkImport(currentUser as User, dataModel, params.finalised, params.importAsNewDocumentationVersion)
     }
 }
