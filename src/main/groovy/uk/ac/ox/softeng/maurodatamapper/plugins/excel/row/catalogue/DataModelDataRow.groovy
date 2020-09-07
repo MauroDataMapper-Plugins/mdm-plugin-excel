@@ -59,7 +59,7 @@ class DataModelDataRow extends StandardDataRow {
         description = dataModel.description
         author = dataModel.author
         organisation = dataModel.organisation
-        type = dataModel.type.label
+        type = dataModel.modelType
 
         dataModel.metadata.each {md ->
             metadata += new MetadataColumn(namespace: md.namespace, key: md.key, value: md.value)

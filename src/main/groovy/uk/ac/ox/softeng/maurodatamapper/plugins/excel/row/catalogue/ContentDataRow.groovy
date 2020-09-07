@@ -19,7 +19,10 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue
 
 import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.StandardDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column.MetadataColumn
 
@@ -57,11 +60,11 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
             metadata += new MetadataColumn(namespace: md.namespace, key: md.key, value: md.value)
         }
 
-        if (catalogueItem.instanceOf(DataClass)) {
+        if (catalogueItem instanceof DataClass) {
             dataClassPath = buildPath(catalogueItem)
             minMultiplicity = catalogueItem.minMultiplicity
             maxMultiplicity = catalogueItem.maxMultiplicity
-        } else if (catalogueItem.instanceOf(DataElement)) {
+        } else if (catalogueItem instanceof DataElement) {
             dataClassPath = buildPath(catalogueItem.dataClass)
             dataElementName = catalogueItem.label
             minMultiplicity = catalogueItem.minMultiplicity
@@ -71,9 +74,9 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
             dataTypeName = dataType.getLabel()
             dataTypeDescription = dataType.getDescription()
 
-            if (dataType.instanceOf(ReferenceType)) {
+            if (dataType instanceof ReferenceType) {
                 referenceToDataClassPath = buildPath(dataType.getReferenceClass())
-            } else if (dataType.instanceOf(EnumerationType)) {
+            } else if (dataType instanceof EnumerationType) {
                 dataType.getEnumerationValues().sort {it.key}.each {ev ->
                     mergedContentRows += new EnumerationValueDataRow(ev)
                 }

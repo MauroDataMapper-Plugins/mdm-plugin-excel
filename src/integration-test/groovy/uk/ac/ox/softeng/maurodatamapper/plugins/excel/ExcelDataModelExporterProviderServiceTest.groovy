@@ -20,6 +20,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.user.IntegrationTestUser
 
 import com.google.common.base.Strings
 import org.junit.Test
@@ -119,7 +120,7 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
     private void testExport(UUID dataModelId, Path outPath) throws IOException, ApiException {
         log.info('>>> Exporting Single')
         ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
-        ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomain(catalogueUser, dataModelId)
+        ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomain(IntegrationTestUser.instance, dataModelId)
         assertNotNull('Should have an exported model', byteArrayOutputStream)
 
         String exported = byteArrayOutputStream.toString('ISO-8859-1')

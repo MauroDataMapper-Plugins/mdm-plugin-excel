@@ -235,4 +235,10 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
         if (params.modelName) dataModel.label = params.modelName
         checkImport(currentUser as User, dataModel, params.finalised, params.importAsNewDocumentationVersion)
     }
+
+    @Override // TODO(adjl): Investigate why checkImport doesn't work in DataModelImporterProviderService despite matching param types
+    List<DataModel> importDomains(User currentUser, ExcelFileImporterProviderServiceParameters params) {
+        List<DataModel> dataModels = importDataModels(currentUser, params)
+        dataModels?.collect { checkImport(currentUser, it, params.finalised, params.importAsNewDocumentationVersion) }
+    }
 }

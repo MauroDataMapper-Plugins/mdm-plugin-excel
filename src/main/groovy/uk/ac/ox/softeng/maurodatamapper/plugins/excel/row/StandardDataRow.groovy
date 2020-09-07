@@ -41,7 +41,7 @@ abstract class StandardDataRow<K extends EnumerationDataRow> extends DataRow {
 
     void addToMergedContentRows(Row row) {
         if (enumerationExcelDataRowClass) {
-            K enumerationRow = enumerationExcelDataRowClass.newInstance()
+            K enumerationRow = enumerationExcelDataRowClass.getDeclaredConstructor().newInstance()
             enumerationRow.setAndInitialise(row)
             mergedContentRows += enumerationRow
         }

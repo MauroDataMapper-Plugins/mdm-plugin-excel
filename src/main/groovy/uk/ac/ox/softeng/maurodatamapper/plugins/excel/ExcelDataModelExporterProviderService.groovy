@@ -21,11 +21,13 @@ import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElementService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelExporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.ContentDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.DataModelDataRow
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.EnumerationValueDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.util.WorkbookExporter
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
@@ -155,7 +157,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
             log.trace('Creating content {}:{}', item.domainType, item.label)
             ContentDataRow dataRow = new ContentDataRow(item)
             contentDataRows += dataRow
-            if (item.instanceOf(DataClass)) {
+            if (item instanceof DataClass) {
                 contentDataRows = createContentDataRows(dataElementService.findAllByDataClassIdJoinDataType(item.id), contentDataRows)
                 contentDataRows = createContentDataRows(dataClassService.findAllByParentDataClassId(item.id, [sort: 'label']), contentDataRows)
             }

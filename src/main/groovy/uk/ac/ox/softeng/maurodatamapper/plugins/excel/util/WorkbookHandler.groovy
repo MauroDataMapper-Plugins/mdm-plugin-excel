@@ -92,7 +92,7 @@ trait WorkbookHandler extends CellHandler {
             if (getCellValueAsString(row.getCell(idCellNumber))) {
                 log.trace('Examining row {} at {}', getCellValueAsString(row.getCell(idCellNumber)), row.rowNum)
 
-                K dataRow = dataRowClass.newInstance()
+                K dataRow = dataRowClass.getDeclaredConstructor().newInstance()
                 dataRow.setAndInitialise(row)
                 dataRows.add(dataRow)
 

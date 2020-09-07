@@ -23,13 +23,12 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.util.CellHandler
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.util.CellRangeAddress
-
-import groovy.util.logging.Slf4j
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * @since 02/03/2018
  */
-@Slf4j
 abstract class DataRow implements CellHandler {
 
     public static final Integer METADATA_NAMESPACE_ROW = 0
@@ -111,5 +110,9 @@ abstract class DataRow implements CellHandler {
                 .flatten()
                 .groupBy {it.namespace}
                 .collectEntries {[it.key, it.value.key as Set]}.findAll {it.value} as Map<String, Set<String>>
+    }
+
+    Logger getLog() {
+        LoggerFactory.getLogger(getClass())
     }
 }
