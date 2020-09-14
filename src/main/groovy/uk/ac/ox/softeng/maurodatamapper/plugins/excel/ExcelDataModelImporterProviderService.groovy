@@ -76,6 +76,8 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     @Autowired
     DataElementService dataElementService
 
+    boolean saveDataModelsOnCreate = true
+
     @Override
     String getDisplayName() {
         'Excel (XLSX) Importer'
@@ -129,7 +131,8 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
             log.debug('Creating DataModel {}', dataRow.name)
             DataModel dataModel = dataModelService.createAndSaveDataModel(
                 catalogueUser, Folder.findOrCreateByLabel('random', [createdBy: catalogueUser.emailAddress]),
-                DataModelType.findForLabel(dataRow.type), dataRow.name, dataRow.description, dataRow.author, dataRow.organisation)
+                DataModelType.findForLabel(dataRow.type), dataRow.name, dataRow.description, dataRow.author, dataRow.organisation,
+                saveDataModelsOnCreate)
 
             addMetadataToCatalogueItem dataModel, dataRow.metadata, catalogueUser
 
