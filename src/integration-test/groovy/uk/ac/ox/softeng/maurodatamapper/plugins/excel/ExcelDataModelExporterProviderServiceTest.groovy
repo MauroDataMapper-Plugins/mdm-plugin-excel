@@ -23,6 +23,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.user.IntegrationTestUser
 
 import com.google.common.base.Strings
+import org.junit.Before
 import org.junit.Test
 
 import groovy.util.logging.Slf4j
@@ -40,6 +41,11 @@ import static org.junit.Assert.assertNotNull
 @Slf4j
 @SuppressWarnings('SpellCheckingInspection')
 class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
+
+    @Before
+    void disableDataModelSavingOnCreate() {
+        importerInstance.saveDataModelsOnCreate = false
+    }
 
     @Test
     void testSimpleExport() {
