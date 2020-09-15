@@ -20,6 +20,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 import uk.ac.ox.softeng.maurodatamapper.core.importer.ImporterService
 import uk.ac.ox.softeng.maurodatamapper.core.rest.transport.importer.ImportParameterGroup
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 
 import org.junit.Test
@@ -106,6 +107,7 @@ class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImport
 
     @Test
     void performMultipleDataModelImport() {
+        importerInstance.saveDataModelsOnCreate = false
         ExcelFileImporterProviderServiceParameters importerParameters = createImportParameters('multiDataModelImport.xlsx')
         List<DataModel> importedModels = importDomains(importerParameters, 3)
 
@@ -123,7 +125,7 @@ class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImport
                                               'testing dataflows', dataModel.description)
         assertEquals('DataModel author', 'tester', dataModel.author)
         assertEquals('DataModel organisation', 'Oxford', dataModel.organisation)
-        assertEquals('DataModel type', DataModelType.DATA_ASSET, dataModel.type)
+        assertEquals('DataModel type', DataModelType.DATA_ASSET as String, dataModel.modelType)
 
         assertEquals('DataModel Metadata count', 2, dataModel.metadata.size())
 

@@ -51,7 +51,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertEquals('DataModel description', 'this is a simple test with only 1 DataModel', dataModel.description)
         assertEquals('DataModel author', 'tester', dataModel.author)
         assertEquals('DataModel organisation', 'Oxford', dataModel.organisation)
-        assertEquals('DataModel type', DataModelType.DATA_STANDARD.toString(), dataModel.modelType)
+        assertEquals('DataModel type', DataModelType.DATA_STANDARD as String, dataModel.modelType)
 
         assertEquals('DataModel Metadata count', mdCount, dataModel.metadata.size())
 
