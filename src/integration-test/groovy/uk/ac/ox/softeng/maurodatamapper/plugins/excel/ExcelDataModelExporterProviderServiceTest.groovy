@@ -138,7 +138,7 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
     private void testExport(List<UUID> dataModelIds, Path outPath) throws IOException, ApiException {
         log.info('>>> Exporting Multiple')
         ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
-        ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomains(catalogueUser, dataModelIds)
+        ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomains(IntegrationTestUser.instance, dataModelIds)
         assertNotNull('Should have an exported model', byteArrayOutputStream)
 
         String exported = byteArrayOutputStream.toString('ISO-8859-1')
