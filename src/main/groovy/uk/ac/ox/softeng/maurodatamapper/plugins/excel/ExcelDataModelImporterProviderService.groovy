@@ -19,6 +19,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
+import uk.ac.ox.softeng.maurodatamapper.core.authority.AuthorityService
 import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
@@ -76,6 +77,9 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     @Autowired
     DataElementService dataElementService
 
+    @Autowired
+    AuthorityService authorityService
+
     boolean saveDataModelsOnCreate = true
 
     @Override
@@ -132,7 +136,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
             DataModel dataModel = dataModelService.createAndSaveDataModel(
                 catalogueUser, Folder.findOrCreateByLabel('random', [createdBy: catalogueUser.emailAddress]),
                 DataModelType.findForLabel(dataRow.type), dataRow.name, dataRow.description, dataRow.author, dataRow.organisation,
-                saveDataModelsOnCreate)
+                authorityService.defaultAuthority, saveDataModelsOnCreate)
 
             addMetadataToCatalogueItem dataModel, dataRow.metadata, catalogueUser
 
