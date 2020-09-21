@@ -98,7 +98,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
             List<LinkedHashMap<String, String>> dataModelsSheetArray = []
             List<LinkedHashMap<String, String>> enumerationsSheetArray = []
 
-            dataModels.each {dataModel ->
+            dataModels.each { dataModel ->
                 String sheetKey = createSheetKey(dataModel.label)
                 LinkedHashMap<String, String> array = new LinkedHashMap<String, String>()
                 array["Name"] = dataModel.label
@@ -108,23 +108,23 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
                 array["Sheet Key"] = sheetKey
                 array["Type"] = dataModel.type.toString()
 
-                dataModel.metadata.each {metadata ->
+                dataModel.metadata.each { metadata ->
                     String key = "${metadata.namespace}:${metadata.key}"
                     array[key] = metadata.value
                 }
                 dataModelsSheetArray.add(array)
 
                 List<LinkedHashMap<String, String>> enumerationsArray = []
-                dataModel.dataTypes.findAll {it instanceof EnumerationType}.each {dataType ->
+                dataModel.dataTypes.findAll { it instanceof EnumerationType }.each { dataType ->
                     EnumerationType enumType = (EnumerationType) dataType
-                    enumType.enumerationValues.each {enumValue ->
+                    enumType.enumerationValues.each { enumValue ->
                         LinkedHashMap<String, String> enumArray = new LinkedHashMap<String, String>()
                         enumArray["DataModel Name"] = dataModel.label
                         enumArray["Name"] = enumType.label
                         enumArray["Description"] = enumType.description
                         enumArray["Key"] = enumValue.key
                         enumArray["Value"] = enumValue.value
-                        enumValue.metadata.each {metadata ->
+                        enumValue.metadata.each { metadata ->
                             String key = "${metadata.namespace}:${metadata.key}"
                             enumArray[key] = metadata.value
                         }
@@ -136,7 +136,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
                 XSSFSheet dataModelSheet = workbook.createSheet(sheetKey)
                 List<LinkedHashMap<String, String>> dataModelSheetArray = []
 
-                dataModel.childDataClasses.each {dataClass ->
+                dataModel.childDataClasses.each { dataClass ->
                     dataModelSheetArray.addAll(createArrayFromClass(dataClass, null))
                 }
                 writeArrayToSheet(workbook, dataModelSheet, dataModelSheetArray)
@@ -168,7 +168,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
     }
 
     void autoSizeColumns(Sheet sheet, List<Integer> columns) {
-        columns.each {sheet.autoSizeColumn(it, true)}
+        columns.each { sheet.autoSizeColumn(it, true) }
     }
 
     void writeArrayToSheet(Workbook workbook, XSSFSheet sheet, List<LinkedHashMap<String, String>> array) {
@@ -176,21 +176,21 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
         if (array.size() > 0) {
             headers.addAll(array.get(0).keySet())
         }
-        array.eachWithIndex {entry, i ->
+        array.eachWithIndex { entry, i ->
             if (i != 0) {
                 headers.addAll(entry.keySet())
             }
         }
         Row headerRow = sheet.createRow(0)
-        headers.eachWithIndex {header, idx ->
+        headers.eachWithIndex { header, idx ->
             Cell headerCell = headerRow.createCell(idx)
             headerCell.setCellValue(header)
         }
         setHeaderRow(headerRow, workbook)
 
-        array.eachWithIndex {map, rowIdx ->
+        array.eachWithIndex { map, rowIdx ->
             Row valueRow = sheet.createRow(rowIdx + 1)
-            headers.eachWithIndex {header, cellIdx ->
+            headers.eachWithIndex { header, cellIdx ->
                 Cell valueCell = valueRow.createCell(cellIdx)
                 valueCell.setCellValue(map[header] ?: "")
             }
@@ -205,7 +205,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
         if (words.size() == 1) {
             sheetKey = dataModelName.toUpperCase()
         } else {
-            words.each {word ->
+            words.each { word ->
                 if (word.length() > 0) {
                     String newWord = word.replaceAll("^[^A-Za-z]*", "")
 
@@ -240,14 +240,14 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
             array["Maximum Multiplicity"] = ""
         }
 
-        dc.metadata.each {metadata ->
+        dc.metadata.each { metadata ->
             String key = "${metadata.namespace}:${metadata.key}"
             array[key] = metadata.value
         }
 
         dataClassSheetArray.add(array)
 
-        dc.childDataElements?.each {dataElement ->
+        dc.childDataElements?.each { dataElement ->
             array = new LinkedHashMap<String, String>()
 
             array["DataClass Path"] = dataClassPath
@@ -265,13 +265,13 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
                 array["DataType Reference"] = StringUtils.join(classPath, " | ")
             }
 
-            dataElement.metadata.each {metadata ->
+            dataElement.metadata.each { metadata ->
                 String key = "${metadata.namespace}:${metadata.key}"
                 array[key] = metadata.value
             }
             dataClassSheetArray.add(array)
         }
-        dc.childDataClasses.each {childDataClass ->
+        dc.childDataClasses.each { childDataClass ->
             dataClassSheetArray.addAll(createArrayFromClass(childDataClass, dataClassPath))
         }
         return dataClassSheetArray

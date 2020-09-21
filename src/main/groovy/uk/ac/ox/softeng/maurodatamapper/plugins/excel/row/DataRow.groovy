@@ -58,7 +58,7 @@ abstract class DataRow implements CellHandler {
 
         int lastCellNum = Math.max(firstRow.lastCellNum, secondRow.lastCellNum)
 
-        List<Cell> cells = row.findAll {it.columnIndex >= firstMetadataColumn && it.columnIndex <= lastCellNum && getCellValueAsString(it)}
+        List<Cell> cells = row.findAll { it.columnIndex >= firstMetadataColumn && it.columnIndex <= lastCellNum && getCellValueAsString(it) }
 
         cells.each {
             int columnIndex = it.columnIndex
@@ -79,12 +79,12 @@ abstract class DataRow implements CellHandler {
             Row firstRow = row.sheet.getRow(METADATA_NAMESPACE_ROW)
             Row secondRow = row.sheet.getRow(METADATA_KEY_ROW)
 
-            metadata.groupBy {it.namespace}.each {ns, mds ->
+            metadata.groupBy { it.namespace }.each { ns, mds ->
 
                 Cell namespaceHeader = findCell(firstRow, ns)
                 CellRangeAddress mergeRegion = getMergeRegion(namespaceHeader)
 
-                mds.each {md ->
+                mds.each { md ->
                     log.debug('Adding {}:{}', md.namespace, md.key)
 
                     Cell keyHeader
@@ -106,10 +106,10 @@ abstract class DataRow implements CellHandler {
     }
 
     static Map<String, Set<String>> getMetadataNamespaceAndKeys(List<DataRow> dataRows) {
-        dataRows.collect {it.metadata}
+        dataRows.collect { it.metadata }
                 .flatten()
-                .groupBy {it.namespace}
-                .collectEntries {[it.key, it.value.key as Set]}.findAll {it.value} as Map<String, Set<String>>
+                .groupBy { it.namespace }
+                .collectEntries { [it.key, it.value.key as Set] }.findAll { it.value } as Map<String, Set<String>>
     }
 
     Logger getLog() {

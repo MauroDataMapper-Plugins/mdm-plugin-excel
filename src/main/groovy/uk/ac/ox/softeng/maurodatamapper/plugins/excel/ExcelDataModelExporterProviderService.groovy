@@ -93,7 +93,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
             workbook = loadWorkbookFromFilename(DATAMODEL_TEMPLATE_FILENAME) as XSSFWorkbook
 
             workbook = loadDataModelDataRowsIntoWorkbook(
-                dataModels.collect {new DataModelDataRow(it)}, workbook)
+                dataModels.collect { new DataModelDataRow(it) }, workbook)
 
             if (workbook) {
                 ByteArrayOutputStream os = new ByteArrayOutputStream()
@@ -122,7 +122,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
         addMetadataHeadersToSheet(dataModelSheet, dataModelDataRows)
 
-        dataModelDataRows.each {dataModelDataRow ->
+        dataModelDataRows.each { dataModelDataRow ->
 
             log.debug('Loading DataModel {} into workbook', dataModelDataRow.name)
 
@@ -137,7 +137,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
             configureSheetStyle(dataModelSheet, dataModelDataRow.firstMetadataColumn, DATAMODELS_HEADER_ROWS, defaultStyle, colouredStyle)
 
             log.debug('Adding DataModel content to sheet {}', dataModelDataRow.sheetKey)
-            List<ContentDataRow> contentDataRows = createContentDataRows(dataModelDataRow.dataModel.childDataClasses.sort {it.label})
+            List<ContentDataRow> contentDataRows = createContentDataRows(dataModelDataRow.dataModel.childDataClasses.sort { it.label })
 
             if (contentDataRows) {
                 loadDataRowsIntoSheet(contentSheet, contentDataRows)
@@ -153,7 +153,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     List<ContentDataRow> createContentDataRows(List<CatalogueItem> catalogueItems, List<ContentDataRow> contentDataRows = []) {
         log.debug('Creating content DataRows')
-        catalogueItems.each {item ->
+        catalogueItems.each { item ->
             log.trace('Creating content {}:{}', item.domainType, item.label)
             ContentDataRow dataRow = new ContentDataRow(item)
             contentDataRows += dataRow

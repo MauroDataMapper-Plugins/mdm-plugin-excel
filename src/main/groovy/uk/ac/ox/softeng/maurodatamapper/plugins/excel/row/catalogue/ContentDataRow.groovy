@@ -56,7 +56,7 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
 
         description = catalogueItem.description
 
-        catalogueItem.metadata.each {md ->
+        catalogueItem.metadata.each { md ->
             metadata += new MetadataColumn(namespace: md.namespace, key: md.key, value: md.value)
         }
 
@@ -77,7 +77,7 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
             if (dataType instanceof ReferenceType) {
                 referenceToDataClassPath = buildPath(dataType.getReferenceClass())
             } else if (dataType instanceof EnumerationType) {
-                dataType.getEnumerationValues().sort {it.key}.each {ev ->
+                dataType.getEnumerationValues().sort { it.key }.each { ev ->
                     mergedContentRows += new EnumerationValueDataRow(ev)
                 }
             }

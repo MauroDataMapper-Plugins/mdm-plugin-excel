@@ -36,7 +36,8 @@ import static org.junit.Assert.fail
 /**
  * @since 09/03/2018
  */
-abstract class BaseImporterExporterProviderServiceTest<D extends GormEntity, P extends ImporterProviderServiceParameters, T extends ImporterProviderService<D, P>>
+abstract class BaseImporterExporterProviderServiceTest<D extends GormEntity, P extends ImporterProviderServiceParameters, T extends
+ImporterProviderService<D, P>>
     extends BaseImportPluginTest<D, P, T> {
 
     protected void checkMetadata(CatalogueItem catalogueItem, String key, String value) {

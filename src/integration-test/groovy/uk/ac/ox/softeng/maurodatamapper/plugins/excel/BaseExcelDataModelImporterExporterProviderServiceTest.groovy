@@ -90,7 +90,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     protected void checkDataElement(DataClass parent, String label, String description, String dataType, int min = 1, int max = 1,
                                     Map<String, String> metadata = [:]) {
-        DataElement dataElement = parent.dataElements.find {it.label == label}
+        DataElement dataElement = parent.dataElements.find { it.label == label }
         assertNotNull("${label} dataelement exists", dataElement)
         assertEquals("${label} dataelement description", description, dataElement.description)
         assertEquals("${label} dataelement datatype", dataType, dataElement.dataType.label)
@@ -98,20 +98,20 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertEquals("${label} dataelement max multiplicity", max, dataElement.maxMultiplicity)
         // TODO(adjl): Replace with equivalent Metadata count call to cover all cases vs running the assertion conditionally
         if (dataElement.id) assertEquals("${label} dataelement Metadata count", metadata.size(), Metadata.countByCatalogueItemId(dataElement.id))
-        metadata.each {k, v ->
+        metadata.each { k, v ->
             checkMetadata(dataElement, k, v)
         }
     }
 
     protected DataClass checkDataClass(DataModel dataModel, String label, int elementCount, String description = null, int min = 1, int max = 1,
                                        Map<String, String> metadata = [:]) {
-        DataClass dataClass = dataModel.dataClasses.find {it.label == label && !it.parentDataClass}
+        DataClass dataClass = dataModel.dataClasses.find { it.label == label && !it.parentDataClass }
         checkDataClassData(dataClass, label, elementCount, description, min, max, metadata)
     }
 
     protected DataClass checkDataClass(DataClass parent, String label, int elementCount, String description = null, int min = 1, int max = 1,
                                        Map<String, String> metadata = [:]) {
-        DataClass dataClass = parent.dataClasses.find {it.label == label}
+        DataClass dataClass = parent.dataClasses.find { it.label == label }
         checkDataClassData(dataClass, label, elementCount, description, min, max, metadata)
     }
 
@@ -124,7 +124,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertEquals("${label} dataclass max multiplicity", max, dataClass.maxMultiplicity)
         // TODO(adjl): Replace with equivalent Metadata count call to cover all cases vs running the assertion conditionally
         if (dataClass.id) assertEquals("${label} dataclass Metadata count", metadata.size(), Metadata.countByCatalogueItemId(dataClass.id))
-        metadata.each {k, v ->
+        metadata.each { k, v ->
             checkMetadata(dataClass, k, v)
         }
         dataClass
@@ -133,13 +133,13 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
     protected void checkEnumeration(DataModel dataModel, String label, String description, Map<String, String> enumValues) {
         EnumerationType enumerationType = checkDataType(dataModel, label, description) as EnumerationType
         assertEquals("${enumerationType.label} number of enumerations", enumValues.size(), enumerationType.enumerationValues.size())
-        enumValues.each {k, v ->
+        enumValues.each { k, v ->
             assertEquals("${enumerationType.label} enumeration ${k}", v, enumerationType.findEnumerationValueByKey(k).value)
         }
     }
 
     protected DataType checkDataType(DataModel dataModel, String label, String description) {
-        DataType dataType = dataModel.dataTypes.find {it.label == label}
+        DataType dataType = dataModel.dataTypes.find { it.label == label }
         assertNotNull("${label} datatype exists", dataType)
         assertEquals("${label} datatype description", dataType.description, description)
         dataType

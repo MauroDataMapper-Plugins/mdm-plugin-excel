@@ -48,7 +48,7 @@ trait CellHandler {
     }
 
     Cell findCell(Row row, String content) {
-        row.find {getCellValueAsString(it) == content} as Cell
+        row.find { getCellValueAsString(it) == content } as Cell
     }
 
     Cell findCell(Row row, String content, int column) {
@@ -56,7 +56,7 @@ trait CellHandler {
     }
 
     Cell findCell(Row row, String content, int firstColumn, int lastColumn) {
-        row.find {it.columnIndex >= firstColumn && it.columnIndex <= lastColumn && getCellValueAsString(it) == content} as Cell
+        row.find { it.columnIndex >= firstColumn && it.columnIndex <= lastColumn && getCellValueAsString(it) == content } as Cell
     }
 
     String getCellValueAsString(Cell cell) {
@@ -77,7 +77,7 @@ trait CellHandler {
     }
 
     CellRangeAddress getMergeRegion(Sheet sheet, int rowIndex, int columnIndex) {
-        sheet?.mergedRegions?.find {it.isInRange(rowIndex, columnIndex)}
+        sheet?.mergedRegions?.find { it.isInRange(rowIndex, columnIndex) }
     }
 
     Cell buildHeaderCell(Row headerRow, int cellStyleColumn, String cellValue, boolean createMergeRegion = true) {
@@ -172,6 +172,6 @@ trait CellHandler {
                 }
             }
         }
-        enumMap.findAll {it.key}
+        enumMap.findAll { it.key }
     }
 }

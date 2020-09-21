@@ -49,7 +49,7 @@ class DataModelDataRow extends StandardDataRow {
         if (words.size() == 1) {
             sheetKey = dataModel.label.toUpperCase()
         } else {
-            words.each {word ->
+            words.each { word ->
                 if (word.length() > 0) {
                     sheetKey += word[0].toUpperCase()
                 }
@@ -61,7 +61,7 @@ class DataModelDataRow extends StandardDataRow {
         organisation = dataModel.organisation
         type = dataModel.modelType
 
-        dataModel.metadata.each {md ->
+        dataModel.metadata.each { md ->
             metadata += new MetadataColumn(namespace: md.namespace, key: md.key, value: md.value)
         }
     }

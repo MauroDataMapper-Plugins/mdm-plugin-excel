@@ -59,8 +59,8 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
     void testMultiModelExport() {
         List<DataModel> dataModels = testExportViaImport('multiDataModelImport.xlsx', 'multiDataModelImport_export.xlsx', 3)
 
-        verifySimpleDataModel dataModels.find {it.label == 'test'}
-        verifySimpleDataModelContent dataModels.find {it.label == 'test'}
+        verifySimpleDataModel dataModels.find { it.label == 'test' }
+        verifySimpleDataModelContent dataModels.find { it.label == 'test' }
     }
 
     @Test

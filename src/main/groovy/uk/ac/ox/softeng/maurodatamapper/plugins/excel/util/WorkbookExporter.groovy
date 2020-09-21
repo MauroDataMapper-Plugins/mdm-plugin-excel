@@ -81,7 +81,7 @@ trait WorkbookExporter implements WorkbookHandler {
 
         addMetadataHeadersToSheet(sheet, dataRows, 3)
 
-        dataRows.each {dataRow ->
+        dataRows.each { dataRow ->
             log.debug('Adding to row {}', sheet.lastRowNum + 1)
             dataRow.buildRow(sheet.createRow(sheet.lastRowNum + 1))
         }
@@ -95,7 +95,7 @@ trait WorkbookExporter implements WorkbookHandler {
 
         int nsColumnIndex = firstRow.lastCellNum
 
-        metadataMapping.sort().each {namespace, keys ->
+        metadataMapping.sort().each { namespace, keys ->
 
             Cell namespaceHeader = buildHeaderCell(firstRow, nsColumnIndex, cellStyleColumn, namespace, false)
 
@@ -109,7 +109,7 @@ trait WorkbookExporter implements WorkbookHandler {
                                                                     namespaceHeader.columnIndex + keys.size() - 1)
                 sheet.addMergedRegion(mergeRegion)
 
-                keys.eachWithIndex {key, i ->
+                keys.eachWithIndex { key, i ->
                     buildHeaderCell(secondRow, namespaceHeader.columnIndex + i, cellStyleColumn, key, false)
                 }
                 nsColumnIndex += keys.size()
@@ -128,7 +128,7 @@ trait WorkbookExporter implements WorkbookHandler {
         metadataColouredBorderStyle.cloneStyleFrom(colouredStyle)
         metadataColouredBorderStyle.setBorderRight(BorderStyle.DOUBLE)
 
-        int lastColumnIndex = sheet.max {it.lastCellNum}.lastCellNum
+        int lastColumnIndex = sheet.max { it.lastCellNum }.lastCellNum
         boolean colourRow = false
 
         for (int r = numberOfHeaderRows; r <= sheet.lastRowNum; r++) {

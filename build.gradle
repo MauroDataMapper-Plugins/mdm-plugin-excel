@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit
 buildscript {
     repositories {
         mavenLocal()
-        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-snapshot'}
-        maven {url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-release'}
+        maven { url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-snapshot' }
+        maven { url 'https://jenkins.cs.ox.ac.uk/artifactory/plugins-release' }
         jcenter()
     }
     dependencies {
@@ -96,7 +96,7 @@ afterEvaluate {
     }
 
     Closure runConfig = {
-        System.properties.each {prop ->
+        System.properties.each { prop ->
             systemProperty prop.key, prop.value
         }
         systemProperty 'user.dir', projectDir

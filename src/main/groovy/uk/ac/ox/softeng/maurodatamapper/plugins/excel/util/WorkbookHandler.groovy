@@ -76,7 +76,7 @@ trait WorkbookHandler extends CellHandler {
 
         List<CellRangeAddress> mergedRegions = sheet.mergedRegions.findAll {
             it.firstColumn == idCellNumber && it.lastRow != it.firstRow
-        }.sort {it.firstRow}
+        }.sort { it.firstRow }
 
         log.trace('{} merged regions found, reduced down to {} useable regions', sheet.mergedRegions.size(), mergedRegions.size())
 
@@ -97,10 +97,10 @@ trait WorkbookHandler extends CellHandler {
                 dataRows.add(dataRow)
 
                 if (mergedRegions) {
-                    Integer lastRowIndexOfMerge = mergedRegions.find {it.firstRow == row.rowNum}?.lastRow
+                    Integer lastRowIndexOfMerge = mergedRegions.find { it.firstRow == row.rowNum }?.lastRow
                     if (lastRowIndexOfMerge) {
                         log.trace('Merged region for {} from {} to {}(inclusive)', getCellValueAsString(row.getCell(idCellNumber)), row.rowNum,
-                                     lastRowIndexOfMerge)
+                                  lastRowIndexOfMerge)
                         dataRow.addToMergedContentRows(row)
                         while (rowIterator.hasNext() && row.rowNum < lastRowIndexOfMerge) {
                             row = rowIterator.next()
@@ -126,12 +126,12 @@ trait WorkbookHandler extends CellHandler {
     }
 
     void autoSizeColumns(Sheet sheet, Integer... columns) {
-        columns.each {sheet.autoSizeColumn(it, true)}
+        columns.each { sheet.autoSizeColumn(it, true) }
     }
 
     void autoSizeHeaderColumnsAfter(Sheet sheet, Integer columnIndex) {
         sheet.getRow(0)
-             .findAll {it.columnIndex >= columnIndex && getCellValueAsString(it)}
-             .each {sheet.autoSizeColumn(it.columnIndex, true)}
+             .findAll { it.columnIndex >= columnIndex && getCellValueAsString(it) }
+             .each { sheet.autoSizeColumn(it.columnIndex, true) }
     }
 }

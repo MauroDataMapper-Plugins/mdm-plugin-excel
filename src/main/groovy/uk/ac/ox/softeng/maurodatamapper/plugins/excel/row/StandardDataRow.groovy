@@ -53,8 +53,8 @@ abstract class StandardDataRow<K extends EnumerationDataRow> extends DataRow {
         if (enumerationType.enumerationValues.size() != mergedContentRows.size()) return false
 
         // Check every enumeration value has an entry in the merged content rows
-        enumerationType.enumerationValues.every {ev ->
-            mergedContentRows.any {it.key == ev.key && it.value == ev.value}
+        enumerationType.enumerationValues.every { ev ->
+            mergedContentRows.any { it.key == ev.key && it.value == ev.value }
         }
     }
 }

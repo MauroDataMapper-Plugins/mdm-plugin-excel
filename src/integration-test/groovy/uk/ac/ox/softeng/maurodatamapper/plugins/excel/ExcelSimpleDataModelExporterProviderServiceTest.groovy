@@ -31,7 +31,7 @@ class ExcelSimpleDataModelExporterProviderServiceTest {
             "[GEL: CancerSchema-v1.0.1]": "GC101"
         ]
 
-        results.each {entry ->
+        results.each { entry ->
             assertEquals(ExcelSimpleDataModelExporterProviderService.createSheetKey(entry.key), entry.value)
         }
     }

@@ -129,7 +129,7 @@ class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProvi
 
             List<DataModel> dataModels = []
             sheetValues = getSheetValues(ExcelSimplePlugin.DATAMODEL_SHEET_COLUMNS, dataModelsSheet)
-            sheetValues.each {row ->
+            sheetValues.each { row ->
                 DataModel dataModel = dataModelFromRow(row)
                 addMetadataFromExtraColumns(dataModel, ExcelSimplePlugin.DATAMODEL_SHEET_COLUMNS, row)
                 String sheetKey = row["Sheet Key"]
@@ -186,7 +186,7 @@ class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProvi
         while (row.getCell(col)) {
             String headerText = getCellValueAsString(row.getCell(col))
             boolean found = false
-            intendedColumns.each {columnName ->
+            intendedColumns.each { columnName ->
                 if (headerText.toLowerCase().trim() == columnName.toLowerCase().trim()) {
                     expectedSheetColumns[columnName] = col
                     found = true
@@ -209,11 +209,11 @@ class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProvi
         while (rowIterator.hasNext()) {
             row = rowIterator.next()
             Map<String, String> rowValues = [:]
-            intendedColumns.each {columnName ->
+            intendedColumns.each { columnName ->
                 String value = getCellValueAsString(row.getCell(expectedSheetColumns[columnName]))
                 rowValues[columnName] = value
             }
-            otherSheetColumns.keySet().each {columnName ->
+            otherSheetColumns.keySet().each { columnName ->
                 String value = getCellValueAsString(row.getCell(otherSheetColumns[columnName]))
                 rowValues[columnName] = value
             }
@@ -223,7 +223,7 @@ class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProvi
     }
 
     void addMetadataFromExtraColumns(MetadataAware entity, List<String> expectedColumns, Map<String, String> columnValues) {
-        columnValues.keySet().each {columnName ->
+        columnValues.keySet().each { columnName ->
             if (!expectedColumns.contains(columnName)) {
                 String key = columnName
                 String namespace = this.getNamespace()
@@ -266,7 +266,7 @@ class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProvi
     Map<String, Map<String, EnumerationType>> calculateEnumerationTypes(List<Map<String, String>> sheetValues) {
 
         Map<String, Map<String, EnumerationType>> returnValues = [:]
-        sheetValues.each {columnValues ->
+        sheetValues.each { columnValues ->
             String dataModelName = columnValues["DataModel Name"]
             String label = columnValues["Name"]
             String description = columnValues["Description"]
@@ -295,7 +295,7 @@ class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProvi
     void addClassesAndElements(DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
         List<Map<String, String>> sheetValues = getSheetValues(ExcelSimplePlugin.MODEL_SHEET_COLUMNS, dataModelSheet)
         Map<String, DataType> modelDataTypes = [:]
-        sheetValues.each {row ->
+        sheetValues.each { row ->
 
             String dataClassPath = row["DataClass Path"]
             DataClass parentDataClass = getOrCreateClassFromPath(dataModel, dataClassPath)

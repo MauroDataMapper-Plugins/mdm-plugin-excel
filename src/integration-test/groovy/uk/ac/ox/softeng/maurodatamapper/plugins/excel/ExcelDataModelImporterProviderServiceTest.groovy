@@ -48,9 +48,9 @@ class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImport
         assertEquals('Number of source parameters', 1, importParameters[1].size())
 
         assertTrue 'Has ImportFile parameter', importParameters[1].first().name == 'importFile'
-        assertTrue 'Has Finalised parameter', importParameters[0].any {it.name == 'finalised'}
-        assertTrue 'Has importAsNewDocumentationVersion parameter', importParameters[0].any {it.name == 'importAsNewDocumentationVersion'}
-        assertTrue 'Has folder parameter', importParameters[0].any {it.name == 'folderId'}
+        assertTrue 'Has Finalised parameter', importParameters[0].any { it.name == 'finalised' }
+        assertTrue 'Has importAsNewDocumentationVersion parameter', importParameters[0].any { it.name == 'importAsNewDocumentationVersion' }
+        assertTrue 'Has folder parameter', importParameters[0].any { it.name == 'folderId' }
     }
 
     @Test
@@ -113,10 +113,10 @@ class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImport
 
         assertEquals('Number of DataModels imported', 3, importedModels.size())
 
-        verifySimpleDataModel DataModel.get(importedModels.find {it.label == 'test'}?.id)
-        verifySimpleDataModelContent DataModel.get(importedModels.find {it.label == 'test'}?.id)
+        verifySimpleDataModel DataModel.get(importedModels.find { it.label == 'test' }?.id)
+        verifySimpleDataModelContent DataModel.get(importedModels.find { it.label == 'test' }?.id)
 
-        DataModel dataModel = DataModel.get(importedModels.find {it.label == 'Another Model'}?.id)
+        DataModel dataModel = DataModel.get(importedModels.find { it.label == 'Another Model' }?.id)
 
         assertNotNull('Second model must exist', dataModel)
 
@@ -157,7 +157,7 @@ class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImport
         checkDataElement brother, 'sibling', 'reference to the other child', 'child', 1, -1, ['extra info': 'some extra info']
         checkDataElement brother, 'twin_sibling', 'reference to the other child', 'child', 0, -1
 
-        dataModel = DataModel.get(importedModels.find {it.label == 'complex.xsd'}?.id)
+        dataModel = DataModel.get(importedModels.find { it.label == 'complex.xsd' }?.id)
 
         assertNotNull('Third model must exist', dataModel)
     }

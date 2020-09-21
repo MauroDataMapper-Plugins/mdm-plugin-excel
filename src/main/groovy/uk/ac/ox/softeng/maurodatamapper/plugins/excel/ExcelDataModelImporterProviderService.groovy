@@ -57,7 +57,8 @@ import static ExcelPlugin.DATAMODELS_SHEET_NAME
  * @since 01/03/2018
  */
 @CompileStatic
-class ExcelDataModelImporterProviderService extends DataModelImporterProviderService<ExcelFileImporterProviderServiceParameters> implements WorkbookHandler {
+class ExcelDataModelImporterProviderService extends DataModelImporterProviderService<ExcelFileImporterProviderServiceParameters>
+    implements WorkbookHandler {
 
     @Autowired
     DataModelService dataModelService
@@ -122,7 +123,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
             List<DataModel> dataModels = loadDataModels(dataModelDataRows, currentUser, workbook, importFile.fileName)
 
-            return dataModels.findAll {it.dataClasses}
+            return dataModels.findAll { it.dataClasses }
         } finally {
             closeWorkbook workbook
         }
@@ -131,7 +132,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     List<DataModel> loadDataModels(List<DataModelDataRow> dataRows, User catalogueUser, Workbook workbook, String filename) {
         List<DataModel> dataModels = []
 
-        dataRows.each {dataRow ->
+        dataRows.each { dataRow ->
             log.debug('Creating DataModel {}', dataRow.name)
             DataModel dataModel = dataModelService.createAndSaveDataModel(
                 catalogueUser, Folder.findOrCreateByLabel('random', [createdBy: catalogueUser.emailAddress]),
@@ -162,7 +163,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
         loadDataClassRows(dataRows, dataModel, catalogueUser)
 
         // Load the rest of the rows as DataElements
-        loadDataElementRows(dataRows.findAll {it.dataElementName}, dataModel, catalogueUser)
+        loadDataElementRows(dataRows.findAll { it.dataElementName }, dataModel, catalogueUser)
 
         dataModel
     }
@@ -172,10 +173,10 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
         // Where not DataElement name then the row is DataClass specific data, otherwise we just need to make sure all the DataClasses exist
         // Sort the rows so we generate them in path descending order, this will ensure we create any specific data before we create children
-        dataRows.groupBy {it.dataClassPath}.sort().each {path, dataClassRows ->
+        dataRows.groupBy { it.dataClassPath }.sort().each { path, dataClassRows ->
 
             // Find the row with no DataElement name, if it doesn't exist then just grab the first row
-            ContentDataRow dataRow = dataClassRows.find {!it.dataElementName} ?: dataClassRows.first()
+            ContentDataRow dataRow = dataClassRows.find { !it.dataElementName } ?: dataClassRows.first()
 
             String description = dataRow.dataElementName ? null : dataRow.description
             Integer min = dataRow.dataElementName ? 1 : dataRow.minMultiplicity
@@ -192,7 +193,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     }
 
     void loadDataElementRows(List<ContentDataRow> dataRows, DataModel dataModel, User catalogueUser) {
-        dataRows.each {dataRow ->
+        dataRows.each { dataRow ->
 
             DataClass parentDataClass = dataClassService.findDataClassByPath(dataModel, dataRow.dataClassPathList)
             DataType dataType = null
@@ -203,7 +204,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
                 dataType = enumerationTypeService.findOrCreateDataTypeForDataModel(dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription,
                                                                                    catalogueUser)
 
-                dataRow.mergedContentRows.each {mcr ->
+                dataRow.mergedContentRows.each { mcr ->
                     ((EnumerationType) dataType).addToEnumerationValues(mcr.key, mcr.value, catalogueUser)
                 }
             } else if (dataRow.referenceToDataClassPath) {
@@ -216,7 +217,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
             }
 
             log.debug('Adding DataElement [{}] to DataClass [{}] with DataType [{}]', dataRow.dataElementName, parentDataClass?.label,
-                         dataType?.label)
+                      dataType?.label)
             DataElement dataElement = dataElementService.findOrCreateDataElementForDataClass(
                 parentDataClass, dataRow.dataElementName, dataRow.description, catalogueUser, dataType, dataRow.minMultiplicity,
                 dataRow.maxMultiplicity
@@ -229,13 +230,14 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     }
 
     void addMetadataToCatalogueItem(CatalogueItem catalogueItem, List<MetadataColumn> metadata, User catalogueUser) {
-        metadata.each {md ->
+        metadata.each { md ->
             log.trace('Adding Metadata {}', md.key)
             catalogueItem.addToMetadata(md.namespace ?: namespace, md.key, md.value, catalogueUser)
         }
     }
 
-    @Override // TODO(adjl): Investigate why casting `as User` in DataModelImporterProviderService doesn't work
+    @Override
+    // TODO(adjl): Investigate why casting `as User` in DataModelImporterProviderService doesn't work
     DataModel importDomain(User currentUser, ExcelFileImporterProviderServiceParameters params) {
         DataModel dataModel = importDataModel(currentUser, params)
         if (!dataModel) return null
@@ -243,7 +245,8 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
         checkImport(currentUser as User, dataModel, params.finalised, params.importAsNewDocumentationVersion)
     }
 
-    @Override // TODO(adjl): Investigate why checkImport doesn't work in DataModelImporterProviderService despite matching param types
+    @Override
+    // TODO(adjl): Investigate why checkImport doesn't work in DataModelImporterProviderService despite matching param types
     List<DataModel> importDomains(User currentUser, ExcelFileImporterProviderServiceParameters params) {
         List<DataModel> dataModels = importDataModels(currentUser, params)
         dataModels?.collect { checkImport(currentUser, it, params.finalised, params.importAsNewDocumentationVersion) }
