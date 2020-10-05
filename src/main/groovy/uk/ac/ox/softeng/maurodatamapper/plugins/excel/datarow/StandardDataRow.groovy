@@ -15,46 +15,37 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
 
 import org.apache.poi.ss.usermodel.Row
 
-/**
- * @since 07/09/2017
- */
 abstract class StandardDataRow<K extends EnumerationDataRow> extends DataRow {
 
-    Class<K> enumerationExcelDataRowClass
-    List<K> mergedContentRows
+    Class<K> enumerationDataRowClass
+    List<K> mergedContentRows = []
 
     StandardDataRow() {
-        super()
-        mergedContentRows = []
     }
 
-    StandardDataRow(Class<K> enumerationExcelDataRowClass) {
-        this()
-        this.enumerationExcelDataRowClass = enumerationExcelDataRowClass
+    StandardDataRow(Class<K> enumerationDataRowClass) {
+        this.enumerationDataRowClass = enumerationDataRowClass
     }
 
     void addToMergedContentRows(Row row) {
-        if (enumerationExcelDataRowClass) {
-            K enumerationRow = enumerationExcelDataRowClass.getDeclaredConstructor().newInstance()
-            enumerationRow.setAndInitialise(row)
-            mergedContentRows += enumerationRow
-        }
+        if (!enumerationDataRowClass) return
+        K enumerationRow = enumerationDataRowClass.getDeclaredConstructor().newInstance()
+        enumerationRow.setAndInitialise(row)
+        mergedContentRows << enumerationRow
     }
 
     boolean matchesEnumerationType(EnumerationType enumerationType) {
-        if (!mergedContentRows) return false
-
-        if (enumerationType.enumerationValues.size() != mergedContentRows.size()) return false
-
-        // Check every enumeration value has an entry in the merged content rows
-        enumerationType.enumerationValues.every { ev ->
-            mergedContentRows.any { it.key == ev.key && it.value == ev.value }
+        if (mergedContentRows?.size() != enumerationType.enumerationValues.size()) return false
+        // Check that every enumeration value has an entry in the merged content rows
+        enumerationType.enumerationValues.every { EnumerationValue enumerationValue ->
+            mergedContentRows.any { it.key == enumerationValue.key && it.value == enumerationValue.value }
         }
     }
 }

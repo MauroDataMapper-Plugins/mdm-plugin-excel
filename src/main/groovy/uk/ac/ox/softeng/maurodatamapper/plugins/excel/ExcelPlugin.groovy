@@ -21,9 +21,6 @@ import uk.ac.ox.softeng.maurodatamapper.provider.plugin.AbstractMauroDataMapperP
 
 import java.awt.Color
 
-/**
- * @since 17/08/2017
- */
 @SuppressWarnings('SpellCheckingInspection')
 class ExcelPlugin extends AbstractMauroDataMapperPlugin {
 
@@ -33,16 +30,13 @@ class ExcelPlugin extends AbstractMauroDataMapperPlugin {
     public static final Double CELL_COLOUR_TINT = 0.6d
     public static final Double BORDER_COLOUR_TINT = -0.35d
 
+    public static final String DATAMODEL_TEMPLATE_FILENAME = 'Template_DataModel_Import_File.xlsx'
     public static final String DATAMODELS_SHEET_NAME = 'DataModels'
+
     public static final Integer DATAMODELS_HEADER_ROWS = 2
     public static final Integer DATAMODELS_ID_COLUMN = 1
-
     public static final Integer CONTENT_HEADER_ROWS = 2
     public static final Integer CONTENT_ID_COLUMN = 0
-
-    public static final String DATAMODEL_TEMPLATE_FILENAME = 'Template_DataModel_Import_File.xlsx'
-
-    public static final String DATACLASS_PATH_SPLIT_REGEX = ~/\|/
 
     @Override
     String getName() {
@@ -52,8 +46,8 @@ class ExcelPlugin extends AbstractMauroDataMapperPlugin {
     @Override
     Closure doWithSpring() {
         { ->
-            excelDataModelImporterProviderService(ExcelDataModelImporterProviderService)
-            excelDataModelExporterProviderService(ExcelDataModelExporterProviderService)
+            excelDataModelImporterProviderService ExcelDataModelImporterProviderService
+            excelDataModelExporterProviderService ExcelDataModelExporterProviderService
         }
     }
 }

@@ -15,24 +15,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
-import org.junit.Test
-
-import static org.junit.Assert.assertEquals
-
-class ExcelSimpleDataModelExporterProviderServiceTest {
-
-    @Test
-    void testSheetKey() {
-        Map<String, String> results = [
-            "My Model"                  : "MM",
-            "GEL: CancerSchema-v1.0.1"  : "GC101",
-            "[GEL: CancerSchema-v1.0.1]": "GC101"
-        ]
-
-        results.each { entry ->
-            assertEquals(ExcelSimpleDataModelExporterProviderService.createSheetKey(entry.key), entry.value)
-        }
-    }
+abstract class EnumerationDataRow extends DataRow {
+    String key
+    String value
 }

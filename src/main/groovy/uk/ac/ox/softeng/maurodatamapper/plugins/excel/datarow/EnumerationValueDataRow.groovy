@@ -15,27 +15,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.EnumerationDataRow
 
 import org.apache.poi.ss.usermodel.Row
 
-/**
- * @since 01/03/2018
- */
 class EnumerationValueDataRow extends EnumerationDataRow {
 
-    public static final int KEY_COL_INDEX = 8
-    public static final int VALUE_COL_INDEX = 9
+    static final int KEY_COL_INDEX = 8
+    static final int VALUE_COL_INDEX = 9
 
     EnumerationValueDataRow() {
-        super()
     }
 
     EnumerationValueDataRow(EnumerationValue enumerationValue) {
-        this()
         key = enumerationValue.key
         value = enumerationValue.value
     }
@@ -43,13 +37,14 @@ class EnumerationValueDataRow extends EnumerationDataRow {
     @Override
     void setAndInitialise(Row row) {
         setRow(row)
-        key = getCellValueAsString(row, KEY_COL_INDEX)
-        value = getCellValueAsString(row, VALUE_COL_INDEX)
+        key = getCellValue(row, KEY_COL_INDEX)
+        value = getCellValue(row, VALUE_COL_INDEX)
     }
 
+    @Override
     Row buildRow(Row row) {
-        addCellToRow(row, KEY_COL_INDEX, key)
-        addCellToRow(row, VALUE_COL_INDEX, value)
+        addCellToRow row, KEY_COL_INDEX, key
+        addCellToRow row, VALUE_COL_INDEX, value
         row
     }
 }

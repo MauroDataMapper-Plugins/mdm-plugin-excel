@@ -25,140 +25,95 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 
 import org.junit.Test
 
+import groovy.transform.CompileStatic
+
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertTrue
 
-/**
- * @since 01/03/2018
- */
+@CompileStatic
 @SuppressWarnings('SpellCheckingInspection')
 class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
 
     @Test
-    void testImporterParametersAreCorrect() {
+    void testImportParametersAreCorrect() {
+        List<ImportParameterGroup> importParameters = applicationContext.getBean(ImporterService).describeImporterParams(importerInstance)
 
-        ImporterService importerService = getBean(ImporterService)
+        assertEquals 'Number of parameter groups', 2, importParameters.size()
+        assertEquals 'Number of standard parameters', 4, importParameters[0].size()
+        assertEquals 'Number of source parameters', 1, importParameters[1].size()
 
-        List<ImportParameterGroup> importParameters = importerService.describeImporterParams(importerInstance)
-
-        assertEquals('Number of parameter groups', 2, importParameters.size())
-
-        assertEquals('Number of standard parameters', 4, importParameters[0].size())
-        assertEquals('Number of source parameters', 1, importParameters[1].size())
-
-        assertTrue 'Has ImportFile parameter', importParameters[1].first().name == 'importFile'
         assertTrue 'Has Finalised parameter', importParameters[0].any { it.name == 'finalised' }
-        assertTrue 'Has importAsNewDocumentationVersion parameter', importParameters[0].any { it.name == 'importAsNewDocumentationVersion' }
-        assertTrue 'Has folder parameter', importParameters[0].any { it.name == 'folderId' }
+        assertTrue 'Has ImportAsNewDocumentationVersion parameter', importParameters[0].any { it.name == 'importAsNewDocumentationVersion' }
+        assertTrue 'Has FolderId parameter', importParameters[0].any { it.name == 'folderId' }
+        assertTrue 'Has ImportFile parameter', importParameters[1].first().name == 'importFile'
     }
 
     @Test
-    void performSimpleImport() {
-        ExcelFileImporterProviderServiceParameters importerParameters = createImportParameters('simpleImport.xlsx')
-        DataModel imported = importDomain(importerParameters)
-
-        verifySimpleDataModel DataModel.get(imported.id)
-        verifySimpleDataModelContent DataModel.get(imported.id)
+    void testSimpleImport() {
+        DataModel importedDataModel = importDomain(createImportParameters('simpleImport.xlsx'))
+        verifySimpleDataModel DataModel.get(importedDataModel.id)
+        verifySimpleDataModelContent DataModel.get(importedDataModel.id)
     }
 
     @Test
-    void performSimpleImportWithComplexMetadata() {
-        ExcelFileImporterProviderServiceParameters importerParameters = createImportParameters('simpleImportComplexMetadata.xlsx')
-        DataModel imported = importDomain(importerParameters)
-
-        DataModel dataModel = DataModel.get(imported.id)
-        verifySimpleDataModel dataModel, 4
-        checkMetadata dataModel, 'ox.softeng.database|dialect', 'test'
-
-        DataClass top = checkDataClass(dataModel, 'top', 3, 'tops description', 1, 1, [
-            'extra info'          : 'some extra info',
-            'ox.softeng.test|blob': 'hello'])
-        checkDataElement top, 'info', 'info description', 'string', 1, 1, [
-            'different info'    : 'info',
-            'ox.softeng.xsd|min': '1',
-            'ox.softeng.xsd|max': '20',
-        ]
-        checkDataElement top, 'another', null, 'int', 0, 1, ['extra info': 'some extra info', 'different info': 'info']
-        checkDataElement top, 'more info', 'why not', 'string', 0
-
-        DataClass child = checkDataClass(top, 'child', 4, 'child description', 0)
-        checkDataElement child, 'info', 'childs info', 'string', 1, 1, [
-            'extra info'          : 'some extra info',
-            'ox.softeng.xsd|min'  : '0',
-            'ox.softeng.xsd|max'  : '10',
-            'ox.softeng.test|blob': 'wobble'
-        ]
-        checkDataElement child, 'does it work', 'I don\'t know', 'yesno', 0, -1, [
-            'ox.softeng.xsd|choice': 'a',
-        ]
-        checkDataElement child, 'lazy', 'where the merging only happens in the id col', 'possibly', 1, 1, [
-            'different info'       : 'info',
-            'ox.softeng.xsd|choice': 'a',
-        ]
-        checkDataElement child, 'wrong order', 'should be fine', 'table'
-
-        DataClass brother = checkDataClass(top, 'brother', 2)
-        checkDataElement brother, 'info', 'brothers info', 'string', 0, 1, [
-            'ox.softeng.xsd|min': '1',
-            'ox.softeng.xsd|max': '255',]
-        checkDataElement brother, 'sibling', 'reference to the other child', 'child', 1, -1, ['extra info': 'some extra info']
+    void testSimpleImportWithComplexMetadata() {
+        DataModel importedDataModel = DataModel.get(importDomain(createImportParameters('simpleImportComplexMetadata.xlsx')).id)
+        verifySimpleDataModel importedDataModel, 4
+        verifyMetadata importedDataModel, 'ox.softeng.database|dialect', 'test'
+        verifySimpleDataModelContentWithComplexMetadata importedDataModel
     }
 
     @Test
-    void performMultipleDataModelImport() {
+    void testMultipleDataModelImport() {
         importerInstance.saveDataModelsOnCreate = false
-        ExcelFileImporterProviderServiceParameters importerParameters = createImportParameters('multiDataModelImport.xlsx')
-        List<DataModel> importedModels = importDomains(importerParameters, 3)
 
-        assertEquals('Number of DataModels imported', 3, importedModels.size())
+        List<DataModel> importedDataModels = importDomains(createImportParameters('multiDataModelImport.xlsx'), 3)
+        assertEquals 'Number of DataModels imported', 3, importedDataModels.size()
 
-        verifySimpleDataModel DataModel.get(importedModels.find { it.label == 'test' }?.id)
-        verifySimpleDataModelContent DataModel.get(importedModels.find { it.label == 'test' }?.id)
+        verifySimpleDataModel DataModel.get(importedDataModels.find { it.label == 'test' }?.id)
+        verifySimpleDataModelContent DataModel.get(importedDataModels.find { it.label == 'test' }?.id)
 
-        DataModel dataModel = DataModel.get(importedModels.find { it.label == 'Another Model' }?.id)
+        DataModel dataModel = DataModel.get(importedDataModels.find { it.label == 'Another Model' }?.id)
+        assertNotNull 'Second model must exist', dataModel
 
-        assertNotNull('Second model must exist', dataModel)
+        assertEquals 'DataModel name', 'Another Model', dataModel.label
+        assertEquals 'DataModel description',
+                     'this is another model which isn\'t overly complicated, and is designed for testing dataflows', dataModel.description
+        assertEquals 'DataModel author', 'tester', dataModel.author
+        assertEquals 'DataModel organisation', 'Oxford', dataModel.organisation
+        assertEquals 'DataModel type', DataModelType.DATA_ASSET.toString(), dataModel.modelType
 
-        assertEquals('DataModel name', 'Another Model', dataModel.label)
-        assertEquals('DataModel description', 'this is another model which isn\'t overly complicated, and is designed for ' +
-                                              'testing dataflows', dataModel.description)
-        assertEquals('DataModel author', 'tester', dataModel.author)
-        assertEquals('DataModel organisation', 'Oxford', dataModel.organisation)
-        assertEquals('DataModel type', DataModelType.DATA_ASSET as String, dataModel.modelType)
+        assertEquals 'DataModel Metadata count', 2, dataModel.metadata.size()
+        assertEquals 'Number of DataTypes', 6, dataModel.dataTypes.size()
+        assertEquals 'Number of DataClasses', 3, dataModel.dataClasses.size()
 
-        assertEquals('DataModel Metadata count', 2, dataModel.metadata.size())
+        verifyMetadata dataModel, 'reviewed', 'no'
+        verifyMetadata dataModel, 'distributed', 'no'
 
-        checkMetadata dataModel, 'reviewed', 'no'
-        checkMetadata dataModel, 'distributed', 'no'
+        verifyDataType dataModel, 'text', 'unlimited text'
+        verifyDataType dataModel, 'string', 'just a plain old string'
+        verifyDataType dataModel, 'int', 'a number'
+        verifyDataType dataModel, 'table', 'a random thing'
+        verifyDataType dataModel, 'child', null
+        verifyEnumeration dataModel, 'yesno', 'an eumeration', [y: 'yes', n: 'no']
 
-        assertEquals('Number of DataTypes', 6, dataModel.dataTypes.size())
-        assertEquals('Number of DataClasses', 3, dataModel.dataClasses.size())
+        DataClass top = verifyDataClass(dataModel, 'top', 3, 'tops description', 1, 1, ['extra info': 'some extra info'])
+        verifyDataElement top, 'info', 'info description', 'string', 1, 1, ['different info': 'info']
+        verifyDataElement top, 'another', null, 'int', 0, 1, ['extra info': 'some extra info', 'different info': 'info']
+        verifyDataElement top, 'allinfo', 'all the info', 'text'
 
-        checkDataType dataModel, 'text', 'unlimited text'
-        checkDataType dataModel, 'string', 'just a plain old string'
-        checkDataType dataModel, 'int', 'a number'
-        checkDataType dataModel, 'table', 'a random thing'
-        checkEnumeration dataModel, 'yesno', 'an eumeration', [y: 'yes', n: 'no']
-        checkDataType dataModel, 'child', null
+        DataClass child = verifyDataClass(top, 'child', 3, 'child description', 0)
+        verifyDataElement child, 'info', 'childs info', 'string', 1, 1, ['extra info': 'some extra info']
+        verifyDataElement child, 'does it work', 'I don\'t know', 'yesno', 1, -1
+        verifyDataElement child, 'wrong order', 'should be fine', 'table'
 
-        DataClass top = checkDataClass(dataModel, 'top', 3, 'tops description', 1, 1, ['extra info': 'some extra info'])
-        checkDataElement top, 'info', 'info description', 'string', 1, 1, ['different info': 'info']
-        checkDataElement top, 'another', null, 'int', 0, 1, ['extra info': 'some extra info', 'different info': 'info']
-        checkDataElement top, 'allinfo', 'all the info', 'text'
+        DataClass brother = verifyDataClass(top, 'brother', 3)
+        verifyDataElement brother, 'info', 'brothers info', 'string', 0
+        verifyDataElement brother, 'sibling', 'reference to the other child', 'child', 1, -1, ['extra info': 'some extra info']
+        verifyDataElement brother, 'twin_sibling', 'reference to the other child', 'child', 0, -1
 
-        DataClass child = checkDataClass(top, 'child', 3, 'child description', 0)
-        checkDataElement child, 'info', 'childs info', 'string', 1, 1, ['extra info': 'some extra info']
-        checkDataElement child, 'does it work', 'I don\'t know', 'yesno', 1, -1
-        checkDataElement child, 'wrong order', 'should be fine', 'table'
-
-        DataClass brother = checkDataClass(top, 'brother', 3)
-        checkDataElement brother, 'info', 'brothers info', 'string', 0
-        checkDataElement brother, 'sibling', 'reference to the other child', 'child', 1, -1, ['extra info': 'some extra info']
-        checkDataElement brother, 'twin_sibling', 'reference to the other child', 'child', 0, -1
-
-        dataModel = DataModel.get(importedModels.find { it.label == 'complex.xsd' }?.id)
-
-        assertNotNull('Third model must exist', dataModel)
+        dataModel = DataModel.get(importedDataModels.find { it.label == 'complex.xsd' }?.id)
+        assertNotNull 'Third model must exist', dataModel
     }
 }

@@ -19,13 +19,13 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
-import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.user.IntegrationTestUser
 
 import com.google.common.base.Strings
 import org.junit.Before
 import org.junit.Test
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import java.nio.file.Files
@@ -35,12 +35,13 @@ import java.nio.file.Paths
 import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertNotNull
 
-/**
- * @since 01/03/2018
- */
 @Slf4j
+@CompileStatic
 @SuppressWarnings('SpellCheckingInspection')
 class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
+
+    private static final String CHARSET = 'ISO-8859-1'
+    private static final String EXPORT_FILEPATH = 'build/tmp/'
 
     @Before
     void disableDataModelSavingOnCreate() {
@@ -49,101 +50,46 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
 
     @Test
     void testSimpleExport() {
-        List<DataModel> dataModels = testExportViaImport('simpleImport.xlsx', 'simpleImport_export.xlsx')
-
-        verifySimpleDataModel dataModels.first()
-        verifySimpleDataModelContent dataModels.first()
+        DataModel importedDataModel = testExportViaImport('simpleImport.xlsx', 'simpleImport_export.xlsx').first()
+        verifySimpleDataModel importedDataModel
+        verifySimpleDataModelContent importedDataModel
     }
 
     @Test
-    void testMultiModelExport() {
-        List<DataModel> dataModels = testExportViaImport('multiDataModelImport.xlsx', 'multiDataModelImport_export.xlsx', 3)
-
-        verifySimpleDataModel dataModels.find { it.label == 'test' }
-        verifySimpleDataModelContent dataModels.find { it.label == 'test' }
+    void testSimpleExportWithComplexMetadata() {
+        DataModel importedDataModel = testExportViaImport('simpleImportComplexMetadata.xlsx', 'simpleImportComplexMetadata_export.xlsx').first()
+        verifySimpleDataModel importedDataModel, 4
+        verifyMetadata importedDataModel, 'ox.softeng.database|dialect', 'test'
+        verifySimpleDataModelContentWithComplexMetadata importedDataModel
     }
 
     @Test
-    void testComplexMetadataModelExport() {
-        List<DataModel> dataModels = testExportViaImport('simpleImportComplexMetadata.xlsx', 'simpleImportComplexMetadata_export.xlsx')
-
-        DataModel dataModel = dataModels.first()
-        verifySimpleDataModel dataModel, 4
-        checkMetadata dataModel, 'ox.softeng.database|dialect', 'test'
-
-        DataClass top = checkDataClass(dataModel, 'top', 3, 'tops description', 1, 1, [
-            'extra info'          : 'some extra info',
-            'ox.softeng.test|blob': 'hello'])
-        checkDataElement top, 'info', 'info description', 'string', 1, 1, [
-            'different info'    : 'info',
-            'ox.softeng.xsd|min': '1',
-            'ox.softeng.xsd|max': '20',
-        ]
-        checkDataElement top, 'another', null, 'int', 0, 1, ['extra info': 'some extra info', 'different info': 'info']
-        checkDataElement top, 'more info', 'why not', 'string', 0
-
-        DataClass child = checkDataClass(top, 'child', 4, 'child description', 0)
-        checkDataElement child, 'info', 'childs info', 'string', 1, 1, [
-            'extra info'          : 'some extra info',
-            'ox.softeng.xsd|min'  : '0',
-            'ox.softeng.xsd|max'  : '10',
-            'ox.softeng.test|blob': 'wobble'
-        ]
-        checkDataElement child, 'does it work', 'I don\'t know', 'yesno', 0, -1, [
-            'ox.softeng.xsd|choice': 'a',
-        ]
-        checkDataElement child, 'lazy', 'where the merging only happens in the id col', 'possibly', 1, 1, [
-            'different info'       : 'info',
-            'ox.softeng.xsd|choice': 'a',
-        ]
-        checkDataElement child, 'wrong order', 'should be fine', 'table'
-
-        DataClass brother = checkDataClass(top, 'brother', 2)
-        checkDataElement brother, 'info', 'brothers info', 'string', 0, 1, [
-            'ox.softeng.xsd|min': '1',
-            'ox.softeng.xsd|max': '255',]
-        checkDataElement brother, 'sibling', 'reference to the other child', 'child', 1, -1, ['extra info': 'some extra info']
+    void testMultipleDataModelExport() {
+        List<DataModel> importedDataModels = testExportViaImport('multiDataModelImport.xlsx', 'multiDataModelImport_export.xlsx', 3)
+        verifySimpleDataModel importedDataModels.find { it.label == 'test' }
+        verifySimpleDataModelContent importedDataModels.find { it.label == 'test' }
     }
 
-    private List<DataModel> testExportViaImport(String filename, String outFileName, int expectedCount = 1) throws IOException, ApiException {
-        // Import model first
-        ExcelFileImporterProviderServiceParameters params = createImportParameters(filename)
-        List<DataModel> importedModels = importDomains(params, expectedCount)
+    private List<DataModel> testExportViaImport(String importFilename, String exportFilename, int expectedSize = 1) throws IOException, ApiException {
+        // Import DataModels under test first
+        List<DataModel> importedDataModels = importDomains(createImportParameters(importFilename), expectedSize)
+        log.debug('DataModel(s) to export: {}', importedDataModels.size() == 1 ? importedDataModels.first().id : importedDataModels.id)
 
-        log.debug('DataModel to export: {}', importedModels[0].getId())
-        // Rather than use the one returned from the import, we want to check whats actually been saved into the DB
+        // Export what has been saved into the database
+        log.info('>>> Exporting {}', importedDataModels.size() == 1 ? 'Single' : 'Multiple')
+        ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
+        ByteArrayOutputStream exportedDataModels = importedDataModels.size() == 1
+            ? exporterService.exportDomain(IntegrationTestUser.instance, importedDataModels.first().id)
+            : exporterService.exportDomains(IntegrationTestUser.instance, importedDataModels.id)
 
-        Path outPath = Paths.get('build/tmp/', outFileName)
+        assertNotNull 'Should have exported model(s)', exportedDataModels
+        assertFalse 'Should have exported model string', Strings.isNullOrEmpty(exportedDataModels.toString(CHARSET))
 
-        if (importedModels.size() == 1) testExport(importedModels[0].getId(), outPath)
-        else testExport(importedModels.id, outPath)
+        Path exportFilepath = Paths.get(EXPORT_FILEPATH, exportFilename)
+        Files.write(exportFilepath, exportedDataModels.toByteArray())
 
+        // Test using the exported DataModels instead of the ones from the first import
         log.info('>>> Importing')
-        params = createImportParameters(outPath)
-        importDomains(params, expectedCount, false)
-    }
-
-    private void testExport(UUID dataModelId, Path outPath) throws IOException, ApiException {
-        log.info('>>> Exporting Single')
-        ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
-        ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomain(IntegrationTestUser.instance, dataModelId)
-        assertNotNull('Should have an exported model', byteArrayOutputStream)
-
-        String exported = byteArrayOutputStream.toString('ISO-8859-1')
-        assertFalse('Should have an exported model string', Strings.isNullOrEmpty(exported))
-
-        Files.write(outPath, exported.getBytes('ISO-8859-1'))
-    }
-
-    private void testExport(List<UUID> dataModelIds, Path outPath) throws IOException, ApiException {
-        log.info('>>> Exporting Multiple')
-        ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
-        ByteArrayOutputStream byteArrayOutputStream = exporterService.exportDomains(IntegrationTestUser.instance, dataModelIds)
-        assertNotNull('Should have an exported model', byteArrayOutputStream)
-
-        String exported = byteArrayOutputStream.toString('ISO-8859-1')
-        assertFalse('Should have an exported model string', Strings.isNullOrEmpty(exported))
-
-        Files.write(outPath, exported.getBytes('ISO-8859-1'))
+        importDomains(createImportParameters(exportFilepath), expectedSize, false)
     }
 }

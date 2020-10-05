@@ -15,15 +15,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
 
-import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
+import org.junit.Test
 
-/**
- * @since 01/03/2018
- */
-class ExcelFileImporterProviderServiceParameters extends DataModelFileImporterProviderServiceParameters {
+import static org.junit.Assert.assertEquals
 
-    // So we don't ask for the DataModel name
-    String dataModelName
+class ExcelSimpleDataModelExporterProviderServiceTest {
+    @Test
+    void testSheetKey() {
+        Map<String, String> results = [
+            'My Model'                  : 'MM',
+            'GEL: CancerSchema-v1.0.1'  : 'GC101',
+            '[GEL: CancerSchema-v1.0.1]': 'GC101'
+        ].each { assertEquals ExcelSimpleDataModelExporterProviderService.createSheetKey(it.key), it.value }
+    }
 }

@@ -25,16 +25,13 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElementService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelExporterProviderService
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.ContentDataRow
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.DataModelDataRow
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.catalogue.EnumerationValueDataRow
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.util.WorkbookExporter
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.ContentDataRow
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.DataModelDataRow
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.workbook.WorkbookExporter
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import org.apache.poi.ss.usermodel.FillPatternType
-import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
-import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFColor
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
@@ -42,27 +39,18 @@ import org.springframework.beans.factory.annotation.Autowired
 
 import groovy.util.logging.Slf4j
 
-import static ExcelPlugin.ALTERNATING_COLUMN_COLOUR
-import static ExcelPlugin.CELL_COLOUR_TINT
-import static ExcelPlugin.CONTENT_HEADER_ROWS
-import static ExcelPlugin.DATAMODELS_HEADER_ROWS
-import static ExcelPlugin.DATAMODELS_SHEET_NAME
-import static ExcelPlugin.DATAMODEL_TEMPLATE_FILENAME
-
-/**
- * @since 01/03/2018
- */
 @Slf4j
+// @CompileStatic
 class ExcelDataModelExporterProviderService extends DataModelExporterProviderService implements WorkbookExporter {
 
     @Autowired
     DataModelService dataModelService
 
     @Autowired
-    DataElementService dataElementService
+    DataClassService dataClassService
 
     @Autowired
-    DataClassService dataClassService
+    DataElementService dataElementService
 
     @Override
     String getDisplayName() {
@@ -71,7 +59,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     @Override
     String getVersion() {
-        '1.0.0'
+        '2.0.0-SNAPSHOT'
     }
 
     @Override
@@ -86,105 +74,71 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     @Override
     ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
-
         log.info('Exporting DataModels to Excel')
         XSSFWorkbook workbook = null
         try {
-            workbook = loadWorkbookFromFilename(DATAMODEL_TEMPLATE_FILENAME) as XSSFWorkbook
-
             workbook = loadDataModelDataRowsIntoWorkbook(
-                dataModels.collect { new DataModelDataRow(it) }, workbook)
+                dataModels.collect { new DataModelDataRow(it) },
+                loadWorkbookFromFilename(ExcelPlugin.DATAMODEL_TEMPLATE_FILENAME) as XSSFWorkbook)
+            if (!workbook) return null
 
-            if (workbook) {
-                ByteArrayOutputStream os = new ByteArrayOutputStream()
-                workbook.write(os)
-                log.info('DataModels exported')
-                return os
-            }
+            ByteArrayOutputStream exportStream = new ByteArrayOutputStream()
+            workbook.write(exportStream)
+            log.info('DataModels exported')
+            exportStream
         } finally {
             closeWorkbook(workbook)
         }
-        null
     }
 
-    XSSFWorkbook loadDataModelDataRowsIntoWorkbook(List<DataModelDataRow> dataModelDataRows, XSSFWorkbook workbook) {
-        XSSFColor cellColour = new XSSFColor(ALTERNATING_COLUMN_COLOUR)
-        cellColour.setTint(CELL_COLOUR_TINT)
-
+    private XSSFWorkbook loadDataModelDataRowsIntoWorkbook(List<DataModelDataRow> dataRows, XSSFWorkbook workbook) {
         XSSFCellStyle defaultStyle = createDefaultCellStyle(workbook as XSSFWorkbook)
+        XSSFColor cellColour = new XSSFColor(ExcelPlugin.ALTERNATING_COLUMN_COLOUR).tap {
+            tint = ExcelPlugin.CELL_COLOUR_TINT
+        }
+        XSSFCellStyle colouredStyle = workbook.createCellStyle().tap {
+            cloneStyleFrom(defaultStyle)
+            fillForegroundColor = cellColour
+            fillPattern = FillPatternType.SOLID_FOREGROUND
+        } as XSSFCellStyle
 
-        XSSFCellStyle colouredStyle = workbook.createCellStyle() as XSSFCellStyle
-        colouredStyle.cloneStyleFrom(defaultStyle)
-        colouredStyle.setFillForegroundColor(cellColour)
-        colouredStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND)
+        Sheet dataModelSheet = workbook.getSheet(ExcelPlugin.DATAMODELS_SHEET_NAME)
+        addMetadataHeadersToSheet(dataModelSheet, dataRows)
 
-        Sheet dataModelSheet = workbook.getSheet(DATAMODELS_SHEET_NAME)
-
-        addMetadataHeadersToSheet(dataModelSheet, dataModelDataRows)
-
-        dataModelDataRows.each { dataModelDataRow ->
-
-            log.debug('Loading DataModel {} into workbook', dataModelDataRow.name)
-
-            // We need to allow for potential sheet name already exists
-            Sheet contentSheet = createComponentSheetFromTemplate(workbook, dataModelDataRow.sheetKey)
-            dataModelDataRow.sheetKey = contentSheet.sheetName
+        dataRows.each { DataModelDataRow dataRow ->
+            log.debug('Loading DataModel {} into workbook', dataRow.name)
+            Sheet contentSheet = createComponentSheetFromTemplate(workbook, dataRow.sheetKey)
+            dataRow.sheetKey = contentSheet.sheetName
 
             log.debug('Adding DataModel row')
-            dataModelDataRow.buildRow(dataModelSheet.createRow(dataModelSheet.lastRowNum + 1))
+            dataRow.buildRow(dataModelSheet.createRow(dataModelSheet.lastRowNum + 1))
 
             log.debug('Configuring {} sheet style', dataModelSheet.sheetName)
-            configureSheetStyle(dataModelSheet, dataModelDataRow.firstMetadataColumn, DATAMODELS_HEADER_ROWS, defaultStyle, colouredStyle)
+            configureSheetStyle(dataModelSheet, dataRow.firstMetadataColumn, ExcelPlugin.DATAMODELS_HEADER_ROWS, defaultStyle, colouredStyle)
 
-            log.debug('Adding DataModel content to sheet {}', dataModelDataRow.sheetKey)
-            List<ContentDataRow> contentDataRows = createContentDataRows(dataModelDataRow.dataModel.childDataClasses.sort { it.label })
-
-            if (contentDataRows) {
+            log.debug('Adding DataModel content to sheet {}', dataRow.sheetKey)
+            List<ContentDataRow> contentDataRows = createContentDataRows(dataRow.dataModel.childDataClasses.sort { it.label })
+            if (!contentDataRows) log.warn('No content rows to add for DataModel')
+            else {
                 loadDataRowsIntoSheet(contentSheet, contentDataRows)
-
                 log.debug('Configuring {} sheet style', contentSheet.sheetName)
-                configureSheetStyle(contentSheet, contentDataRows.first().firstMetadataColumn, CONTENT_HEADER_ROWS, defaultStyle, colouredStyle)
-            } else {
-                log.warn('No content rows to add for DataModel')
+                configureSheetStyle(contentSheet, contentDataRows.first().firstMetadataColumn, ExcelPlugin.CONTENT_HEADER_ROWS, defaultStyle,
+                                    colouredStyle)
             }
         }
         removeTemplateSheet(workbook)
     }
 
-    List<ContentDataRow> createContentDataRows(List<CatalogueItem> catalogueItems, List<ContentDataRow> contentDataRows = []) {
+    private List<ContentDataRow> createContentDataRows(List<CatalogueItem> catalogueItems, List<ContentDataRow> dataRows = []) {
         log.debug('Creating content DataRows')
-        catalogueItems.each { item ->
-            log.trace('Creating content {}:{}', item.domainType, item.label)
-            ContentDataRow dataRow = new ContentDataRow(item)
-            contentDataRows += dataRow
-            if (item instanceof DataClass) {
-                contentDataRows = createContentDataRows(dataElementService.findAllByDataClassIdJoinDataType(item.id), contentDataRows)
-                contentDataRows = createContentDataRows(dataClassService.findAllByParentDataClassId(item.id, [sort: 'label']), contentDataRows)
+        catalogueItems.each { CatalogueItem catalogueItem ->
+            log.trace('Creating content {}:{}', catalogueItem.domainType, catalogueItem.label)
+            dataRows << new ContentDataRow(catalogueItem)
+            if (catalogueItem instanceof DataClass) {
+                dataRows = createContentDataRows(dataElementService.findAllByDataClassIdJoinDataType(catalogueItem.id), dataRows)
+                dataRows = createContentDataRows(dataClassService.findAllByParentDataClassId(catalogueItem.id, [sort: 'label']), dataRows)
             }
         }
-        contentDataRows
-    }
-
-    @Override
-    Integer configureExtraRowStyle(Row row, int metadataColumnIndex, int lastColumnIndex, XSSFCellStyle defaultStyle,
-                                   XSSFCellStyle colouredStyle, XSSFCellStyle mainCellStyle, XSSFCellStyle borderCellStyle,
-                                   XSSFCellStyle metadataBorderStyle, XSSFCellStyle metadataColouredBorderStyle, boolean colourRow) {
-        CellRangeAddress mergedRegion = getMergeRegion(row.getCell(0))
-        if (mergedRegion) {
-            boolean internalColourRow = colourRow
-            for (int m = mergedRegion.firstRow; m <= mergedRegion.lastRow; m++) {
-                Row internalRow = row.sheet.getRow(m)
-                setRowStyle(internalRow, mainCellStyle, borderCellStyle, 0, EnumerationValueDataRow.KEY_COL_INDEX, metadataColumnIndex)
-                setRowStyle(internalRow, internalColourRow ? colouredStyle : defaultStyle,
-                            internalColourRow ? metadataColouredBorderStyle : metadataBorderStyle, EnumerationValueDataRow.KEY_COL_INDEX,
-                            EnumerationValueDataRow.VALUE_COL_INDEX + 1, metadataColumnIndex)
-                setRowStyle(internalRow, mainCellStyle, borderCellStyle, EnumerationValueDataRow.VALUE_COL_INDEX + 1, lastColumnIndex,
-                            metadataColumnIndex)
-
-                internalColourRow = !internalColourRow
-            }
-            return mergedRegion.lastRow
-        }
-        row.rowNum
+        dataRows
     }
 }

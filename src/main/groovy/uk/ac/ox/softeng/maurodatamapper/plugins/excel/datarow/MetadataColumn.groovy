@@ -15,36 +15,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row.column
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
-/**
- * @since 13/03/2018
- */
 class MetadataColumn {
 
     String namespace
     String key
     String value
 
-    boolean equals(o) {
-        if (this.is(o)) return true
-        if (getClass() != o.class) return false
-
-        MetadataColumn that = (MetadataColumn) o
-
-        if (key != that.key) return false
-        if (namespace != that.namespace) return false
-
-        return true
+    @Override
+    boolean equals(Object metadataColumn) {
+        if (is(metadataColumn)) return true
+        if (getClass() != metadataColumn.class) return false
+        namespace == (metadataColumn as MetadataColumn).namespace && key == (metadataColumn as MetadataColumn).key
     }
 
+    @Override
     int hashCode() {
-        int result
-        result = (namespace != null ? namespace.hashCode() : 0)
-        result = 31 * result + (key != null ? key.hashCode() : 0)
-        return result
+        (namespace?.hashCode() ?: 0) * 31 + (key?.hashCode() ?: 0)
     }
 
+    @Override
     String toString() {
         "${namespace}/${key}"
     }

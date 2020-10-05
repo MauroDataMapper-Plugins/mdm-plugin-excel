@@ -15,17 +15,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel.row
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
-/**
- * @since 15/02/2018
- */
-abstract class EnumerationDataRow extends DataRow {
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
 
-    String key
-    String value
-
-    EnumerationDataRow() {
-        super()
-    }
+class ExcelDataModelFileImporterProviderServiceParameters extends DataModelFileImporterProviderServiceParameters {
 }
