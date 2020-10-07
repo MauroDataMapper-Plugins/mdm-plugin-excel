@@ -36,6 +36,7 @@ import java.nio.file.Paths
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNull
 import static org.junit.Assert.fail
 
 abstract class BaseExcelDataModelImporterExporterProviderServiceTest
@@ -120,6 +121,39 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         verifyEnumerationType dataModel, 'yesno', 'an eumeration', [y: 'yes', n: 'no']
     }
 
+    protected void verifyComplexDataModel(DataModel dataModel) {
+        assertNotNull 'Third DataModel must exist', dataModel
+
+        assertEquals 'DataModel Name', 'complex.xsd', dataModel.label
+        assertNull 'DataModel Description', dataModel.description
+        assertNull 'DataModel Author', dataModel.author
+        assertNull 'DataModel Organisation', dataModel.organisation
+        assertEquals 'DataModel Type', DataModelType.DATA_STANDARD.toString(), dataModel.modelType
+
+        verifyMetadata dataModel, 'ox.softeng.metadatacatalogue.plugins.xsd|XSD XML Target Namespace',
+                       'https://metadatacatalogue.com/xsd/test/complex/1.0'
+
+        verifyDataType dataModel, 'decimal', 'XML primitive type: xs:decimal'
+        verifyDataType dataModel, 'string', 'XML primitive type: xs:string'
+        verifyDataType dataModel, 'date', 'XML primitive type: xs:date'
+        verifyDataType dataModel, 'dateTime', 'XML primitive type: xs:dateTime'
+        verifyDataType dataModel, 'mandatoryString', 'A mandatory string type'
+        verifyDataType dataModel, 'patternedString'
+        verifyDataType dataModel, 'numberWithRestrictions'
+        verifyDataType dataModel, 'anotherNumberWithRestrictions'
+        verifyDataType dataModel, 'stringWithRestrictions'
+        verifyDataType dataModel, 'gUID'
+
+        verifyReferenceType dataModel, 'choiceB', 'This is a list of a new complex type which provides a choice of date or datetime', 'choiceB'
+        verifyReferenceType dataModel, 'allL', 'An element with an all complex element', 'topElement|allL'
+        verifyReferenceType dataModel, 'elementP', 'Element with a local complex type', 'topElement|elementP'
+        verifyReferenceType dataModel, 'complexM', null, 'topElement|complexM'
+        verifyReferenceType dataModel, 'complexTypeQ', null, 'topElement|complexTypeQ'
+
+        verifyEnumerationType dataModel, 'enumeratedString', 'An enumeration', [Y: 'Yes', N: 'No', U: 'Unknown']
+        verifyEnumerationType dataModel, 'elementC', null, ['1': 'Possible', '2': 'Not Possible', '3': 'Probable']
+    }
+
     protected void verifySimpleDataModelContent(DataModel dataModel) {
         DataClass top = verifyDataClass(dataModel, 'top', 3, 'tops description', 1, 1, ['extra info': 'some extra info'])
         verifyDataElement top, 'info', 'info description', 'string', 1, 1, ['different info': 'info']
@@ -186,6 +220,48 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         verifyDataElement brother, 'twin_sibling', 'reference to the other child', 'child', 0, -1
     }
 
+    protected void verifyComplexDataModelContent(DataModel dataModel) {
+        DataClass choiceB = verifyDataClass(dataModel, 'choiceB', 3, 'A choice complex type')
+        verifyDataElement choiceB, 'elementE', 'The choice for date', 'date', 1, 1, ['XSD Choice Group': 'choice']
+        verifyDataElement choiceB, 'elementF', 'The choice for datetime', 'dateTime', 1, 1, ['XSD Choice Group': 'choice']
+        verifyDataElement choiceB, 'mappingId', null, 'gUID', 0
+
+        DataClass topElement = verifyDataClass(dataModel, 'topElement', 6, 'The top element complex type')
+        verifyDataElement topElement, 'element_H', 'regex string', 'patternedString'
+        verifyDataElement topElement, 'element-i', 'remaining restrictions applied to a string', 'stringWithRestrictions'
+        verifyDataElement topElement, 'ElementK', 'An element with an all complex element', 'allL'
+        verifyDataElement topElement, 'elementP', 'Element with a local complex type', 'elementP'
+        verifyDataElement topElement, 'elementO', null, 'complexM'
+        verifyDataElement topElement, 'elementV', null, 'complexTypeQ'
+
+        DataClass allL = verifyDataClass(topElement, 'allL', 2, 'An all complex type')
+        verifyDataElement allL, 'element-J-number', null, 'numberWithRestrictions', 1, 1, ['XSD All Group': 'true']
+        verifyDataElement allL, 'Element_J_Decimal', null, 'anotherNumberWithRestrictions', 1, 1, ['XSD All Group': 'true']
+
+        DataClass elementP = verifyDataClass(topElement, 'elementP', 5)
+        verifyDataElement elementP, 'elementA', 'This is a simple string which is fixed to \'Hello\'', 'string', 1, 1, ['XSD Fixed': 'Hello']
+        verifyDataElement elementP, 'elementB', 'This is an enumerated string', 'enumeratedString', 1, 1, ['XSD Default': 'Y']
+        verifyDataElement elementP, 'elementC', 'This is an optional local enumerated string', 'elementC', 0
+        verifyDataElement elementP, 'elementD', 'This is a list of a new complex type which provides a choice of date or datetime', 'choiceB', 1, -1
+        verifyDataElement elementP, 'elementG', 'This is a string entry where there must be contents in the element', 'mandatoryString'
+
+        DataClass complexM = verifyDataClass(topElement, 'complexM', 4, 'A complex element which extends another', 1, 1, [
+            'XSD Extension Base': 'choiceB'])
+        verifyDataElement complexM, 'elementE', 'The choice for date', 'date', 1, 1, ['XSD Choice Group': 'choice']
+        verifyDataElement complexM, 'elementF', 'The choice for datetime', 'dateTime', 1, 1, ['XSD Choice Group': 'choice']
+        verifyDataElement complexM, 'elementN', null, 'mandatoryString'
+        verifyDataElement complexM, 'mappingId', null, 'gUID', 0
+
+        DataClass complexTypeQ = verifyDataClass(topElement, 'complexTypeQ', 7)
+        verifyDataElement complexTypeQ, 'elementR', null, 'choiceB'
+        verifyDataElement complexTypeQ, 'elementS', null, 'mandatoryString', 0
+        verifyDataElement complexTypeQ, 'elementT', null, 'decimal', 1, 1, ['XSD Choice Group': 'choice-1']
+        verifyDataElement complexTypeQ, 'elementU', null, 'numberWithRestrictions', 1, 1, ['XSD Choice Group': 'choice-1']
+        verifyDataElement complexTypeQ, 'elementW', null, 'stringWithRestrictions', 1, -1, ['XSD Choice Group': 'choice-2']
+        verifyDataElement complexTypeQ, 'elementX', null, 'patternedString', 1, -1, ['XSD Choice Group': 'choice-2']
+        verifyDataElement complexTypeQ, 'elementY', null, 'choiceB', 0
+    }
+
     private void verifyMetadata(CatalogueItem catalogueItem, String fullKeyName, String value) {
         String[] keyNameParts = fullKeyName.split(/\|/)
         String namespace = keyNameParts.size() > 1 ? keyNameParts[0] : importerInstance.namespace
@@ -231,7 +307,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         metadata.each { String key, String value -> verifyMetadata(dataElement, key, value) }
     }
 
-    private DataType verifyDataType(DataModel dataModel, String label, String description) {
+    private DataType verifyDataType(DataModel dataModel, String label, String description = null) {
         DataType dataType = dataModel.dataTypes.find { it.label == label }
         assertNotNull "DataType ${label} must exist", dataType
         assertEquals "DataType ${label} Description", dataType.description, description

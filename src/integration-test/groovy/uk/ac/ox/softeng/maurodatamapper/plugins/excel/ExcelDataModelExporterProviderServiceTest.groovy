@@ -73,6 +73,10 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
         DataModel dataFlowDataModel = dataModels.find { it.label == 'Another Model' }
         verifyDataFlowDataModel dataFlowDataModel
         verifyDataFlowDataModelContent dataFlowDataModel
+
+        DataModel complexDataModel = dataModels.find { it.label == 'complex.xsd' }
+        verifyComplexDataModel complexDataModel
+        verifyComplexDataModelContent complexDataModel
     }
 
     private importThenExportSheet(String importFilename, String exportFilename, int expectedSize = 1) throws IOException, ApiException {

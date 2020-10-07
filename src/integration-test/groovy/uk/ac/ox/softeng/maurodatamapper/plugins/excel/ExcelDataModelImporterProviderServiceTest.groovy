@@ -26,7 +26,6 @@ import org.junit.Test
 import groovy.transform.CompileStatic
 
 import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertTrue
 
 @CompileStatic
@@ -77,7 +76,8 @@ class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImport
         verifyDataFlowDataModelContent dataFlowDataModel
 
         DataModel complexDataModel = DataModel.get(dataModels.find { it.label == 'complex.xsd' }?.id)
-        assertNotNull 'Third model must exist', complexDataModel
+        verifyComplexDataModel complexDataModel
+        verifyComplexDataModelContent complexDataModel
     }
 
     private importSheet(String sheetFilename, int dataModelCount = 1) {
