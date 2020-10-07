@@ -50,27 +50,32 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
 
     @Test
     void testSimpleExport() {
-        DataModel importedDataModel = testExportViaImport('simpleImport.xlsx', 'simpleImport_export.xlsx').first()
-        verifySimpleDataModel importedDataModel
-        verifySimpleDataModelContent importedDataModel
+        DataModel dataModel = importThenExportSheet('simpleImport.xlsx', 'simpleImport_export.xlsx') as DataModel
+        verifySimpleDataModel dataModel
+        verifySimpleDataModelContent dataModel
     }
 
     @Test
     void testSimpleExportWithComplexMetadata() {
-        DataModel importedDataModel = testExportViaImport('simpleImportComplexMetadata.xlsx', 'simpleImportComplexMetadata_export.xlsx').first()
-        verifySimpleDataModel importedDataModel, 4
-        verifyMetadata importedDataModel, 'ox.softeng.database|dialect', 'test'
-        verifySimpleDataModelContentWithComplexMetadata importedDataModel
+        DataModel dataModel = importThenExportSheet('simpleImportComplexMetadata.xlsx', 'simpleImportComplexMetadata_export.xlsx') as DataModel
+        verifySimpleDataModelWithComplexMetadata dataModel
+        verifySimpleDataModelWithComplexMetadataContent dataModel
     }
 
     @Test
     void testMultipleDataModelExport() {
-        List<DataModel> importedDataModels = testExportViaImport('multiDataModelImport.xlsx', 'multiDataModelImport_export.xlsx', 3)
-        verifySimpleDataModel importedDataModels.find { it.label == 'test' }
-        verifySimpleDataModelContent importedDataModels.find { it.label == 'test' }
+        List<DataModel> dataModels = importThenExportSheet('multiDataModelImport.xlsx', 'multiDataModelImport_export.xlsx', 3) as List<DataModel>
+
+        DataModel simpleDataModel = dataModels.find { it.label == 'test' }
+        verifySimpleDataModel simpleDataModel
+        verifySimpleDataModelContent simpleDataModel
+
+        DataModel dataFlowDataModel = dataModels.find { it.label == 'Another Model' }
+        verifyDataFlowDataModel dataFlowDataModel
+        verifyDataFlowDataModelContent dataFlowDataModel
     }
 
-    private List<DataModel> testExportViaImport(String importFilename, String exportFilename, int expectedSize = 1) throws IOException, ApiException {
+    private importThenExportSheet(String importFilename, String exportFilename, int expectedSize = 1) throws IOException, ApiException {
         // Import DataModels under test first
         List<DataModel> importedDataModels = importDomains(createImportParameters(importFilename), expectedSize)
         log.debug('DataModel(s) to export: {}', importedDataModels.size() == 1 ? importedDataModels.first().id : importedDataModels.id)
@@ -90,6 +95,7 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
 
         // Test using the exported DataModels instead of the ones from the first import
         log.info('>>> Importing')
-        importDomains(createImportParameters(exportFilepath), expectedSize, false)
+        List<DataModel> importedExportedDataModels = importDomains(createImportParameters(exportFilepath), expectedSize, false)
+        importedExportedDataModels.size() == 1 ? importedExportedDataModels.first() : importedExportedDataModels
     }
 }

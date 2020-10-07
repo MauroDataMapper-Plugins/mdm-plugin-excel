@@ -20,8 +20,6 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 import uk.ac.ox.softeng.maurodatamapper.core.importer.ImporterService
 import uk.ac.ox.softeng.maurodatamapper.core.rest.transport.importer.ImportParameterGroup
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
-import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelType
-import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 
 import org.junit.Test
 
@@ -36,7 +34,7 @@ import static org.junit.Assert.assertTrue
 class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
 
     @Test
-    void testImportParametersAreCorrect() {
+    void testImportParameters() {
         List<ImportParameterGroup> importParameters = applicationContext.getBean(ImporterService).describeImporterParams(importerInstance)
 
         assertEquals 'Number of parameter groups', 2, importParameters.size()
@@ -51,69 +49,39 @@ class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImport
 
     @Test
     void testSimpleImport() {
-        DataModel importedDataModel = importDomain(createImportParameters('simpleImport.xlsx'))
-        verifySimpleDataModel DataModel.get(importedDataModel.id)
-        verifySimpleDataModelContent DataModel.get(importedDataModel.id)
+        DataModel dataModel = importSheet('simpleImport.xlsx') as DataModel
+        verifySimpleDataModel dataModel
+        verifySimpleDataModelContent dataModel
     }
 
     @Test
     void testSimpleImportWithComplexMetadata() {
-        DataModel importedDataModel = DataModel.get(importDomain(createImportParameters('simpleImportComplexMetadata.xlsx')).id)
-        verifySimpleDataModel importedDataModel, 4
-        verifyMetadata importedDataModel, 'ox.softeng.database|dialect', 'test'
-        verifySimpleDataModelContentWithComplexMetadata importedDataModel
+        DataModel dataModel = importSheet('simpleImportComplexMetadata.xlsx') as DataModel
+        verifySimpleDataModelWithComplexMetadata dataModel
+        verifySimpleDataModelWithComplexMetadataContent dataModel
     }
 
     @Test
     void testMultipleDataModelImport() {
         importerInstance.saveDataModelsOnCreate = false
 
-        List<DataModel> importedDataModels = importDomains(createImportParameters('multiDataModelImport.xlsx'), 3)
-        assertEquals 'Number of DataModels imported', 3, importedDataModels.size()
+        List<DataModel> dataModels = importSheet('multiDataModelImport.xlsx', 3) as List<DataModel>
+        assertEquals 'Number of DataModels imported', 3, dataModels.size()
 
-        verifySimpleDataModel DataModel.get(importedDataModels.find { it.label == 'test' }?.id)
-        verifySimpleDataModelContent DataModel.get(importedDataModels.find { it.label == 'test' }?.id)
+        DataModel simpleDataModel = DataModel.get(dataModels.find { it.label == 'test' }?.id)
+        verifySimpleDataModel simpleDataModel
+        verifySimpleDataModelContent simpleDataModel
 
-        DataModel dataModel = DataModel.get(importedDataModels.find { it.label == 'Another Model' }?.id)
-        assertNotNull 'Second model must exist', dataModel
+        DataModel dataFlowDataModel = DataModel.get(dataModels.find { it.label == 'Another Model' }?.id)
+        verifyDataFlowDataModel dataFlowDataModel
+        verifyDataFlowDataModelContent dataFlowDataModel
 
-        assertEquals 'DataModel name', 'Another Model', dataModel.label
-        assertEquals 'DataModel description',
-                     'this is another model which isn\'t overly complicated, and is designed for testing dataflows', dataModel.description
-        assertEquals 'DataModel author', 'tester', dataModel.author
-        assertEquals 'DataModel organisation', 'Oxford', dataModel.organisation
-        assertEquals 'DataModel type', DataModelType.DATA_ASSET.toString(), dataModel.modelType
+        DataModel complexDataModel = DataModel.get(dataModels.find { it.label == 'complex.xsd' }?.id)
+        assertNotNull 'Third model must exist', complexDataModel
+    }
 
-        assertEquals 'DataModel Metadata count', 2, dataModel.metadata.size()
-        assertEquals 'Number of DataTypes', 6, dataModel.dataTypes.size()
-        assertEquals 'Number of DataClasses', 3, dataModel.dataClasses.size()
-
-        verifyMetadata dataModel, 'reviewed', 'no'
-        verifyMetadata dataModel, 'distributed', 'no'
-
-        verifyDataType dataModel, 'text', 'unlimited text'
-        verifyDataType dataModel, 'string', 'just a plain old string'
-        verifyDataType dataModel, 'int', 'a number'
-        verifyDataType dataModel, 'table', 'a random thing'
-        verifyDataType dataModel, 'child', null
-        verifyEnumeration dataModel, 'yesno', 'an eumeration', [y: 'yes', n: 'no']
-
-        DataClass top = verifyDataClass(dataModel, 'top', 3, 'tops description', 1, 1, ['extra info': 'some extra info'])
-        verifyDataElement top, 'info', 'info description', 'string', 1, 1, ['different info': 'info']
-        verifyDataElement top, 'another', null, 'int', 0, 1, ['extra info': 'some extra info', 'different info': 'info']
-        verifyDataElement top, 'allinfo', 'all the info', 'text'
-
-        DataClass child = verifyDataClass(top, 'child', 3, 'child description', 0)
-        verifyDataElement child, 'info', 'childs info', 'string', 1, 1, ['extra info': 'some extra info']
-        verifyDataElement child, 'does it work', 'I don\'t know', 'yesno', 1, -1
-        verifyDataElement child, 'wrong order', 'should be fine', 'table'
-
-        DataClass brother = verifyDataClass(top, 'brother', 3)
-        verifyDataElement brother, 'info', 'brothers info', 'string', 0
-        verifyDataElement brother, 'sibling', 'reference to the other child', 'child', 1, -1, ['extra info': 'some extra info']
-        verifyDataElement brother, 'twin_sibling', 'reference to the other child', 'child', 0, -1
-
-        dataModel = DataModel.get(importedDataModels.find { it.label == 'complex.xsd' }?.id)
-        assertNotNull 'Third model must exist', dataModel
+    private importSheet(String sheetFilename, int dataModelCount = 1) {
+        if (dataModelCount == 1) return DataModel.get(importDomain(createImportParameters(sheetFilename)).id)
+        importDomains(createImportParameters(sheetFilename), dataModelCount)
     }
 }
