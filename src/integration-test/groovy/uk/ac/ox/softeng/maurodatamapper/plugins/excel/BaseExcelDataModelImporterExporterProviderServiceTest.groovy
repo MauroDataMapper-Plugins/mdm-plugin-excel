@@ -86,13 +86,13 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         verifyDataType dataModel, 'table', 'a random thing'
 
         verifyReferenceType dataModel, 'child', null, 'top|child'
-        verifyEnumerationType dataModel, 'yesno', 'an eumeration', [y: 'yes', n: 'no']
+        verifyEnumerationType dataModel, 'yesno', 'an enumeration', [y: 'yes', n: 'no']
         verifyEnumerationType dataModel, 'possibly', null, ['0': 'lazy', '1': 'not lazy', '2': 'very lazy']
     }
 
     protected void verifySimpleDataModelWithComplexMetadata(DataModel dataModel) {
         verifySimpleDataModel dataModel, 4
-        verifyMetadata dataModel, 'ox.softeng.database|dialect', 'test'
+        verifyMetadata dataModel, 'uk.ac.ox.softeng.maurodatamapper.plugins.database|dialect', 'test'
     }
 
     protected void verifyDataFlowDataModel(DataModel dataModel) {
@@ -118,7 +118,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         verifyDataType dataModel, 'table', 'a random thing'
 
         verifyReferenceType dataModel, 'child', null, 'top|child'
-        verifyEnumerationType dataModel, 'yesno', 'an eumeration', [y: 'yes', n: 'no']
+        verifyEnumerationType dataModel, 'yesno', 'an enumeration', [y: 'yes', n: 'no']
     }
 
     protected void verifyComplexDataModel(DataModel dataModel) {
@@ -130,7 +130,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertNull 'DataModel Organisation', dataModel.organisation
         assertEquals 'DataModel Type', DataModelType.DATA_STANDARD.toString(), dataModel.modelType
 
-        verifyMetadata dataModel, 'ox.softeng.metadatacatalogue.plugins.xsd|XSD XML Target Namespace',
+        verifyMetadata dataModel, 'uk.ac.ox.softeng.maurodatamapper.plugins.xsd|XSD XML Target Namespace',
                        'https://metadatacatalogue.com/xsd/test/complex/1.0'
 
         verifyDataType dataModel, 'decimal', 'XML primitive type: xs:decimal'
@@ -173,12 +173,12 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     protected void verifySimpleDataModelWithComplexMetadataContent(DataModel dataModel) {
         DataClass top = verifyDataClass(dataModel, 'top', 3, 'tops description', 1, 1, [
-            'extra info'          : 'some extra info',
-            'ox.softeng.test|blob': 'hello'])
+            'extra info'                                : 'some extra info',
+            'uk.ac.ox.softeng.maurodatamapper.test|blob': 'hello'])
         verifyDataElement top, 'info', 'info description', 'string', 1, 1, [
-            'different info'    : 'info',
-            'ox.softeng.xsd|min': '1',
-            'ox.softeng.xsd|max': '20']
+            'different info'                                  : 'info',
+            'uk.ac.ox.softeng.maurodatamapper.plugins.xsd|min': '1',
+            'uk.ac.ox.softeng.maurodatamapper.plugins.xsd|max': '20']
         verifyDataElement top, 'another', null, 'int', 0, 1, [
             'extra info'    : 'some extra info',
             'different info': 'info']
@@ -186,20 +186,21 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
         DataClass child = verifyDataClass(top, 'child', 4, 'child description', 0)
         verifyDataElement child, 'info', 'childs info', 'string', 1, 1, [
-            'extra info'          : 'some extra info',
-            'ox.softeng.xsd|min'  : '0',
-            'ox.softeng.xsd|max'  : '10',
-            'ox.softeng.test|blob': 'wobble']
-        verifyDataElement child, 'does it work', 'I don\'t know', 'yesno', 0, -1, ['ox.softeng.xsd|choice': 'a']
+            'extra info'                                      : 'some extra info',
+            'uk.ac.ox.softeng.maurodatamapper.plugins.xsd|min': '0',
+            'uk.ac.ox.softeng.maurodatamapper.plugins.xsd|max': '10',
+            'uk.ac.ox.softeng.maurodatamapper.test|blob'      : 'wobble']
+        verifyDataElement child, 'does it work', 'I don\'t know', 'yesno', 0, -1, [
+            'uk.ac.ox.softeng.maurodatamapper.plugins.xsd|choice': 'a']
         verifyDataElement child, 'lazy', 'where the merging only happens in the id col', 'possibly', 1, 1, [
-            'different info'       : 'info',
-            'ox.softeng.xsd|choice': 'a']
+            'different info'                                     : 'info',
+            'uk.ac.ox.softeng.maurodatamapper.plugins.xsd|choice': 'a']
         verifyDataElement child, 'wrong order', 'should be fine', 'table'
 
         DataClass brother = verifyDataClass(top, 'brother', 2)
         verifyDataElement brother, 'info', 'brothers info', 'string', 0, 1, [
-            'ox.softeng.xsd|min': '1',
-            'ox.softeng.xsd|max': '255']
+            'uk.ac.ox.softeng.maurodatamapper.plugins.xsd|min': '1',
+            'uk.ac.ox.softeng.maurodatamapper.plugins.xsd|max': '255']
         verifyDataElement brother, 'sibling', 'reference to the other child', 'child', 1, -1, ['extra info': 'some extra info']
     }
 
