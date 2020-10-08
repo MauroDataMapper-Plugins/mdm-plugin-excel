@@ -67,17 +67,21 @@ class ExcelDataModelImporterProviderServiceTest extends BaseExcelDataModelImport
         List<DataModel> dataModels = importSheet('multiDataModelImport.xlsx', 3) as List<DataModel>
         assertEquals 'Number of DataModels imported', 3, dataModels.size()
 
-        DataModel simpleDataModel = DataModel.get(dataModels.find { it.label == 'test' }?.id)
+        DataModel simpleDataModel = findByLabel(dataModels, 'test')
         verifySimpleDataModel simpleDataModel
         verifySimpleDataModelContent simpleDataModel
 
-        DataModel dataFlowDataModel = DataModel.get(dataModels.find { it.label == 'Another Model' }?.id)
+        DataModel dataFlowDataModel = findByLabel(dataModels, 'Another Model')
         verifyDataFlowDataModel dataFlowDataModel
         verifyDataFlowDataModelContent dataFlowDataModel
 
-        DataModel complexDataModel = DataModel.get(dataModels.find { it.label == 'complex.xsd' }?.id)
+        DataModel complexDataModel = findByLabel(dataModels, 'complex.xsd')
         verifyComplexDataModel complexDataModel
         verifyComplexDataModelContent complexDataModel
+    }
+
+    private static DataModel findByLabel(List<DataModel> dataModels, String label) {
+        DataModel.get(dataModels.find { it.label == label }.id)
     }
 
     private importSheet(String sheetFilename, int dataModelCount = 1) {

@@ -66,17 +66,21 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
     void testMultipleDataModelExport() {
         List<DataModel> dataModels = importThenExportSheet('multiDataModelImport.xlsx', 'multiDataModelImport_export.xlsx', 3) as List<DataModel>
 
-        DataModel simpleDataModel = dataModels.find { it.label == 'test' }
+        DataModel simpleDataModel = findByLabel(dataModels, 'test')
         verifySimpleDataModel simpleDataModel
         verifySimpleDataModelContent simpleDataModel
 
-        DataModel dataFlowDataModel = dataModels.find { it.label == 'Another Model' }
+        DataModel dataFlowDataModel = findByLabel(dataModels, 'Another Model')
         verifyDataFlowDataModel dataFlowDataModel
         verifyDataFlowDataModelContent dataFlowDataModel
 
-        DataModel complexDataModel = dataModels.find { it.label == 'complex.xsd' }
+        DataModel complexDataModel = findByLabel(dataModels, 'complex.xsd')
         verifyComplexDataModel complexDataModel
         verifyComplexDataModelContent complexDataModel
+    }
+
+    private static DataModel findByLabel(List<DataModel> dataModels, String label) {
+        dataModels.find { it.label == label }
     }
 
     private importThenExportSheet(String importFilename, String exportFilename, int expectedSize = 1) throws IOException, ApiException {
@@ -91,8 +95,8 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
             ? exporterService.exportDomain(IntegrationTestUser.instance, importedDataModels.first().id)
             : exporterService.exportDomains(IntegrationTestUser.instance, importedDataModels.id)
 
-        assertNotNull 'Should have exported model(s)', exportedDataModels
-        assertFalse 'Should have exported model string', Strings.isNullOrEmpty(exportedDataModels.toString(CHARSET))
+        assertNotNull 'Should have exported DataModel(s)', exportedDataModels
+        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(exportedDataModels.toString(CHARSET))
 
         Path exportFilepath = Paths.get(EXPORT_FILEPATH, exportFilename)
         Files.write(exportFilepath, exportedDataModels.toByteArray())

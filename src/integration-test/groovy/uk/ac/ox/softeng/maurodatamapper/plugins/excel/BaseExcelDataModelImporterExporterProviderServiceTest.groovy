@@ -45,7 +45,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
     private static final String EXCEL_FILETYPE = 'application/vnd.ms-excel'
     private static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
 
-    DataModelService dataModelService = applicationContext.getBean(DataModelService)
+    private DataModelService dataModelService = applicationContext.getBean(DataModelService)
 
     @Override
     DataModel saveDomain(DataModel domain) {
@@ -74,8 +74,8 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertEquals 'DataModel Type', DataModelType.DATA_STANDARD.toString(), dataModel.modelType
 
         assertEquals 'DataModel Metadata count', metadataCount, dataModel.metadata.size()
-        assertEquals 'DataModel number of DataTypes', 6, dataModel.dataTypes.size()
-        assertEquals 'DataModel number of DataClasses', 3, dataModel.dataClasses.size()
+        assertEquals 'DataModel Number of DataTypes', 6, dataModel.dataTypes.size()
+        assertEquals 'DataModel Number of DataClasses', 3, dataModel.dataClasses.size()
 
         verifyMetadata dataModel, 'reviewed', 'yes'
         verifyMetadata dataModel, 'approved', 'yes'
@@ -96,7 +96,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
     }
 
     protected void verifyDataFlowDataModel(DataModel dataModel) {
-        assertNotNull 'Second DataModel must exist', dataModel
+        assertNotNull 'DataFlow DataModel must exist', dataModel
 
         assertEquals 'DataModel Name', 'Another Model', dataModel.label
         assertEquals 'DataModel Description',
@@ -106,8 +106,8 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertEquals 'DataModel Type', DataModelType.DATA_ASSET.toString(), dataModel.modelType
 
         assertEquals 'DataModel Metadata count', 2, dataModel.metadata.size()
-        assertEquals 'DataModel number of DataTypes', 6, dataModel.dataTypes.size()
-        assertEquals 'DataModel number of DataClasses', 3, dataModel.dataClasses.size()
+        assertEquals 'DataModel Number of DataTypes', 6, dataModel.dataTypes.size()
+        assertEquals 'DataModel Number of DataClasses', 3, dataModel.dataClasses.size()
 
         verifyMetadata dataModel, 'reviewed', 'no'
         verifyMetadata dataModel, 'distributed', 'no'
@@ -122,7 +122,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
     }
 
     protected void verifyComplexDataModel(DataModel dataModel) {
-        assertNotNull 'Third DataModel must exist', dataModel
+        assertNotNull 'Complex DataModel must exist', dataModel
 
         assertEquals 'DataModel Name', 'complex.xsd', dataModel.label
         assertNull 'DataModel Description', dataModel.description
@@ -276,17 +276,17 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertEquals "${catalogueItem.label} Metadata ${fullKeyName} value", value, metadata.value
     }
 
-    private DataClass verifyDataClass(CatalogueItem catalogueItem, String label, int elementCount, String description = null,
-                                      int min = 1, int max = 1, Map<String, String> metadata = [:]) {
+    private DataClass verifyDataClass(CatalogueItem catalogueItem, String label, int dataElementCount, String description = null,
+                                      int minMultiplicity = 1, int maxMultiplicity = 1, Map<String, String> metadata = [:]) {
         DataClass dataClass = catalogueItem instanceof DataModel
             ? catalogueItem.dataClasses.find { it.label == label && !it.parentDataClass }
             : (catalogueItem as DataClass).dataClasses.find { it.label == label }
 
         assertNotNull "DataClass ${label} must exist", dataClass
         assertEquals "DataClass ${label} Description", description, dataClass.description
-        assertEquals "DataClass ${label} Minimum Multiplicity", min, dataClass.minMultiplicity
-        assertEquals "DataClass ${label} Maximum Multiplicity", max, dataClass.maxMultiplicity
-        assertEquals "DataClass ${label} number of DataElements", elementCount, dataClass.dataElements.size()
+        assertEquals "DataClass ${label} Minimum Multiplicity", minMultiplicity, dataClass.minMultiplicity
+        assertEquals "DataClass ${label} Maximum Multiplicity", maxMultiplicity, dataClass.maxMultiplicity
+        assertEquals "DataClass ${label} Number of DataElements", dataElementCount, dataClass.dataElements.size()
 
         if (dataClass.id) assertEquals "DataClass ${label} Metadata count", metadata.size(), Metadata.countByCatalogueItemId(dataClass.id)
         metadata.each { String key, String value -> verifyMetadata(dataClass, key, value) }
@@ -294,14 +294,14 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         dataClass
     }
 
-    private void verifyDataElement(DataClass parent, String label, String description, String dataType, int min = 1, int max = 1,
-                                   Map<String, String> metadata = [:]) {
+    private void verifyDataElement(DataClass parent, String label, String description, String dataType,
+                                   int minMultiplicity = 1, int maxMultiplicity = 1, Map<String, String> metadata = [:]) {
         DataElement dataElement = parent.dataElements.find { it.label == label }
 
         assertNotNull "DataElement ${label} must exist", dataElement
         assertEquals "DataElement ${label} Description", description, dataElement.description
-        assertEquals "DataElement ${label} Minimum Multiplicity", min, dataElement.minMultiplicity
-        assertEquals "DataElement ${label} Maximum Multiplicity", max, dataElement.maxMultiplicity
+        assertEquals "DataElement ${label} Minimum Multiplicity", minMultiplicity, dataElement.minMultiplicity
+        assertEquals "DataElement ${label} Maximum Multiplicity", maxMultiplicity, dataElement.maxMultiplicity
         assertEquals "DataElement ${label} DataType", dataType, dataElement.dataType.label
 
         if (dataElement.id) assertEquals "DataElement ${label} Metadata count", metadata.size(), Metadata.countByCatalogueItemId(dataElement.id)
@@ -317,15 +317,16 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     private void verifyReferenceType(DataModel dataModel, String label, String description, String referenceClassPath) {
         ReferenceType referenceType = verifyDataType(dataModel, label, description) as ReferenceType
-        assertEquals "DataType ${referenceType.label} Reference to DataClass Path",
+        assertNotNull "ReferenceType ${label} must exist", referenceType
+        assertEquals "ReferenceType ${label} Reference to DataClass Path",
                      referenceClassPath, dataModelService.dataClassService.buildPath(referenceType.referenceClass)
     }
 
     private void verifyEnumerationType(DataModel dataModel, String label, String description, Map<String, String> enumerationValues) {
         EnumerationType enumerationType = verifyDataType(dataModel, label, description) as EnumerationType
-        assertEquals "DataType ${enumerationType.label} number of Enumerations", enumerationValues.size(), enumerationType.enumerationValues.size()
+        assertEquals "EnumerationType ${label} Enumerations count", enumerationValues.size(), enumerationType.enumerationValues.size()
         enumerationValues.each { String key, String value ->
-            assertEquals "DataType ${enumerationType.label} Enumeration ${key}", value, enumerationType.findEnumerationValueByKey(key).value
+            assertEquals "EnumerationType ${label} Enumeration ${key}", value, enumerationType.findEnumerationValueByKey(key).value
         }
     }
 }
