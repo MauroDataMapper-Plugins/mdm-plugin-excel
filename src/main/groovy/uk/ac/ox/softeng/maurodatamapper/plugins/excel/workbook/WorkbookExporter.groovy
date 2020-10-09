@@ -83,11 +83,11 @@ trait WorkbookExporter extends WorkbookHandler {
         }
     }
 
-    Sheet createComponentSheetFromTemplate(XSSFWorkbook workbook, String name) {
+    Sheet createContentSheetFromTemplate(XSSFWorkbook workbook, String name) {
         try {
             workbook.cloneSheet(workbook.getSheetIndex(templateContentSheet), name)
         } catch (IllegalArgumentException ignored) {
-            createComponentSheetFromTemplate(workbook, "${name}.1")
+            createContentSheetFromTemplate(workbook, "${name}.1")
         }
     }
 

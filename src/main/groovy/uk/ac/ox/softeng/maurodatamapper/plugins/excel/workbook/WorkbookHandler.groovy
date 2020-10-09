@@ -19,6 +19,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.workbook
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiInternalException
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.CellHandler
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.StandardDataRow
 
@@ -39,6 +40,10 @@ trait WorkbookHandler extends CellHandler {
 
     Workbook loadWorkbookFromFilename(String filename) throws ApiException {
         loadWorkbookFromInputStream(filename, getClass().classLoader.getResourceAsStream(filename))
+    }
+
+    Workbook loadWorkbookFromInputStream(FileParameter fileParameter) throws ApiException {
+        loadWorkbookFromInputStream(fileParameter.fileName, fileParameter.inputStream)
     }
 
     Workbook loadWorkbookFromInputStream(String filename, InputStream inputStream) throws ApiException {

@@ -33,7 +33,9 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElementService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationTypeService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveTypeService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceTypeService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.ContentDataRow
@@ -75,6 +77,8 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
     boolean saveDataModelsOnCreate = true
 
+    private User currentUser
+
     @Override
     String getDisplayName() {
         'Excel (XLSX) Importer'
@@ -98,107 +102,128 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     @Override
     List<DataModel> importDataModels(User currentUser, ExcelDataModelFileImporterProviderServiceParameters importParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
+        this.currentUser = currentUser
 
         FileParameter importFile = importParameters.importFile
         if (!importFile.fileContents.size()) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
-        getLog().info('Importing {} as {}', importFile.fileName, currentUser.emailAddress)
 
-        Workbook workbook = null
-        try {
-            workbook = loadWorkbookFromInputStream(importFile.fileName, importFile.inputStream)
-            List<DataModelDataRow> dataRows = loadDataRows(
-                workbook, DataModelDataRow, importFile.fileName, ExcelPlugin.DATAMODELS_SHEET_NAME, ExcelPlugin.DATAMODELS_HEADER_ROWS,
-                ExcelPlugin.DATAMODELS_ID_COLUMN)
-            if (!dataRows) return []
-            loadDataModels(dataRows, currentUser, workbook, importFile.fileName).findAll { it.dataClasses }
-        } finally {
-            closeWorkbook(workbook)
+        getLog().info('Importing {} as {}', importFile.fileName, currentUser.emailAddress)
+        loadWorkbookFromInputStream(importFile).withCloseable { Workbook workbook ->
+            loadDataModels(workbook, importFile.fileName).findAll { it.dataClasses }
         }
     }
 
-    private List<DataModel> loadDataModels(List<DataModelDataRow> dataRows, User currentUser, Workbook workbook, String filename) {
-        List<DataModel> dataModels = []
-        dataRows.each { DataModelDataRow dataRow ->
-            getLog().debug('Creating DataModel {}', dataRow.name)
-            DataModel dataModel = dataModelService.createAndSaveDataModel(
-                currentUser, Folder.findOrCreateByLabel('random', [createdBy: currentUser.emailAddress]),
-                DataModelType.findForLabel(dataRow.type), dataRow.name, dataRow.description, dataRow.author, dataRow.organisation,
-                authorityService.defaultAuthority, saveDataModelsOnCreate)
-            addMetadataToCatalogueItem(dataModel, dataRow.metadata, currentUser)
+    private List<DataModelDataRow> loadDataModelDataRows(Workbook workbook, String filename) {
+        getLog().info('Loading DataModel rows from {}', filename)
+        loadDataRows(workbook, DataModelDataRow, filename, ExcelPlugin.DATAMODELS_SHEET_NAME, ExcelPlugin.DATAMODELS_HEADER_ROWS,
+                     ExcelPlugin.DATAMODELS_ID_COLUMN)
+    }
 
+    private List<ContentDataRow> loadContentDataRows(Workbook workbook, String filename, String sheetName) {
+        getLog().info('Loading content (DataClass/DataElement) rows from {} in sheet {}', filename, sheetName)
+        loadDataRows(workbook, ContentDataRow, filename, sheetName, ExcelPlugin.CONTENT_HEADER_ROWS, ExcelPlugin.CONTENT_ID_COLUMN)
+    }
+
+    private List<DataModel> loadDataModels(Workbook workbook, String filename) {
+        List<DataModel> dataModels = []
+        loadDataModelDataRows(workbook, filename).each { DataModelDataRow dataRow ->
             if (!workbook.getSheet(dataRow.sheetKey)) {
-                getLog().warn('DataModel {} with key {} will not be imported as it has no corresponding sheet', dataRow.name, dataRow.sheetKey)
-                return
+                getLog().warn('DataModel [{}] with key [{}] will not be imported as it has no corresponding sheet', dataRow.name, dataRow.sheetKey)
+                return []
             }
 
-            List<ContentDataRow> contentDataRows = loadDataRows(
-                workbook, ContentDataRow, filename, dataRow.sheetKey, ExcelPlugin.CONTENT_HEADER_ROWS, ExcelPlugin.CONTENT_ID_COLUMN)
-            if (!contentDataRows) return
-            dataModels << loadSheetDataRowsIntoDataModel(contentDataRows, dataModel, currentUser)
+            List<ContentDataRow> contentDataRows = loadContentDataRows(workbook, filename, dataRow.sheetKey)
+            if (!contentDataRows) return []
+            dataModels << loadDataModel(dataRow, contentDataRows)
         }
         dataModels
     }
 
-    private DataModel loadSheetDataRowsIntoDataModel(List<ContentDataRow> dataRows, DataModel dataModel, User currentUser) {
-        loadDataClassRows(dataRows, dataModel, currentUser) // Load DataClasses
-        loadDataElementRows(dataRows.findAll { it.dataElementName }, dataModel, currentUser) // Load the rest of the rows as DataElements
-        dataModel
-    }
+    private DataModel loadDataModel(DataModelDataRow dataModelDataRow, List<ContentDataRow> contentDataRows) {
+        getLog().info('Loading DataModel [{}]', dataModelDataRow.name)
+        createDataModel(dataModelDataRow).tap { DataModel dataModel ->
+            // Generate DataClasses in path-descending order, ensuring specific parent data is created before creating children
+            getLog().info('Loading DataClass rows for DataModel [{}]', dataModel.label)
+            loadDataClassRows(contentDataRows).each { findOrCreateDataClass(dataModel, it) }
 
-    private void loadDataClassRows(List<ContentDataRow> dataRows, DataModel dataModel, User currentUser) {
-        getLog().info('Loading DataClass rows for DataModel {}', dataModel.label)
-        // If the DataElement name is empty, then the row is DataClass-specific data. Otherwise, we only need to ensure all the DataClasses exist.
-        // Sort the rows so we generate them in path-descending order. This ensures we create any specific data before we create children.
-        dataRows.groupBy { it.dataClassPath }.sort().each { String path, List<ContentDataRow> dataClassRows ->
-            // Find the row with no DataElement name. If none exists, then just grab the first row.
-            ContentDataRow dataRow = dataClassRows.find { !it.dataElementName } ?: dataClassRows.first()
-            getLog().debug('Creating DataClass [{}]', dataRow.dataClassPath)
-            // TODO: Compose this functionality from other methods instead of publicising findOrCreateDataClassByPath()
-            DataClass dataClass = dataClassService.findOrCreateDataClassByPath(
-                dataModel, dataRow.dataClassPathList,
-                dataRow.dataElementName ? null : dataRow.description,
-                currentUser,
-                dataRow.dataElementName ? 1 : dataRow.minMultiplicity,
-                dataRow.dataElementName ? 1 : dataRow.maxMultiplicity)
-            if (!dataRow.dataElementName) {
-                addMetadataToCatalogueItem(dataClass, dataRow.metadata, currentUser)
-            }
+            getLog().info('Loading DataElement rows for DataModel [{}]', dataModel.label)
+            loadDataElementRows(contentDataRows).each { findOrCreateDataElement(dataModel, it) }
         }
     }
 
-    private void loadDataElementRows(List<ContentDataRow> dataRows, DataModel dataModel, User currentUser) {
-        dataRows.each { ContentDataRow dataRow ->
-            DataType dataType
-            if (dataRow.mergedContentRows) {
-                getLog().debug('DataElement is an EnumerationType')
-                dataType = enumerationTypeService.findOrCreateDataTypeForDataModel(
-                    dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, currentUser)
-                dataRow.mergedContentRows.each { (dataType as EnumerationType).addToEnumerationValues(it.key, it.value, currentUser) }
-            } else if (dataRow.referenceToDataClassPath) {
-                DataClass referenceClass = dataClassService.findDataClassByPath(dataModel, dataRow.referenceToDataClassPathList)
-                dataType = referenceTypeService.findOrCreateDataTypeForDataModel(
-                    dataModel, referenceClass.label, dataRow.dataTypeDescription, currentUser, referenceClass)
-            } else {
-                dataType = primitiveTypeService.findOrCreateDataTypeForDataModel(
-                    dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, currentUser)
-            }
-
-            DataClass parentDataClass = dataClassService.findDataClassByPath(dataModel, dataRow.dataClassPathList)
-            getLog().debug('Adding DataElement [{}] to DataClass [{}] with DataType [{}]', dataRow.dataElementName, parentDataClass?.label,
-                           dataType?.label)
-            DataElement dataElement = dataElementService.findOrCreateDataElementForDataClass(
-                parentDataClass, dataRow.dataElementName, dataRow.description, currentUser, dataType, dataRow.minMultiplicity,
-                dataRow.maxMultiplicity)
-            addMetadataToCatalogueItem(dataElement, dataRow.metadata, currentUser)
-        }
-        dataModel
+    private static Collection<List<ContentDataRow>> loadDataClassRows(List<ContentDataRow> dataRows) {
+        dataRows.groupBy { it.dataClassPath }.sort().values()
     }
 
-    private void addMetadataToCatalogueItem(CatalogueItem catalogueItem, List<MetadataColumn> metadata, User currentUser) {
+    private static List<ContentDataRow> loadDataElementRows(List<ContentDataRow> dataRows) {
+        dataRows.findAll { it.dataElementName }
+    }
+
+    private DataModel createDataModel(DataModelDataRow dataRow) {
+        getLog().debug('Creating DataModel [{}]', dataRow.name)
+        dataModelService.createAndSaveDataModel(
+            currentUser, Folder.findOrCreateByLabel('random', [createdBy: currentUser.emailAddress]),
+            DataModelType.findForLabel(dataRow.type), dataRow.name, dataRow.description, dataRow.author, dataRow.organisation,
+            authorityService.defaultAuthority, saveDataModelsOnCreate).tap { DataModel dataModel ->
+            addMetadataToCatalogueItem(dataModel, dataRow.metadata)
+        }
+    }
+
+    private DataClass findOrCreateDataClass(DataModel dataModel, List<ContentDataRow> dataRows) {
+        // Find the row with no DataElement name. If none exists, then just grab the first row.
+        ContentDataRow dataRow = dataRows.find { !it.dataElementName } ?: dataRows.first()
+        getLog().debug('Creating DataClass [{}]', dataRow.dataClassPath)
+        dataClassService.findOrCreateDataClassByPath(
+            dataModel, dataRow.dataClassPathList,
+            dataRow.dataElementName ? null : dataRow.description,
+            currentUser,
+            dataRow.dataElementName ? 1 : dataRow.minMultiplicity,
+            dataRow.dataElementName ? 1 : dataRow.maxMultiplicity).tap { DataClass dataClass ->
+            if (!dataRow.dataElementName) addMetadataToCatalogueItem(dataClass, dataRow.metadata)
+        }
+    }
+
+    private DataElement findOrCreateDataElement(DataModel dataModel, ContentDataRow dataRow) {
+        DataClass dataClass = dataClassService.findDataClassByPath(dataModel, dataRow.dataClassPathList)
+        DataType dataType = findOrCreateDataType(dataModel, dataRow)
+        getLog().debug('Adding DataElement [{}] to DataClass [{}] with DataType [{}]', dataRow.dataElementName, dataClass.label, dataType.label)
+        dataElementService.findOrCreateDataElementForDataClass(
+            dataClass, dataRow.dataElementName, dataRow.description, currentUser, dataType, dataRow.minMultiplicity, dataRow.maxMultiplicity).tap {
+            addMetadataToCatalogueItem(it, dataRow.metadata)
+        }
+    }
+
+    private void addMetadataToCatalogueItem(CatalogueItem catalogueItem, List<MetadataColumn> metadata) {
         metadata.each { MetadataColumn metadataColumn ->
-            getLog().trace('Adding Metadata {}', metadataColumn.key)
+            getLog().debug('Adding Metadata [{}] to CatalogueItem [{}]', metadataColumn.key, catalogueItem.label)
             catalogueItem.addToMetadata(metadataColumn.namespace ?: namespace, metadataColumn.key, metadataColumn.value, currentUser)
         }
+    }
+
+    private DataType findOrCreateDataType(DataModel dataModel, ContentDataRow dataRow) {
+        if (dataRow.mergedContentRows) return findOrCreateEnumerationType(dataModel, dataRow)
+        if (dataRow.referenceToDataClassPath) return findOrCreateReferenceType(dataModel, dataRow)
+        findOrCreatePrimitiveType(dataModel, dataRow)
+    }
+
+    private EnumerationType findOrCreateEnumerationType(DataModel dataModel, ContentDataRow dataRow) {
+        getLog().debug('DataElement [{}] is an EnumerationType', dataRow.dataElementName)
+        enumerationTypeService.findOrCreateDataTypeForDataModel(
+            dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, currentUser).tap { EnumerationType enumerationType ->
+            dataRow.mergedContentRows.each { enumerationType.addToEnumerationValues(it.key, it.value, currentUser as User) }
+        }
+    }
+
+    private ReferenceType findOrCreateReferenceType(DataModel dataModel, ContentDataRow dataRow) {
+        getLog().debug('DataElement [{}] is a ReferenceType', dataRow.dataElementName)
+        DataClass referenceClass = dataClassService.findDataClassByPath(dataModel, dataRow.referenceToDataClassPathList)
+        referenceTypeService.findOrCreateDataTypeForDataModel(
+            dataModel, referenceClass.label, dataRow.dataTypeDescription, currentUser, referenceClass)
+    }
+
+    private PrimitiveType findOrCreatePrimitiveType(DataModel dataModel, ContentDataRow dataRow) {
+        getLog().debug('DataElement [{}] is a PrimitiveType', dataRow.dataElementName)
+        primitiveTypeService.findOrCreateDataTypeForDataModel(dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, currentUser)
     }
 
     // The following are hacks– exact reimplementations of methods inherited from DataModelImporterProviderService. Despite having little to no
