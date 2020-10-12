@@ -40,9 +40,11 @@ class DataModelDataRow extends StandardDataRow {
         String[] words = dataModel.label.split(' ')
         if (words.size() == 1) sheetKey = dataModel.label.toUpperCase()
         else {
+            StringBuffer sheetKeyString = new StringBuffer()
             words.each { String word ->
-                if (word.length()) sheetKey += word[0].toUpperCase()
+                if (word.length()) sheetKeyString.append(word[0].toUpperCase())
             }
+            sheetKey = sheetKeyString.toString()
         }
         name = dataModel.label
         description = dataModel.description
