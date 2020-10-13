@@ -38,11 +38,12 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
     String dataClassPath
     String dataElementName
     String description
-    Integer minMultiplicity
-    Integer maxMultiplicity
     String dataTypeName
     String dataTypeDescription
     String referenceToDataClassPath
+
+    int minMultiplicity
+    int maxMultiplicity
 
     ContentDataRow() {
         super(EnumerationValueDataRow)
