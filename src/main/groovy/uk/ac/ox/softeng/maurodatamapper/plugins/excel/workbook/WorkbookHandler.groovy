@@ -80,7 +80,7 @@ trait WorkbookHandler extends CellHandler {
             if (!cellValue) continue
 
             log.trace('Examining row {} at {}', cellValue, row.rowNum)
-            K dataRow = dataRowClass.getDeclaredConstructor().newInstance().tap { setAndInitialise row }
+            K dataRow = dataRowClass.getDeclaredConstructor().newInstance().tap { initialiseRow row }
             dataRows << dataRow
 
             Integer lastRowIndexOfMerge = mergedRegions.find { it.firstRow == row.rowNum }?.lastRow

@@ -43,15 +43,11 @@ abstract class DataRow implements CellHandler {
                 .collectEntries { [it.key, it.value.key as Set] }.findAll { it.value } as Map<String, Set<String>>
     }
 
-    Integer getFirstMetadataColumn() {
-        null
-    }
+    abstract void initialiseRow(Row row)
 
-    abstract void setAndInitialise(Row row)
+    abstract Row buildRow(Row row)
 
-    Row buildRow(Row row) {
-        row
-    }
+    abstract int getFirstMetadataColumn()
 
     @SuppressWarnings('GroovyAssignabilityCheck')
     void addCellToRow(Row row, int cellNum, Object content, boolean wrapText = false) {

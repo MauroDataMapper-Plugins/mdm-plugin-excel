@@ -57,12 +57,7 @@ class DataModelDataRow extends StandardDataRow {
     }
 
     @Override
-    Integer getFirstMetadataColumn() {
-        6
-    }
-
-    @Override
-    void setAndInitialise(Row row) {
+    void initialiseRow(Row row) {
         setRow(row)
         sheetKey = getCellValue(row, 0)
         name = getCellValue(row, 1)
@@ -83,5 +78,10 @@ class DataModelDataRow extends StandardDataRow {
         addCellToRow row, 5, type
         addMetadataToRow row
         row
+    }
+
+    @Override
+    int getFirstMetadataColumn() {
+        6
     }
 }

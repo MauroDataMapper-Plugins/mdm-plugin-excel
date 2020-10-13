@@ -35,7 +35,7 @@ class EnumerationValueDataRow extends EnumerationDataRow {
     }
 
     @Override
-    void setAndInitialise(Row row) {
+    void initialiseRow(Row row) {
         setRow(row)
         key = getCellValue(row, KEY_COLUMN_INDEX)
         value = getCellValue(row, VALUE_COLUMN_INDEX)
@@ -46,5 +46,10 @@ class EnumerationValueDataRow extends EnumerationDataRow {
         addCellToRow row, KEY_COLUMN_INDEX, key
         addCellToRow row, VALUE_COLUMN_INDEX, value
         row
+    }
+
+    @Override
+    int getFirstMetadataColumn() {
+        null
     }
 }

@@ -81,12 +81,7 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
     }
 
     @Override
-    Integer getFirstMetadataColumn() {
-        10
-    }
-
-    @Override
-    void setAndInitialise(Row row) {
+    void initialiseRow(Row row) {
         setRow(row)
         dataClassPath = getCellValue(row, 0)
         dataElementName = getCellValue(row, 1)
@@ -127,6 +122,11 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
         }
 
         row
+    }
+
+    @Override
+    int getFirstMetadataColumn() {
+        10
     }
 
     List<String> getDataClassPathList() {
