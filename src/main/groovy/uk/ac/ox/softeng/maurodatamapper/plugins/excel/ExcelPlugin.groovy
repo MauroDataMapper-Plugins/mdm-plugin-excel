@@ -19,24 +19,23 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
 import uk.ac.ox.softeng.maurodatamapper.provider.plugin.AbstractMauroDataMapperPlugin
 
-import java.awt.Color
-
 @SuppressWarnings('SpellCheckingInspection')
 class ExcelPlugin extends AbstractMauroDataMapperPlugin {
 
-    public static final String HEADER_COLUMN_COLOUR = '#5B9BD5'
-    public static final Color ALTERNATING_COLUMN_COLOUR = Color.decode('#7BABF5')
-    public static final Color BORDER_COLOUR = Color.decode('#FFFFFF')
-    public static final Double CELL_COLOUR_TINT = 0.6d
-    public static final Double BORDER_COLOUR_TINT = -0.35d
+    static final String VERSION = '2.0.0-SNAPSHOT'
 
-    public static final String DATAMODEL_TEMPLATE_FILENAME = 'Template_DataModel_Import_File.xlsx'
-    public static final String DATAMODELS_SHEET_NAME = 'DataModels'
+    static final String CHARSET = 'ISO-8859-1'
+    static final String EXCEL_FILETYPE = 'application/vnd.ms-excel'
+    static final String EXCEL_FILE_EXTENSION = 'xlsx'
 
-    public static final Integer DATAMODELS_HEADER_ROWS = 2
-    public static final Integer DATAMODELS_ID_COLUMN = 1
-    public static final Integer CONTENT_HEADER_ROWS = 2
-    public static final Integer CONTENT_ID_COLUMN = 0
+    static final String DATAMODELS_IMPORT_TEMPLATE_FILENAME = 'Template_DataModel_Import_File.xlsx'
+    static final String DATAMODELS_SHEET_NAME = 'DataModels'
+    static final String CONTENT_TEMPLATE_SHEET_NAME = 'KEY_1'
+
+    static final int DATAMODELS_NUM_HEADER_ROWS = 2
+    static final int CONTENT_NUM_HEADER_ROWS = 2
+    static final int DATAMODELS_ID_COLUMN_INDEX = 1
+    static final int CONTENT_ID_COLUMN_INDEX = 0
 
     @Override
     String getName() {

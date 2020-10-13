@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory
 
 abstract class DataRow implements CellHandler {
 
-    static final int METADATA_NAMESPACE_ROW = 0
-    static final int METADATA_KEY_ROW = 1
+    static final int METADATA_NAMESPACE_ROW_INDEX = 0
+    static final int METADATA_KEY_ROW_INDEX = 1
 
     Row row
     List<MetadataColumn> metadata = []
@@ -53,8 +53,8 @@ abstract class DataRow implements CellHandler {
     }
 
     void extractMetadataFromColumnIndex() {
-        Row namespaceRow = row.sheet.getRow(METADATA_NAMESPACE_ROW)
-        Row keyRow = row.sheet.getRow(METADATA_KEY_ROW)
+        Row namespaceRow = row.sheet.getRow(METADATA_NAMESPACE_ROW_INDEX)
+        Row keyRow = row.sheet.getRow(METADATA_KEY_ROW_INDEX)
         List<Cell> cells = row.findAll { Cell cell ->
             cell.columnIndex >= firstMetadataColumn &&
             cell.columnIndex <= Math.max(namespaceRow.lastCellNum, keyRow.lastCellNum) &&
@@ -72,8 +72,8 @@ abstract class DataRow implements CellHandler {
 
     void addMetadataToRow(Row row) {
         if (!metadata) return
-        Row namespaceRow = row.sheet.getRow(METADATA_NAMESPACE_ROW)
-        Row keyRow = row.sheet.getRow(METADATA_KEY_ROW)
+        Row namespaceRow = row.sheet.getRow(METADATA_NAMESPACE_ROW_INDEX)
+        Row keyRow = row.sheet.getRow(METADATA_KEY_ROW_INDEX)
         metadata.groupBy { it.namespace }.each { String namespace, List<MetadataColumn> metadataColumns ->
             Cell namespaceHeader = findCell(namespaceRow, namespace)
             CellRangeAddress mergeRegion = getMergeRegion(namespaceHeader)

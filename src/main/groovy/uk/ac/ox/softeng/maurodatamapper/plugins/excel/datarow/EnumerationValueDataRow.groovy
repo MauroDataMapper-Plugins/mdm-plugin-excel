@@ -23,8 +23,8 @@ import org.apache.poi.ss.usermodel.Row
 
 class EnumerationValueDataRow extends EnumerationDataRow {
 
-    static final int KEY_COL_INDEX = 8
-    static final int VALUE_COL_INDEX = 9
+    static final int KEY_COLUMN_INDEX = 8
+    static final int VALUE_COLUMN_INDEX = 9
 
     EnumerationValueDataRow() {
     }
@@ -37,14 +37,14 @@ class EnumerationValueDataRow extends EnumerationDataRow {
     @Override
     void setAndInitialise(Row row) {
         setRow(row)
-        key = getCellValue(row, KEY_COL_INDEX)
-        value = getCellValue(row, VALUE_COL_INDEX)
+        key = getCellValue(row, KEY_COLUMN_INDEX)
+        value = getCellValue(row, VALUE_COLUMN_INDEX)
     }
 
     @Override
     Row buildRow(Row row) {
-        addCellToRow row, KEY_COL_INDEX, key
-        addCellToRow row, VALUE_COL_INDEX, value
+        addCellToRow row, KEY_COLUMN_INDEX, key
+        addCellToRow row, VALUE_COLUMN_INDEX, value
         row
     }
 }

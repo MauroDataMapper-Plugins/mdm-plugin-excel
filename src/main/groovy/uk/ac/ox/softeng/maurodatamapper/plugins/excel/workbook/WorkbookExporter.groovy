@@ -36,17 +36,20 @@ import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide
 
 import groovy.util.logging.Slf4j
 
+import java.awt.Color
+
 @Slf4j
 // @CompileStatic
 trait WorkbookExporter extends WorkbookHandler {
 
-    final String fileExtension = 'xlsx'
-    final String fileType = 'application/vnd.ms-excel'
-    final String templateContentSheet = 'KEY_1'
+    private static final Color CELL_COLOUR = Color.decode('#7BABF5')
+    private static final Color BORDER_COLOUR = Color.decode('#FFFFFF')
+    private static final double CELL_COLOUR_TINT = 0.6d
+    private static final double BORDER_COLOUR_TINT = -0.35d
 
     XSSFCellStyle createDefaultCellStyle(XSSFWorkbook workbook) {
-        XSSFColor borderColour = new XSSFColor(ExcelPlugin.BORDER_COLOUR).tap {
-            setTint ExcelPlugin.BORDER_COLOUR_TINT
+        XSSFColor borderColour = new XSSFColor(BORDER_COLOUR).tap {
+            setTint BORDER_COLOUR_TINT
         }
         workbook.createCellStyle().tap {
             setBorderTop BorderStyle.THIN
@@ -57,6 +60,16 @@ trait WorkbookExporter extends WorkbookHandler {
             setBorderColor BorderSide.LEFT, borderColour
             setBorderColor BorderSide.BOTTOM, borderColour
             setBorderColor BorderSide.RIGHT, borderColour
+        }
+    }
+
+    XSSFCellStyle createColouredCellStyle(XSSFWorkbook workbook, XSSFCellStyle defaultCellStyle) {
+        workbook.createCellStyle().tap {
+            cloneStyleFrom defaultCellStyle
+            setFillForegroundColor new XSSFColor(CELL_COLOUR).tap {
+                setTint CELL_COLOUR_TINT
+            }
+            setFillPattern FillPatternType.SOLID_FOREGROUND
         }
     }
 
@@ -73,7 +86,7 @@ trait WorkbookExporter extends WorkbookHandler {
                 namespaceColumnIndex++
             } else {
                 sheet.addMergedRegion(new CellRangeAddress(
-                    DataRow.METADATA_NAMESPACE_ROW, DataRow.METADATA_NAMESPACE_ROW,
+                    DataRow.METADATA_NAMESPACE_ROW_INDEX, DataRow.METADATA_NAMESPACE_ROW_INDEX,
                     namespaceHeader.columnIndex, namespaceHeader.columnIndex + keys.size() - 1))
                 keys.eachWithIndex { String key, int i ->
                     buildHeaderCell(secondRow, namespaceHeader.columnIndex + i, cellStyleColumn, key, false)
@@ -85,7 +98,7 @@ trait WorkbookExporter extends WorkbookHandler {
 
     Sheet createContentSheetFromTemplate(XSSFWorkbook workbook, String name) {
         try {
-            workbook.cloneSheet(workbook.getSheetIndex(templateContentSheet), name)
+            workbook.cloneSheet(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME), name)
         } catch (IllegalArgumentException ignored) {
             createContentSheetFromTemplate(workbook, "${name}.1")
         }
@@ -135,7 +148,7 @@ trait WorkbookExporter extends WorkbookHandler {
     XSSFWorkbook removeTemplateSheet(XSSFWorkbook workbook) {
         log.debug('Removing the template sheet')
         workbook.tap {
-            removeSheetAt(workbook.getSheetIndex(templateContentSheet))
+            removeSheetAt(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME))
             setActiveSheet(0)
         }
     }
@@ -182,10 +195,11 @@ trait WorkbookExporter extends WorkbookHandler {
 
         (mergedRegion.firstRow..mergedRegion.lastRow).each { int rowNumber ->
             Row sheetRow = row.sheet.getRow(rowNumber)
-            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, 0, EnumerationValueDataRow.KEY_COL_INDEX, metadataColumnIndex)
+            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, 0, EnumerationValueDataRow.KEY_COLUMN_INDEX, metadataColumnIndex)
             setRowStyle(sheetRow, colourRow ? colouredStyle : defaultStyle, colourRow ? metadataColouredBorderStyle : metadataBorderStyle,
-                        EnumerationValueDataRow.KEY_COL_INDEX, EnumerationValueDataRow.VALUE_COL_INDEX + 1, metadataColumnIndex)
-            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, EnumerationValueDataRow.VALUE_COL_INDEX + 1, lastColumnIndex, metadataColumnIndex)
+                        EnumerationValueDataRow.KEY_COLUMN_INDEX, EnumerationValueDataRow.VALUE_COLUMN_INDEX + 1, metadataColumnIndex)
+            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, EnumerationValueDataRow.VALUE_COLUMN_INDEX + 1, lastColumnIndex,
+                        metadataColumnIndex)
             colourRow = !colourRow
         }
         mergedRegion.lastRow

@@ -40,7 +40,6 @@ import static org.junit.Assert.assertNotNull
 @SuppressWarnings('SpellCheckingInspection')
 class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
 
-    private static final String CHARSET = 'ISO-8859-1'
     private static final String EXPORT_FILEPATH = 'build/tmp/'
 
     @Before
@@ -96,7 +95,7 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
             : exporterService.exportDomains(IntegrationTestUser.instance, importedDataModels.id)
 
         assertNotNull 'Should have exported DataModel(s)', exportedDataModels
-        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(exportedDataModels.toString(CHARSET))
+        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(exportedDataModels.toString(ExcelPlugin.CHARSET))
 
         Path exportFilepath = Paths.get(EXPORT_FILEPATH, exportFilename)
         Files.write(exportFilepath, exportedDataModels.toByteArray())

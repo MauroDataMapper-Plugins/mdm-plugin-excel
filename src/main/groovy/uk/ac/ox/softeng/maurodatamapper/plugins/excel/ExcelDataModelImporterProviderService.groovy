@@ -86,7 +86,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
     @Override
     String getVersion() {
-        '2.0.0-SNAPSHOT'
+        ExcelPlugin.VERSION
     }
 
     @Override
@@ -115,13 +115,13 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
     private List<DataModelDataRow> loadDataModelDataRows(Workbook workbook, String filename) {
         getLog().info('Loading DataModel rows from {}', filename)
-        loadDataRows(workbook, DataModelDataRow, filename, ExcelPlugin.DATAMODELS_SHEET_NAME, ExcelPlugin.DATAMODELS_HEADER_ROWS,
-                     ExcelPlugin.DATAMODELS_ID_COLUMN)
+        loadDataRows(workbook, DataModelDataRow, filename, ExcelPlugin.DATAMODELS_SHEET_NAME, ExcelPlugin.DATAMODELS_NUM_HEADER_ROWS,
+                     ExcelPlugin.DATAMODELS_ID_COLUMN_INDEX)
     }
 
     private List<ContentDataRow> loadContentDataRows(Workbook workbook, String filename, String sheetName) {
         getLog().info('Loading content (DataClass/DataElement) rows from {} in sheet {}', filename, sheetName)
-        loadDataRows(workbook, ContentDataRow, filename, sheetName, ExcelPlugin.CONTENT_HEADER_ROWS, ExcelPlugin.CONTENT_ID_COLUMN)
+        loadDataRows(workbook, ContentDataRow, filename, sheetName, ExcelPlugin.CONTENT_NUM_HEADER_ROWS, ExcelPlugin.CONTENT_ID_COLUMN_INDEX)
     }
 
     private List<DataModel> loadDataModels(Workbook workbook, String filename) {

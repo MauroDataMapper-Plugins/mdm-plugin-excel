@@ -42,7 +42,6 @@ import static org.junit.Assert.fail
 abstract class BaseExcelDataModelImporterExporterProviderServiceTest
     extends BaseImportPluginTest<DataModel, ExcelDataModelFileImporterProviderServiceParameters, ExcelDataModelImporterProviderService> {
 
-    private static final String EXCEL_FILETYPE = 'application/vnd.ms-excel'
     private static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
 
     private DataModelService dataModelService = applicationContext.getBean(DataModelService)
@@ -60,7 +59,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     protected ExcelDataModelFileImporterProviderServiceParameters createImportParameters(Path importFilepath) throws IOException {
         new ExcelDataModelFileImporterProviderServiceParameters(finalised: false).tap {
-            importFile = new FileParameter(importFilepath.toString(), EXCEL_FILETYPE, Files.readAllBytes(importFilepath))
+            importFile = new FileParameter(importFilepath.toString(), ExcelPlugin.EXCEL_FILETYPE, Files.readAllBytes(importFilepath))
         }
     }
 

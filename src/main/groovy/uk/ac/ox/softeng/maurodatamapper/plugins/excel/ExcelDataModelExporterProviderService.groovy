@@ -30,10 +30,8 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.DataModelDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.workbook.WorkbookExporter
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
-import org.apache.poi.ss.usermodel.FillPatternType
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.XSSFCellStyle
-import org.apache.poi.xssf.usermodel.XSSFColor
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -63,7 +61,17 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     @Override
     String getVersion() {
-        '2.0.0-SNAPSHOT'
+        ExcelPlugin.VERSION
+    }
+
+    @Override
+    String getFileType() {
+        ExcelPlugin.EXCEL_FILETYPE
+    }
+
+    @Override
+    String getFileExtension() {
+        ExcelPlugin.EXCEL_FILE_EXTENSION
     }
 
     @Override
@@ -79,7 +87,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
     @Override
     ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
         log.info('Exporting DataModels to Excel')
-        workbook = loadWorkbookFromFilename(ExcelPlugin.DATAMODEL_TEMPLATE_FILENAME) as XSSFWorkbook
+        workbook = loadWorkbookFromFilename(ExcelPlugin.DATAMODELS_IMPORT_TEMPLATE_FILENAME) as XSSFWorkbook
         loadWorkbookCellStyles()
         loadDataModelsIntoWorkbook(dataModels).withCloseable { XSSFWorkbook workbook ->
             if (!workbook) return null
@@ -92,13 +100,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     private void loadWorkbookCellStyles() {
         defaultCellStyle = createDefaultCellStyle(workbook)
-        colouredCellStyle = workbook.createCellStyle().tap {
-            cloneStyleFrom(defaultCellStyle)
-            fillForegroundColor = new XSSFColor(ExcelPlugin.ALTERNATING_COLUMN_COLOUR).tap {
-                tint = ExcelPlugin.CELL_COLOUR_TINT
-            }
-            fillPattern = FillPatternType.SOLID_FOREGROUND
-        }
+        colouredCellStyle = createColouredCellStyle(workbook, defaultCellStyle)
     }
 
     private XSSFWorkbook loadDataModelsIntoWorkbook(List<DataModel> dataModels) {
@@ -151,11 +153,11 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     private void configureDataModelSheetStyle(Sheet sheet, DataModelDataRow dataRow) {
         log.debug('Configuring DataModel [{}] sheet style', sheet.sheetName)
-        configureSheetStyle(sheet, dataRow.firstMetadataColumn, ExcelPlugin.DATAMODELS_HEADER_ROWS, defaultCellStyle, colouredCellStyle)
+        configureSheetStyle(sheet, dataRow.firstMetadataColumn, ExcelPlugin.DATAMODELS_NUM_HEADER_ROWS, defaultCellStyle, colouredCellStyle)
     }
 
     private void configureContentSheetStyle(Sheet sheet, List<ContentDataRow> dataRows) {
         log.debug('Configuring DataModel [{}] content sheet style', sheet.sheetName)
-        configureSheetStyle(sheet, dataRows.first().firstMetadataColumn, ExcelPlugin.CONTENT_HEADER_ROWS, defaultCellStyle, colouredCellStyle)
+        configureSheetStyle(sheet, dataRows.first().firstMetadataColumn, ExcelPlugin.CONTENT_NUM_HEADER_ROWS, defaultCellStyle, colouredCellStyle)
     }
 }

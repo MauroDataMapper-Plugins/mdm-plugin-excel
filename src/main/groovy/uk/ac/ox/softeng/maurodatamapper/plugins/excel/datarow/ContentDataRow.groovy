@@ -33,7 +33,7 @@ import org.apache.poi.ss.util.CellUtil
 
 class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
 
-    static final String DATACLASS_PATH_SPLIT_REGEX = ~/\|/
+    private static final String DATACLASS_PATH_SPLIT_REGEX = ~/\|/
 
     String dataClassPath
     String dataElementName
@@ -118,7 +118,7 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
             mergedContentRows[rowNum].buildRow(lastRow)
         }
         if (row.rowNum != lastRow.rowNum) {
-            sheet.getRow(METADATA_KEY_ROW).lastCellNum.times { int columnIndex ->
+            sheet.getRow(METADATA_KEY_ROW_INDEX).lastCellNum.times { int columnIndex ->
                 if (columnIndex == 8 || columnIndex == 9) return // Enum columns
                 sheet.addMergedRegion(new CellRangeAddress(row.rowNum, lastRow.rowNum, columnIndex, columnIndex))
             }
