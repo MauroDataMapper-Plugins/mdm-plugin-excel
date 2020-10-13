@@ -20,6 +20,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.util.CellRangeAddress
+import org.apache.poi.ss.util.CellUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -31,15 +32,15 @@ abstract class DataRow implements CellHandler {
     Row row
     List<MetadataColumn> metadata = []
 
+    Logger getLog() {
+        LoggerFactory.getLogger(getClass())
+    }
+
     static Map<String, Set<String>> getMetadataNamespaceAndKeys(List<DataRow> dataRows) {
         dataRows.collect { it.metadata }
                 .flatten()
                 .groupBy { it.namespace }
                 .collectEntries { [it.key, it.value.key as Set] }.findAll { it.value } as Map<String, Set<String>>
-    }
-
-    Logger getLog() {
-        LoggerFactory.getLogger(getClass())
     }
 
     Integer getFirstMetadataColumn() {
@@ -50,6 +51,37 @@ abstract class DataRow implements CellHandler {
 
     Row buildRow(Row row) {
         row
+    }
+
+    @SuppressWarnings('GroovyAssignabilityCheck')
+    void addCellToRow(Row row, int cellNum, Object content, boolean wrapText = false) {
+        Cell cell = row.createCell(cellNum)
+        cell.setCellValue(content)
+        if (wrapText) {
+            CellUtil.setCellStyleProperty(cell, CellUtil.WRAP_TEXT, wrapText)
+            cell.cellStyle.setShrinkToFit(!wrapText)
+        }
+    }
+
+    void addMetadataToRow(Row row) {
+        if (!metadata) return
+        Row namespaceRow = row.sheet.getRow(METADATA_NAMESPACE_ROW_INDEX)
+        Row keyRow = row.sheet.getRow(METADATA_KEY_ROW_INDEX)
+        metadata.groupBy { it.namespace }.each { String namespace, List<MetadataColumn> metadataColumns ->
+            Cell namespaceHeader = namespaceRow.find { getCellValue(it) == namespace }
+            CellRangeAddress mergeRegion = getMergeRegion(namespaceHeader)
+            metadataColumns.each { MetadataColumn metadata ->
+                log.debug('Adding {}:{}', metadata.namespace, metadata.key)
+                Cell keyHeader = mergeRegion
+                    ? findCell(keyRow, metadata.key, mergeRegion.firstColumn, mergeRegion.lastColumn)
+                    : findCell(keyRow, metadata.key, namespaceHeader.columnIndex, namespaceHeader.columnIndex)
+                addCellToRow(row, keyHeader.columnIndex, metadata.value, true)
+            }
+        }
+    }
+
+    void addToMetadata(String key, String value) {
+        metadata << new MetadataColumn(key: key, value: value)
     }
 
     void extractMetadataFromColumnIndex() {
@@ -70,24 +102,7 @@ abstract class DataRow implements CellHandler {
         }
     }
 
-    void addMetadataToRow(Row row) {
-        if (!metadata) return
-        Row namespaceRow = row.sheet.getRow(METADATA_NAMESPACE_ROW_INDEX)
-        Row keyRow = row.sheet.getRow(METADATA_KEY_ROW_INDEX)
-        metadata.groupBy { it.namespace }.each { String namespace, List<MetadataColumn> metadataColumns ->
-            Cell namespaceHeader = findCell(namespaceRow, namespace)
-            CellRangeAddress mergeRegion = getMergeRegion(namespaceHeader)
-            metadataColumns.each { MetadataColumn metadata ->
-                log.debug('Adding {}:{}', metadata.namespace, metadata.key)
-                Cell keyHeader = mergeRegion
-                    ? findCell(keyRow, metadata.key, mergeRegion.firstColumn, mergeRegion.lastColumn)
-                    : findCell(keyRow, metadata.key, namespaceHeader.columnIndex)
-                addCellToRow(row, keyHeader.columnIndex, metadata.value, true)
-            }
-        }
-    }
-
-    void addToMetadata(String key, String value) {
-        metadata << new MetadataColumn(key: key, value: value)
+    private Cell findCell(Row row, String content, int firstColumn, int lastColumn) {
+        row.find { it.columnIndex >= firstColumn && it.columnIndex <= lastColumn && getCellValue(it) == content } as Cell
     }
 }

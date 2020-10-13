@@ -80,16 +80,16 @@ trait WorkbookExporter extends WorkbookHandler {
         int namespaceColumnIndex = firstRow.lastCellNum
 
         metadataMapping.sort().each { String namespace, Set<String> keys ->
-            Cell namespaceHeader = buildHeaderCell(firstRow, namespaceColumnIndex, cellStyleColumn, namespace, false)
+            Cell namespaceHeader = buildHeaderCell(firstRow, namespaceColumnIndex, cellStyleColumn, namespace)
             if (keys.size() == 1) {
-                buildHeaderCell(secondRow, namespaceHeader.columnIndex, cellStyleColumn, keys.first(), false)
+                buildHeaderCell(secondRow, namespaceHeader.columnIndex, cellStyleColumn, keys.first())
                 namespaceColumnIndex++
             } else {
                 sheet.addMergedRegion(new CellRangeAddress(
                     DataRow.METADATA_NAMESPACE_ROW_INDEX, DataRow.METADATA_NAMESPACE_ROW_INDEX,
                     namespaceHeader.columnIndex, namespaceHeader.columnIndex + keys.size() - 1))
                 keys.eachWithIndex { String key, int i ->
-                    buildHeaderCell(secondRow, namespaceHeader.columnIndex + i, cellStyleColumn, key, false)
+                    buildHeaderCell(secondRow, namespaceHeader.columnIndex + i, cellStyleColumn, key)
                 }
                 namespaceColumnIndex += keys.size()
             }
@@ -151,6 +151,36 @@ trait WorkbookExporter extends WorkbookHandler {
             removeSheetAt(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME))
             setActiveSheet(0)
         }
+    }
+
+    private Cell buildHeaderCell(Row headerRow, int columnIndex, int cellStyleColumn, String cellValue, boolean createMergeRegion = false) {
+        Cell headerCell = headerRow.createCell(columnIndex).tap {
+            setCellValue cellValue
+        }
+
+        Cell copyCell = headerRow.getCell(cellStyleColumn)
+        CellRangeAddress mergedRegion = getMergeRegion(copyCell)
+
+        if (!createMergeRegion || !mergedRegion) {
+            headerCell.setCellStyle(copyCell.cellStyle)
+            return headerCell
+        }
+
+        CellRangeAddress newRegion = mergedRegion.copy().tap {
+            firstColumn = headerCell.columnIndex
+            lastColumn = headerCell.columnIndex
+        }
+        (newRegion.firstRow..newRegion.lastRow) { int rowNumber ->
+            Row newRegionRow = headerRow.sheet.getRow(rowNumber)
+            Cell newRegionHeaderCell = CellUtil.getCell(newRegionRow, headerCell.columnIndex)
+            newRegionHeaderCell.setCellStyle(copyCell.cellStyle)
+            if (rowNumber == newRegion.lastRow) {
+                CellUtil.setCellStyleProperty(newRegionHeaderCell, CellUtil.BORDER_BOTTOM,
+                                              newRegionRow.getCell(cellStyleColumn).cellStyle.borderBottom)
+            }
+        }
+        headerRow.sheet.addMergedRegion(newRegion)
+        headerCell
     }
 
     private void setRowStyle(Row row, XSSFCellStyle cellStyle, XSSFCellStyle borderCellStyle, int start, int finish, int metadataColumnIndex) {

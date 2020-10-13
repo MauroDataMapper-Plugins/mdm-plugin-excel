@@ -26,6 +26,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
 
+import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.util.CellRangeAddress
@@ -134,6 +135,11 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
 
     List<String> getReferenceToDataClassPathList() {
         referenceToDataClassPath?.split(DATACLASS_PATH_SPLIT_REGEX)?.toList()*.trim()
+    }
+
+    private int getCellValueAsInt(Cell cell, int defaultValue) {
+        String cellValue = getCellValue(cell)
+        cellValue ? cellValue.toInteger() : defaultValue
     }
 
     private String buildPath(DataClass dataClass) {
