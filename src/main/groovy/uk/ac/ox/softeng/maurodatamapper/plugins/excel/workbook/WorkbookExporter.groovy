@@ -19,7 +19,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.workbook
 
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.DataRow
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.EnumerationValueDataRow
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.EnumerationDataRow
 
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.Cell
@@ -225,11 +225,10 @@ trait WorkbookExporter extends WorkbookHandler {
 
         (mergedRegion.firstRow..mergedRegion.lastRow).each { int rowNumber ->
             Row sheetRow = row.sheet.getRow(rowNumber)
-            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, 0, EnumerationValueDataRow.KEY_COLUMN_INDEX, metadataColumnIndex)
+            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, 0, EnumerationDataRow.KEY_COLUMN_INDEX, metadataColumnIndex)
             setRowStyle(sheetRow, colourRow ? colouredStyle : defaultStyle, colourRow ? metadataColouredBorderStyle : metadataBorderStyle,
-                        EnumerationValueDataRow.KEY_COLUMN_INDEX, EnumerationValueDataRow.VALUE_COLUMN_INDEX + 1, metadataColumnIndex)
-            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, EnumerationValueDataRow.VALUE_COLUMN_INDEX + 1, lastColumnIndex,
-                        metadataColumnIndex)
+                        EnumerationDataRow.KEY_COLUMN_INDEX, EnumerationDataRow.VALUE_COLUMN_INDEX + 1, metadataColumnIndex)
+            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, EnumerationDataRow.VALUE_COLUMN_INDEX + 1, lastColumnIndex, metadataColumnIndex)
             colourRow = !colourRow
         }
         mergedRegion.lastRow

@@ -17,7 +17,42 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
-abstract class EnumerationDataRow extends DataRow {
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
+
+import org.apache.poi.ss.usermodel.Row
+
+class EnumerationDataRow extends DataRow {
+
+    static final int KEY_COLUMN_INDEX = 8
+    static final int VALUE_COLUMN_INDEX = 9
+
     String key
     String value
+
+    EnumerationDataRow() {
+    }
+
+    EnumerationDataRow(EnumerationValue enumerationValue) {
+        key = enumerationValue.key
+        value = enumerationValue.value
+    }
+
+    @Override
+    void initialiseRow(Row row) {
+        setRow(row)
+        key = getCellValue(row, KEY_COLUMN_INDEX)
+        value = getCellValue(row, VALUE_COLUMN_INDEX)
+    }
+
+    @Override
+    Row buildRow(Row row) {
+        addCellToRow row, KEY_COLUMN_INDEX, key
+        addCellToRow row, VALUE_COLUMN_INDEX, value
+        row
+    }
+
+    @Override
+    int getFirstMetadataColumn() {
+        null
+    }
 }

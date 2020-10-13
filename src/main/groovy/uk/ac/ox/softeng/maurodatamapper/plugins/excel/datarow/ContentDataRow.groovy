@@ -32,7 +32,7 @@ import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.ss.util.CellUtil
 
-class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
+class ContentDataRow extends StandardDataRow<EnumerationDataRow> {
 
     private static final String DATACLASS_PATH_SPLIT_REGEX = ~/\|/
 
@@ -47,7 +47,7 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
     int maxMultiplicity
 
     ContentDataRow() {
-        super(EnumerationValueDataRow)
+        super(EnumerationDataRow)
     }
 
     ContentDataRow(CatalogueItem catalogueItem) {
@@ -70,7 +70,7 @@ class ContentDataRow extends StandardDataRow<EnumerationValueDataRow> {
                 referenceToDataClassPath = buildPath(dataType.referenceClass)
             } else if (dataType instanceof EnumerationType) {
                 dataType.enumerationValues.sort { it.key }.each { EnumerationValue enumerationValue ->
-                    mergedContentRows << new EnumerationValueDataRow(enumerationValue)
+                    mergedContentRows << new EnumerationDataRow(enumerationValue)
                 }
             }
         }
