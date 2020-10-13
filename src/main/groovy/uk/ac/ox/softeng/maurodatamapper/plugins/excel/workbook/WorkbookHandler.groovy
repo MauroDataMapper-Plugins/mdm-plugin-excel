@@ -98,12 +98,4 @@ trait WorkbookHandler extends CellHandler {
         log.debug('Loaded {} data rows from sheet [{}] in [{}]', dataRows.size(), sheet.sheetName, filename)
         dataRows
     }
-
-    void closeWorkbook(Workbook workbook) {
-        try {
-            workbook?.close()
-        } catch (IOException ignored) {
-            // Ignored
-        }
-    }
 }

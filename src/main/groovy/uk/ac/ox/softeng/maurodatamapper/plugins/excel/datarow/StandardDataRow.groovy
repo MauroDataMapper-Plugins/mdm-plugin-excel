@@ -17,9 +17,6 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
-import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
-import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
-
 import org.apache.poi.ss.usermodel.Row
 
 abstract class StandardDataRow<K extends EnumerationDataRow> extends DataRow {
@@ -39,13 +36,5 @@ abstract class StandardDataRow<K extends EnumerationDataRow> extends DataRow {
         K enumerationRow = enumerationDataRowClass.getDeclaredConstructor().newInstance()
         enumerationRow.setAndInitialise(row)
         mergedContentRows << enumerationRow
-    }
-
-    boolean matchesEnumerationType(EnumerationType enumerationType) {
-        if (mergedContentRows?.size() != enumerationType.enumerationValues.size()) return false
-        // Check that every enumeration value has an entry in the merged content rows
-        enumerationType.enumerationValues.every { EnumerationValue enumerationValue ->
-            mergedContentRows.any { it.key == enumerationValue.key && it.value == enumerationValue.value }
-        }
     }
 }

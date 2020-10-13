@@ -52,11 +52,6 @@ trait CellHandler {
         row.find { it.columnIndex >= firstColumn && it.columnIndex <= lastColumn && getCellValue(it) == content } as Cell
     }
 
-    int getCellValueAsInt(Cell cell, int defaultValue) {
-        String cellValue = getCellValue(cell)
-        cellValue ? cellValue.toInteger() : defaultValue
-    }
-
     String getCellValue(Cell cell) {
         cell ? dataFormatter.formatCellValue(cell).replaceAll(/’/, '\'').replaceAll(/—/, '-').trim() : ''
     }
@@ -65,16 +60,17 @@ trait CellHandler {
         row && column != null ? getCellValue(row.getCell(column)) : ''
     }
 
+    int getCellValueAsInt(Cell cell, int defaultValue) {
+        String cellValue = getCellValue(cell)
+        cellValue ? cellValue.toInteger() : defaultValue
+    }
+
     CellRangeAddress getMergeRegion(Cell cell) {
         getMergeRegion(cell?.sheet, cell.rowIndex, cell.columnIndex)
     }
 
     CellRangeAddress getMergeRegion(Sheet sheet, int rowIndex, int columnIndex) {
         sheet?.mergedRegions?.find { it.isInRange(rowIndex, columnIndex) }
-    }
-
-    Cell buildHeaderCell(Row headerRow, int cellStyleColumn, String cellValue, boolean createMergeRegion = true) {
-        buildHeaderCell(headerRow, headerRow.lastCellNum, cellStyleColumn, cellValue, createMergeRegion)
     }
 
     Cell buildHeaderCell(Row headerRow, int columnIndex, int cellStyleColumn, String cellValue, boolean createMergeRegion = true) {
@@ -105,55 +101,5 @@ trait CellHandler {
         }
         headerRow.sheet.addMergedRegion(newRegion)
         headerCell
-    }
-
-    Map<String, String> getEnumValues(String entry, int discardLines, int maxKeySize) {
-        Map<String, String> enumMap = [:]
-        String[] entryParts = entry.split('\n')
-        (discardLines..<entryParts.length).each { int i ->
-            if (!entryParts[i]) return
-            String key = extractKey(entryParts[i], maxKeySize)
-            if (!key) return
-            String value = extractValue(entryParts[i], key)
-            if (value) enumMap[key] = value
-        }
-        enumMap.findAll { it.key }
-    }
-
-    String extractKey(String entry, int maxKeySize) {
-        String[] entryParts = entry.trim().split(' ')
-        if (!entryParts) return null
-
-        String key = entryParts[0].trim()
-        if (!key) return null
-        if (maxKeySize == -1 || key.length() <= maxKeySize) return key
-
-        try {
-            Integer.parseInt(key)
-            return key
-        } catch (NumberFormatException ignored) {
-            // Ignored
-        }
-        if (key.startsWith('+') || key.startsWith('-')) return key
-
-        int indexOfKey = entry.findIndexOf { it == it.toUpperCase() }
-        indexOfKey == -1 ? entry : entry.charAt(indexOfKey).toString()
-    }
-
-    String extractValue(String entry, String key) {
-        String[] entryParts = entry.trim().split(' ')
-        String value
-
-        if (entryParts[0] != key) value = entry
-        else {
-            // The first entry is the key, the rest is the value
-            StringBuilder stringBuilder = new StringBuilder()
-            (1..<entryParts.length).each { int i ->
-                stringBuilder.append(entryParts[i]).append(' ')
-            }
-            value = stringBuilder.toString()
-        }
-
-        value.trim().toLowerCase().capitalize() // Ensure the key is capitalised within the entry
     }
 }
