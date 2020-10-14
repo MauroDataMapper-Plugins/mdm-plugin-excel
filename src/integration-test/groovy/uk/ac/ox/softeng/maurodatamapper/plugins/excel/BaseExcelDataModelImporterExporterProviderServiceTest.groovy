@@ -30,6 +30,9 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseImportPluginTest
 
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -39,12 +42,13 @@ import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertNull
 import static org.junit.Assert.fail
 
+@CompileStatic
 abstract class BaseExcelDataModelImporterExporterProviderServiceTest
     extends BaseImportPluginTest<DataModel, ExcelDataModelFileImporterProviderServiceParameters, ExcelDataModelImporterProviderService> {
 
     private static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
 
-    private DataModelService dataModelService = applicationContext.getBean(DataModelService)
+    private final DataModelService dataModelService = applicationContext.getBean(DataModelService)
 
     @Override
     DataModel saveDomain(DataModel domain) {
@@ -268,8 +272,8 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         String key = keyNameParts[-1]
 
         Metadata metadata = catalogueItem.id
-            ? Metadata.findByCatalogueItemIdAndNamespaceAndKey(catalogueItem.id, namespace, key)
-            : Metadata.findByNamespaceAndKeyAndValue(namespace, key, value)
+            ? findMetadataByValues(catalogueItem.id, namespace, key)
+            : findMetadataByValues(namespace, key, value)
 
         assertNotNull "${catalogueItem.label} Metadata ${fullKeyName} must exist", metadata
         assertEquals "${catalogueItem.label} Metadata ${fullKeyName} value", value, metadata.value
@@ -287,7 +291,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertEquals "DataClass ${label} Maximum Multiplicity", maxMultiplicity, dataClass.maxMultiplicity
         assertEquals "DataClass ${label} Number of DataElements", dataElementCount, dataClass.dataElements.size()
 
-        if (dataClass.id) assertEquals "DataClass ${label} Metadata count", metadata.size(), Metadata.countByCatalogueItemId(dataClass.id)
+        if (dataClass.id) assertEquals "DataClass ${label} Metadata count", metadata.size(), countMetadataById(dataClass.id)
         metadata.each { String key, String value -> verifyMetadata(dataClass, key, value) }
 
         dataClass
@@ -303,15 +307,8 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
         assertEquals "DataElement ${label} Maximum Multiplicity", maxMultiplicity, dataElement.maxMultiplicity
         assertEquals "DataElement ${label} DataType", dataType, dataElement.dataType.label
 
-        if (dataElement.id) assertEquals "DataElement ${label} Metadata count", metadata.size(), Metadata.countByCatalogueItemId(dataElement.id)
+        if (dataElement.id) assertEquals "DataElement ${label} Metadata count", metadata.size(), countMetadataById(dataElement.id)
         metadata.each { String key, String value -> verifyMetadata(dataElement, key, value) }
-    }
-
-    private DataType verifyDataType(DataModel dataModel, String label, String description = null) {
-        DataType dataType = dataModel.dataTypes.find { it.label == label }
-        assertNotNull "DataType ${label} must exist", dataType
-        assertEquals "DataType ${label} Description", dataType.description, description
-        dataType
     }
 
     private void verifyReferenceType(DataModel dataModel, String label, String description, String referenceClassPath) {
@@ -321,11 +318,33 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
                      referenceClassPath, dataModelService.dataClassService.buildPath(referenceType.referenceClass)
     }
 
-    private void verifyEnumerationType(DataModel dataModel, String label, String description, Map<String, String> enumerationValues) {
+    private static void verifyEnumerationType(DataModel dataModel, String label, String description, Map<String, String> enumerationValues) {
         EnumerationType enumerationType = verifyDataType(dataModel, label, description) as EnumerationType
         assertEquals "EnumerationType ${label} Enumerations count", enumerationValues.size(), enumerationType.enumerationValues.size()
         enumerationValues.each { String key, String value ->
             assertEquals "EnumerationType ${label} Enumeration ${key}", value, enumerationType.findEnumerationValueByKey(key).value
         }
+    }
+
+    private static DataType verifyDataType(DataModel dataModel, String label, String description = null) {
+        DataType dataType = dataModel.dataTypes.find { it.label == label }
+        assertNotNull "DataType ${label} must exist", dataType
+        assertEquals "DataType ${label} Description", dataType.description, description
+        dataType
+    }
+
+    @CompileDynamic
+    private static Metadata findMetadataByValues(UUID catalogueItemId, String namespace, String key) {
+        Metadata.findByCatalogueItemIdAndNamespaceAndKey(catalogueItemId, namespace, key)
+    }
+
+    @CompileDynamic
+    private static Metadata findMetadataByValues(String namespace, String key, String value) {
+        Metadata.findByNamespaceAndKeyAndValue(namespace, key, value)
+    }
+
+    @CompileDynamic
+    private static int countMetadataById(UUID catalogueItemId) {
+        Metadata.countByCatalogueItemId(catalogueItemId)
     }
 }

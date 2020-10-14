@@ -21,9 +21,13 @@ import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.ss.util.CellUtil
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+
+@Slf4j
+@CompileStatic
 abstract class DataRow implements CellHandler {
 
     static final int METADATA_NAMESPACE_ROW_INDEX = 0
@@ -32,15 +36,11 @@ abstract class DataRow implements CellHandler {
     Row row
     List<MetadataColumn> metadata = []
 
-    Logger getLog() {
-        LoggerFactory.getLogger(getClass())
-    }
-
+    @CompileDynamic
     static Map<String, Set<String>> getMetadataNamespaceAndKeys(List<DataRow> dataRows) {
-        dataRows.collect { it.metadata }
-                .flatten()
-                .groupBy { it.namespace }
-                .collectEntries { [it.key, it.value.key as Set] }.findAll { it.value } as Map<String, Set<String>>
+        dataRows.collect { it.metadata }.flatten().groupBy { it.namespace }
+                .collectEntries { [it.key, it.value.key as Set] }
+                .findAll { it.value } as Map<String, Set<String>>
     }
 
     abstract void initialiseRow(Row row)
@@ -49,6 +49,7 @@ abstract class DataRow implements CellHandler {
 
     abstract int getFirstMetadataColumn()
 
+    @CompileDynamic
     @SuppressWarnings('GroovyAssignabilityCheck')
     void addCellToRow(Row row, int cellNum, Object content, boolean wrapText = false) {
         Cell cell = row.createCell(cellNum)
@@ -64,7 +65,7 @@ abstract class DataRow implements CellHandler {
         Row namespaceRow = row.sheet.getRow(METADATA_NAMESPACE_ROW_INDEX)
         Row keyRow = row.sheet.getRow(METADATA_KEY_ROW_INDEX)
         metadata.groupBy { it.namespace }.each { String namespace, List<MetadataColumn> metadataColumns ->
-            Cell namespaceHeader = namespaceRow.find { getCellValue(it) == namespace }
+            Cell namespaceHeader = namespaceRow.find { Cell cell -> getCellValue(cell) == namespace } as Cell
             CellRangeAddress mergeRegion = getMergeRegion(namespaceHeader)
             metadataColumns.each { MetadataColumn metadata ->
                 log.debug('Adding {}:{}', metadata.namespace, metadata.key)
@@ -87,7 +88,7 @@ abstract class DataRow implements CellHandler {
             cell.columnIndex >= firstMetadataColumn &&
             cell.columnIndex <= Math.max(namespaceRow.lastCellNum, keyRow.lastCellNum) &&
             getCellValue(cell)
-        }
+        } as List<Cell>
         cells.each { Cell cell ->
             CellRangeAddress mergeRegion = getMergeRegion(row.sheet, namespaceRow.rowNum, cell.columnIndex)
             String namespaceHeader = getCellValue(namespaceRow, cell.columnIndex)
@@ -99,6 +100,6 @@ abstract class DataRow implements CellHandler {
     }
 
     private Cell findCell(Row row, String content, int firstColumn, int lastColumn) {
-        row.find { it.columnIndex >= firstColumn && it.columnIndex <= lastColumn && getCellValue(it) == content } as Cell
+        row.find { Cell cell -> cell.columnIndex >= firstColumn && cell.columnIndex <= lastColumn && getCellValue(cell) == content } as Cell
     }
 }

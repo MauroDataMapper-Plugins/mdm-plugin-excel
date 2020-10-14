@@ -32,10 +32,11 @@ import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.ss.util.CellRangeAddress
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 @Slf4j
-// @CompileStatic
+@CompileStatic
 trait WorkbookHandler extends CellHandler {
 
     Workbook loadWorkbookFromFilename(String filename) throws ApiException {

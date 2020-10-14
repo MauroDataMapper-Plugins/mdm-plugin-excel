@@ -48,8 +48,9 @@ import org.apache.poi.ss.usermodel.Workbook
 import org.springframework.beans.factory.annotation.Autowired
 
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 
-// @Slf4j
+@Slf4j
 @CompileStatic
 class ExcelDataModelImporterProviderService extends DataModelImporterProviderService<ExcelDataModelFileImporterProviderServiceParameters>
     implements WorkbookHandler {
@@ -107,21 +108,18 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
         FileParameter importFile = importParameters.importFile
         if (!importFile.fileContents.size()) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
 
-        getLog().info('Importing {} as {}', importFile.fileName, currentUser.emailAddress)
+        log.info('Importing {} as {}', importFile.fileName, currentUser.emailAddress)
         loadWorkbookFromInputStream(importFile).withCloseable { Workbook workbook ->
             loadDataModels(workbook, importFile.fileName).findAll { it.dataClasses }
         }
     }
 
-    private List<DataModelDataRow> loadDataModelDataRows(Workbook workbook, String filename) {
-        getLog().info('Loading DataModel rows from {}', filename)
-        loadDataRows(workbook, DataModelDataRow, filename, ExcelPlugin.DATAMODELS_SHEET_NAME, ExcelPlugin.DATAMODELS_NUM_HEADER_ROWS,
-                     ExcelPlugin.DATAMODELS_ID_COLUMN_INDEX)
+    private static Collection<List<ContentDataRow>> loadDataClassRows(List<ContentDataRow> dataRows) {
+        dataRows.groupBy { it.dataClassPath }.sort().values()
     }
 
-    private List<ContentDataRow> loadContentDataRows(Workbook workbook, String filename, String sheetName) {
-        getLog().info('Loading content (DataClass/DataElement) rows from {} in sheet {}', filename, sheetName)
-        loadDataRows(workbook, ContentDataRow, filename, sheetName, ExcelPlugin.CONTENT_NUM_HEADER_ROWS, ExcelPlugin.CONTENT_ID_COLUMN_INDEX)
+    private static List<ContentDataRow> loadDataElementRows(List<ContentDataRow> dataRows) {
+        dataRows.findAll { it.dataElementName }
     }
 
     private List<DataModel> loadDataModels(Workbook workbook, String filename) {
@@ -139,8 +137,19 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
         dataModels
     }
 
+    private List<DataModelDataRow> loadDataModelDataRows(Workbook workbook, String filename) {
+        log.info('Loading DataModel rows from {}', filename)
+        loadDataRows(workbook, DataModelDataRow, filename, ExcelPlugin.DATAMODELS_SHEET_NAME, ExcelPlugin.DATAMODELS_NUM_HEADER_ROWS,
+                     ExcelPlugin.DATAMODELS_ID_COLUMN_INDEX)
+    }
+
+    private List<ContentDataRow> loadContentDataRows(Workbook workbook, String filename, String sheetName) {
+        log.info('Loading content (DataClass/DataElement) rows from {} in sheet {}', filename, sheetName)
+        loadDataRows(workbook, ContentDataRow, filename, sheetName, ExcelPlugin.CONTENT_NUM_HEADER_ROWS, ExcelPlugin.CONTENT_ID_COLUMN_INDEX)
+    }
+
     private DataModel loadDataModel(DataModelDataRow dataModelDataRow, List<ContentDataRow> contentDataRows) {
-        getLog().info('Loading DataModel [{}]', dataModelDataRow.name)
+        log.info('Loading DataModel [{}]', dataModelDataRow.name)
         createDataModel(dataModelDataRow).tap { DataModel dataModel ->
             // Generate DataClasses in path-descending order, ensuring specific parent data is created before creating children
             getLog().info('Loading DataClass rows for DataModel [{}]', dataModel.label)
@@ -151,16 +160,8 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
         }
     }
 
-    private static Collection<List<ContentDataRow>> loadDataClassRows(List<ContentDataRow> dataRows) {
-        dataRows.groupBy { it.dataClassPath }.sort().values()
-    }
-
-    private static List<ContentDataRow> loadDataElementRows(List<ContentDataRow> dataRows) {
-        dataRows.findAll { it.dataElementName }
-    }
-
     private DataModel createDataModel(DataModelDataRow dataRow) {
-        getLog().debug('Creating DataModel [{}]', dataRow.name)
+        log.debug('Creating DataModel [{}]', dataRow.name)
         dataModelService.createAndSaveDataModel(
             currentUser, Folder.findOrCreateByLabel('random', [createdBy: currentUser.emailAddress]),
             DataModelType.findForLabel(dataRow.type), dataRow.name, dataRow.description, dataRow.author, dataRow.organisation,
@@ -172,7 +173,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     private DataClass findOrCreateDataClass(DataModel dataModel, List<ContentDataRow> dataRows) {
         // Find the row with no DataElement name. If none exists, then just grab the first row.
         ContentDataRow dataRow = dataRows.find { !it.dataElementName } ?: dataRows.first()
-        getLog().debug('Creating DataClass [{}]', dataRow.dataClassPath)
+        log.debug('Creating DataClass [{}]', dataRow.dataClassPath)
         dataClassService.findOrCreateDataClassByPath(
             dataModel, dataRow.dataClassPathList,
             dataRow.dataElementName ? null : dataRow.description,
@@ -186,7 +187,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     private DataElement findOrCreateDataElement(DataModel dataModel, ContentDataRow dataRow) {
         DataClass dataClass = dataClassService.findDataClassByPath(dataModel, dataRow.dataClassPathList)
         DataType dataType = findOrCreateDataType(dataModel, dataRow)
-        getLog().debug('Adding DataElement [{}] to DataClass [{}] with DataType [{}]', dataRow.dataElementName, dataClass.label, dataType.label)
+        log.debug('Adding DataElement [{}] to DataClass [{}] with DataType [{}]', dataRow.dataElementName, dataClass.label, dataType.label)
         dataElementService.findOrCreateDataElementForDataClass(
             dataClass, dataRow.dataElementName, dataRow.description, currentUser, dataType, dataRow.minMultiplicity, dataRow.maxMultiplicity).tap {
             addMetadataToCatalogueItem(it, dataRow.metadata)
@@ -207,7 +208,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     }
 
     private EnumerationType findOrCreateEnumerationType(DataModel dataModel, ContentDataRow dataRow) {
-        getLog().debug('DataElement [{}] is an EnumerationType', dataRow.dataElementName)
+        log.debug('DataElement [{}] is an EnumerationType', dataRow.dataElementName)
         enumerationTypeService.findOrCreateDataTypeForDataModel(
             dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, currentUser).tap { EnumerationType enumerationType ->
             dataRow.mergedContentRows.each { enumerationType.addToEnumerationValues(it.key, it.value, currentUser as User) }
@@ -215,14 +216,14 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     }
 
     private ReferenceType findOrCreateReferenceType(DataModel dataModel, ContentDataRow dataRow) {
-        getLog().debug('DataElement [{}] is a ReferenceType', dataRow.dataElementName)
+        log.debug('DataElement [{}] is a ReferenceType', dataRow.dataElementName)
         DataClass referenceClass = dataClassService.findDataClassByPath(dataModel, dataRow.referenceToDataClassPathList)
         referenceTypeService.findOrCreateDataTypeForDataModel(
             dataModel, referenceClass.label, dataRow.dataTypeDescription, currentUser, referenceClass)
     }
 
     private PrimitiveType findOrCreatePrimitiveType(DataModel dataModel, ContentDataRow dataRow) {
-        getLog().debug('DataElement [{}] is a PrimitiveType', dataRow.dataElementName)
+        log.debug('DataElement [{}] is a PrimitiveType', dataRow.dataElementName)
         primitiveTypeService.findOrCreateDataTypeForDataModel(dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, currentUser)
     }
 

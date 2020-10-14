@@ -21,6 +21,9 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.Enum
 
 import org.apache.poi.ss.usermodel.Row
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class EnumerationDataRow extends DataRow {
 
     static final int KEY_COLUMN_INDEX = 8

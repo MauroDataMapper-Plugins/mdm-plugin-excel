@@ -17,6 +17,9 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class MetadataColumn {
 
     String namespace

@@ -22,12 +22,19 @@ import org.apache.poi.ss.usermodel.DataFormatter
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.util.CellRangeAddress
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-// @Slf4j
-// @CompileStatic
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+
+@Slf4j
+@CompileStatic
 trait CellHandler {
 
-    final DataFormatter dataFormatter = new DataFormatter()
+    final Logger log = LoggerFactory.getLogger(getClass())
+
+    private final DataFormatter dataFormatter = new DataFormatter()
 
     String getCellValue(Cell cell) {
         cell ? dataFormatter.formatCellValue(cell).replaceAll(/’/, '\'').replaceAll(/—/, '-').trim() : ''

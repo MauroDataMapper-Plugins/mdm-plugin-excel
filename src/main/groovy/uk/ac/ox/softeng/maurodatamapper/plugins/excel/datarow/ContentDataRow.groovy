@@ -32,6 +32,9 @@ import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.ss.util.CellUtil
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class ContentDataRow extends StandardDataRow<EnumerationDataRow> {
 
     private static final String DATACLASS_PATH_SPLIT_REGEX = ~/\|/

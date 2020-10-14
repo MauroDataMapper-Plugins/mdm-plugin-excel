@@ -19,6 +19,10 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
 import uk.ac.ox.softeng.maurodatamapper.provider.plugin.AbstractMauroDataMapperPlugin
 
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+
+@CompileStatic
 @SuppressWarnings('SpellCheckingInspection')
 class ExcelPlugin extends AbstractMauroDataMapperPlugin {
 
@@ -43,6 +47,7 @@ class ExcelPlugin extends AbstractMauroDataMapperPlugin {
     }
 
     @Override
+    @CompileDynamic
     Closure doWithSpring() {
         { ->
             excelDataModelImporterProviderService ExcelDataModelImporterProviderService

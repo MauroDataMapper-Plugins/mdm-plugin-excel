@@ -35,10 +35,11 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.beans.factory.annotation.Autowired
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 @Slf4j
-// @CompileStatic
+@CompileStatic
 class ExcelDataModelExporterProviderService extends DataModelExporterProviderService implements WorkbookExporter {
 
     @Autowired
@@ -131,24 +132,25 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
         }
     }
 
-    private List<ContentDataRow> createContentDataRows(List<CatalogueItem> catalogueItems, List<ContentDataRow> dataRows = []) {
-        log.debug('Creating content rows')
-        catalogueItems.each { CatalogueItem catalogueItem ->
-            log.trace('Creating content {} : {}', catalogueItem.domainType, catalogueItem.label)
-            dataRows << new ContentDataRow(catalogueItem)
-            if (catalogueItem instanceof DataClass) {
-                dataRows = createContentDataRows(dataElementService.findAllByDataClassIdJoinDataType(catalogueItem.id), dataRows)
-                dataRows = createContentDataRows(dataClassService.findAllByParentDataClassId(catalogueItem.id, [sort: 'label']), dataRows)
-            }
-        }
-        dataRows
-    }
-
     private Sheet loadContentSheet(DataModelDataRow dataRow) {
         log.debug('Loading DataModel [{}] content sheet', dataRow.name)
         createContentSheetFromTemplate(workbook, dataRow.sheetKey).tap { Sheet contentSheet ->
             dataRow.sheetKey = contentSheet.sheetName
         }
+    }
+
+    private <K extends CatalogueItem> List<ContentDataRow> createContentDataRows(List<K> catalogueItems, List<ContentDataRow> dataRows = []) {
+        log.debug('Creating content rows')
+        catalogueItems.each { CatalogueItem catalogueItem ->
+            getLog().trace('Creating content {} : {}', catalogueItem.domainType, catalogueItem.label)
+            dataRows << new ContentDataRow(catalogueItem)
+            if (catalogueItem instanceof DataClass) {
+                dataRows = createContentDataRows(dataElementService.findAllByDataClassIdJoinDataType(catalogueItem.id), dataRows)
+                dataRows = createContentDataRows(
+                    dataClassService.findAllByParentDataClassId(catalogueItem.id, [sort: 'label']) as List<DataClass>, dataRows)
+            }
+        }
+        dataRows
     }
 
     private void configureDataModelSheetStyle(Sheet sheet, DataModelDataRow dataRow) {

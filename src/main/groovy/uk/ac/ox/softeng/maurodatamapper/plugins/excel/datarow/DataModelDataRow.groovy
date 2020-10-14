@@ -22,6 +22,9 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 
 import org.apache.poi.ss.usermodel.Row
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class DataModelDataRow extends StandardDataRow {
 
     DataModel dataModel

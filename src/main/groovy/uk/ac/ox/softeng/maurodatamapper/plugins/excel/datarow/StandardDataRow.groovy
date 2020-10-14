@@ -19,6 +19,9 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
 import org.apache.poi.ss.usermodel.Row
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 abstract class StandardDataRow<K extends EnumerationDataRow> extends DataRow {
 
     Class<K> enumerationDataRowClass

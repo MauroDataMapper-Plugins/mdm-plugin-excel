@@ -18,8 +18,10 @@
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.workbook
 
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.ContentDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.DataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.EnumerationDataRow
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.StandardDataRow
 
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.Cell
@@ -34,47 +36,47 @@ import org.apache.poi.xssf.usermodel.XSSFColor
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import java.awt.Color
 
 @Slf4j
-// @CompileStatic
+@CompileStatic
 trait WorkbookExporter extends WorkbookHandler {
 
-    private static final Color CELL_COLOUR = Color.decode('#7BABF5')
-    private static final Color BORDER_COLOUR = Color.decode('#FFFFFF')
-    private static final double CELL_COLOUR_TINT = 0.6d
-    private static final double BORDER_COLOUR_TINT = -0.35d
+    private final Color BORDER_COLOUR = Color.decode('#FFFFFF')
+    private final Color CELL_COLOUR = Color.decode('#7BABF5')
+    private final double BORDER_COLOUR_TINT = -0.35d
+    private final double CELL_COLOUR_TINT = 0.6d
 
-    XSSFCellStyle createDefaultCellStyle(XSSFWorkbook workbook) {
-        XSSFColor borderColour = new XSSFColor(BORDER_COLOUR).tap {
-            setTint BORDER_COLOUR_TINT
-        }
-        workbook.createCellStyle().tap {
-            setBorderTop BorderStyle.THIN
-            setBorderLeft BorderStyle.THIN
-            setBorderBottom BorderStyle.THIN
-            setBorderRight BorderStyle.THIN
-            setBorderColor BorderSide.TOP, borderColour
-            setBorderColor BorderSide.LEFT, borderColour
-            setBorderColor BorderSide.BOTTOM, borderColour
-            setBorderColor BorderSide.RIGHT, borderColour
+    Sheet createContentSheetFromTemplate(XSSFWorkbook workbook, String name) {
+        try {
+            workbook.cloneSheet(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME), name)
+        } catch (IllegalArgumentException ignored) {
+            createContentSheetFromTemplate(workbook, "${name}.1")
         }
     }
 
-    XSSFCellStyle createColouredCellStyle(XSSFWorkbook workbook, XSSFCellStyle defaultCellStyle) {
-        workbook.createCellStyle().tap {
-            cloneStyleFrom defaultCellStyle
-            setFillForegroundColor new XSSFColor(CELL_COLOUR).tap {
-                setTint CELL_COLOUR_TINT
-            }
-            setFillPattern FillPatternType.SOLID_FOREGROUND
+    XSSFWorkbook removeTemplateSheet(XSSFWorkbook workbook) {
+        log.debug('Removing the template sheet')
+        workbook.tap {
+            removeSheetAt(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME))
+            setActiveSheet(0)
         }
     }
 
-    void addMetadataHeadersToSheet(Sheet sheet, List<DataRow> dataRows, int cellStyleColumn = 0) {
-        Map<String, Set<String>> metadataMapping = DataRow.getMetadataNamespaceAndKeys(dataRows)
+    void loadDataRowsIntoSheet(Sheet sheet, List<ContentDataRow> dataRows) {
+        log.debug('Loading DataRows into sheet')
+        addMetadataHeadersToSheet(sheet, dataRows, 3)
+        dataRows.each { ContentDataRow dataRow ->
+            log.debug('Adding to row {}', sheet.lastRowNum + 1)
+            dataRow.buildRow(sheet.createRow(sheet.lastRowNum + 1))
+        }
+    }
+
+    public <K extends StandardDataRow> void addMetadataHeadersToSheet(Sheet sheet, List<K> dataRows, int cellStyleColumn = 0) {
+        Map<String, Set<String>> metadataMapping = DataRow.getMetadataNamespaceAndKeys(dataRows as List<DataRow>)
         Row firstRow = sheet.getRow(0)
         Row secondRow = sheet.getRow(1)
         int namespaceColumnIndex = firstRow.lastCellNum
@@ -93,14 +95,6 @@ trait WorkbookExporter extends WorkbookHandler {
                 }
                 namespaceColumnIndex += keys.size()
             }
-        }
-    }
-
-    Sheet createContentSheetFromTemplate(XSSFWorkbook workbook, String name) {
-        try {
-            workbook.cloneSheet(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME), name)
-        } catch (IllegalArgumentException ignored) {
-            createContentSheetFromTemplate(workbook, "${name}.1")
         }
     }
 
@@ -131,26 +125,45 @@ trait WorkbookExporter extends WorkbookHandler {
         }
 
         List<Integer> columnSizes = sheet.sheetName == ExcelPlugin.DATAMODELS_SHEET_NAME ? [3, 4, 5] : [5, 7, 9]
-        autoSizeColumns(sheet, 0, 1, *columnSizes)
+        autoSizeColumns(sheet, [0, 1] + columnSizes)
         autoSizeHeaderColumnsAfter(sheet, metadataColumnIndex)
         sheet
     }
 
-    void loadDataRowsIntoSheet(Sheet sheet, List<DataRow> dataRows) {
-        log.debug('Loading DataRows into sheet')
-        addMetadataHeadersToSheet(sheet, dataRows, 3)
-        dataRows.each { DataRow dataRow ->
-            log.debug('Adding to row {}', sheet.lastRowNum + 1)
-            dataRow.buildRow(sheet.createRow(sheet.lastRowNum + 1))
+    XSSFCellStyle createDefaultCellStyle(XSSFWorkbook workbook) {
+        XSSFColor borderColour = new XSSFColor(BORDER_COLOUR).tap {
+            setTint BORDER_COLOUR_TINT
+        }
+        workbook.createCellStyle().tap {
+            setBorderTop BorderStyle.THIN
+            setBorderLeft BorderStyle.THIN
+            setBorderBottom BorderStyle.THIN
+            setBorderRight BorderStyle.THIN
+            setBorderColor BorderSide.TOP, borderColour
+            setBorderColor BorderSide.LEFT, borderColour
+            setBorderColor BorderSide.BOTTOM, borderColour
+            setBorderColor BorderSide.RIGHT, borderColour
         }
     }
 
-    XSSFWorkbook removeTemplateSheet(XSSFWorkbook workbook) {
-        log.debug('Removing the template sheet')
-        workbook.tap {
-            removeSheetAt(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME))
-            setActiveSheet(0)
+    XSSFCellStyle createColouredCellStyle(XSSFWorkbook workbook, XSSFCellStyle defaultCellStyle) {
+        workbook.createCellStyle().tap {
+            cloneStyleFrom defaultCellStyle
+            setFillForegroundColor new XSSFColor(CELL_COLOUR).tap {
+                setTint CELL_COLOUR_TINT
+            }
+            setFillPattern FillPatternType.SOLID_FOREGROUND
         }
+    }
+
+    private void autoSizeColumns(Sheet sheet, List<Integer> columns) {
+        columns.each { sheet.autoSizeColumn(it, true) }
+    }
+
+    private void autoSizeHeaderColumnsAfter(Sheet sheet, int columnIndex) {
+        sheet.getRow(0)
+             .findAll { Cell cell -> cell.columnIndex >= columnIndex && getCellValue(cell) }
+             .each { sheet.autoSizeColumn((it as Cell).columnIndex, true) }
     }
 
     private Cell buildHeaderCell(Row headerRow, int columnIndex, int cellStyleColumn, String cellValue, boolean createMergeRegion = false) {
@@ -170,7 +183,7 @@ trait WorkbookExporter extends WorkbookHandler {
             firstColumn = headerCell.columnIndex
             lastColumn = headerCell.columnIndex
         }
-        (newRegion.firstRow..newRegion.lastRow) { int rowNumber ->
+        (newRegion.firstRow..newRegion.lastRow).each { int rowNumber ->
             Row newRegionRow = headerRow.sheet.getRow(rowNumber)
             Cell newRegionHeaderCell = CellUtil.getCell(newRegionRow, headerCell.columnIndex)
             newRegionHeaderCell.setCellStyle(copyCell.cellStyle)
@@ -199,24 +212,6 @@ trait WorkbookExporter extends WorkbookHandler {
         }
     }
 
-    private void copyCellStyleInto(Cell cell, XSSFCellStyle style) {
-        if (style.fillPatternEnum == FillPatternType.SOLID_FOREGROUND) {
-            CellUtil.setCellStyleProperty(cell, CellUtil.FILL_PATTERN, FillPatternType.SOLID_FOREGROUND)
-            (cell.cellStyle as XSSFCellStyle).setFillForegroundColor(style.fillForegroundColorColor)
-        }
-        XSSFColor borderColour = style.leftBorderXSSFColor
-        (cell.cellStyle as XSSFCellStyle).tap {
-            setBorderTop BorderStyle.THIN
-            setBorderLeft BorderStyle.THIN
-            setBorderBottom BorderStyle.THIN
-            setBorderRight BorderStyle.THIN
-            setBorderColor BorderSide.TOP, borderColour
-            setBorderColor BorderSide.LEFT, borderColour
-            setBorderColor BorderSide.BOTTOM, borderColour
-            setBorderColor BorderSide.RIGHT, borderColour
-        }
-    }
-
     private int configureExtraRowStyle(Row row, int metadataColumnIndex, int lastColumnIndex, XSSFCellStyle defaultStyle,
                                        XSSFCellStyle colouredStyle, XSSFCellStyle mainCellStyle, XSSFCellStyle borderCellStyle,
                                        XSSFCellStyle metadataBorderStyle, XSSFCellStyle metadataColouredBorderStyle, boolean colourRow) {
@@ -234,13 +229,21 @@ trait WorkbookExporter extends WorkbookHandler {
         mergedRegion.lastRow
     }
 
-    private void autoSizeColumns(Sheet sheet, Integer... columns) {
-        columns.each { sheet.autoSizeColumn(it, true) }
-    }
-
-    private void autoSizeHeaderColumnsAfter(Sheet sheet, int columnIndex) {
-        sheet.getRow(0)
-             .findAll { it.columnIndex >= columnIndex && getCellValue(it) }
-             .each { sheet.autoSizeColumn(it.columnIndex, true) }
+    private void copyCellStyleInto(Cell cell, XSSFCellStyle style) {
+        if (style.fillPatternEnum == FillPatternType.SOLID_FOREGROUND) {
+            CellUtil.setCellStyleProperty(cell, CellUtil.FILL_PATTERN, FillPatternType.SOLID_FOREGROUND)
+            (cell.cellStyle as XSSFCellStyle).setFillForegroundColor(style.fillForegroundColorColor)
+        }
+        XSSFColor borderColour = style.leftBorderXSSFColor
+        (cell.cellStyle as XSSFCellStyle).tap {
+            setBorderTop BorderStyle.THIN
+            setBorderLeft BorderStyle.THIN
+            setBorderBottom BorderStyle.THIN
+            setBorderRight BorderStyle.THIN
+            setBorderColor BorderSide.TOP, borderColour
+            setBorderColor BorderSide.LEFT, borderColour
+            setBorderColor BorderSide.BOTTOM, borderColour
+            setBorderColor BorderSide.RIGHT, borderColour
+        }
     }
 }
