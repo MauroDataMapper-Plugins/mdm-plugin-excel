@@ -62,12 +62,12 @@ trait WorkbookHandler extends CellHandler {
     }
 
     public <K extends StandardDataRow> List<K> loadDataRows(Workbook workbook, Class<K> dataRowClass, String filename, String sheetName,
-                                                            int numberOfHeaderRows, int idCellNumber) throws ApiException {
+                                                            int numberOfHeaderRows, int idCellIndex) throws ApiException {
         Sheet sheet = workbook.getSheet(sheetName)
         if (!sheet) throw new ApiInternalException('EFS05', "No sheet named [${sheetName}] present in [${filename}]")
 
         List<CellRangeAddress> mergedRegions = sheet.mergedRegions.findAll {
-            it.firstColumn == idCellNumber && it.lastRow != it.firstRow
+            it.firstColumn == idCellIndex && it.lastRow != it.firstRow
         }.sort { it.firstRow }
         log.trace('{} merged regions found, reduced down to {} useable regions', sheet.mergedRegions.size(), mergedRegions.size())
 
@@ -77,7 +77,7 @@ trait WorkbookHandler extends CellHandler {
 
         while (rowIterator.hasNext()) {
             Row row = rowIterator.next()
-            String cellValue = getCellValue(row.getCell(idCellNumber))
+            String cellValue = getCellValue(row.getCell(idCellIndex))
             if (!cellValue) continue
 
             log.trace('Examining row {} at {}', cellValue, row.rowNum)

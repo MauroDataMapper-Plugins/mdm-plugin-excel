@@ -31,7 +31,6 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.workbook.WorkbookExporter
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import org.apache.poi.ss.usermodel.Sheet
-import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -50,10 +49,6 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     @Autowired
     DataElementService dataElementService
-
-    private XSSFWorkbook workbook
-    private XSSFCellStyle defaultCellStyle
-    private XSSFCellStyle colouredCellStyle
 
     @Override
     String getDisplayName() {
@@ -89,7 +84,6 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
     ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
         log.info('Exporting DataModels to Excel')
         workbook = loadWorkbookFromFilename(ExcelPlugin.DATAMODELS_IMPORT_TEMPLATE_FILENAME) as XSSFWorkbook
-        loadWorkbookCellStyles()
         loadDataModelsIntoWorkbook(dataModels).withCloseable { XSSFWorkbook workbook ->
             if (!workbook) return null
             new ByteArrayOutputStream().tap { ByteArrayOutputStream exportStream ->
@@ -99,12 +93,8 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
         }
     }
 
-    private void loadWorkbookCellStyles() {
-        defaultCellStyle = createDefaultCellStyle(workbook)
-        colouredCellStyle = createColouredCellStyle(workbook, defaultCellStyle)
-    }
-
     private XSSFWorkbook loadDataModelsIntoWorkbook(List<DataModel> dataModels) {
+        loadWorkbookCellAndBorderStyles()
         List<DataModelDataRow> dataRows = dataModels.collect { new DataModelDataRow(it) }
         Sheet dataModelSheet = workbook.getSheet(ExcelPlugin.DATAMODELS_SHEET_NAME).tap { Sheet sheet ->
             addMetadataHeadersToSheet sheet, dataRows
@@ -113,7 +103,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
             loadDataModelDataRowToSheet dataModelSheet, dataRow
             loadContentDataRowsToSheet dataRow
         }
-        removeTemplateSheet workbook
+        removeTemplateSheet()
     }
 
     private void loadDataModelDataRowToSheet(Sheet sheet, DataModelDataRow dataRow) {
@@ -134,7 +124,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     private Sheet loadContentSheet(DataModelDataRow dataRow) {
         log.debug('Loading DataModel [{}] content sheet', dataRow.name)
-        createContentSheetFromTemplate(workbook, dataRow.sheetKey).tap { Sheet contentSheet ->
+        createContentSheetFromTemplate(dataRow.sheetKey).tap { Sheet contentSheet ->
             dataRow.sheetKey = contentSheet.sheetName
         }
     }
@@ -155,11 +145,11 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     private void configureDataModelSheetStyle(Sheet sheet, DataModelDataRow dataRow) {
         log.debug('Configuring DataModel [{}] sheet style', sheet.sheetName)
-        configureSheetStyle(sheet, dataRow.firstMetadataColumn, ExcelPlugin.DATAMODELS_NUM_HEADER_ROWS, defaultCellStyle, colouredCellStyle)
+        configureSheetStyle(sheet, dataRow.firstMetadataColumn, ExcelPlugin.DATAMODELS_NUM_HEADER_ROWS)
     }
 
     private void configureContentSheetStyle(Sheet sheet, List<ContentDataRow> dataRows) {
         log.debug('Configuring DataModel [{}] content sheet style', sheet.sheetName)
-        configureSheetStyle(sheet, dataRows.first().firstMetadataColumn, ExcelPlugin.CONTENT_NUM_HEADER_ROWS, defaultCellStyle, colouredCellStyle)
+        configureSheetStyle(sheet, dataRows.first().firstMetadataColumn, ExcelPlugin.CONTENT_NUM_HEADER_ROWS)
     }
 }

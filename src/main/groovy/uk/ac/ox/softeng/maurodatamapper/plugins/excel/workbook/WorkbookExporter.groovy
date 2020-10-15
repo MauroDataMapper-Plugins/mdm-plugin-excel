@@ -50,15 +50,21 @@ trait WorkbookExporter extends WorkbookHandler {
     private final double BORDER_COLOUR_TINT = -0.35d
     private final double CELL_COLOUR_TINT = 0.6d
 
-    Sheet createContentSheetFromTemplate(XSSFWorkbook workbook, String name) {
+    XSSFWorkbook workbook
+    XSSFCellStyle defaultCellStyle
+    XSSFCellStyle colouredCellStyle
+    XSSFCellStyle metadataBorderStyle
+    XSSFCellStyle metadataColouredBorderStyle
+
+    Sheet createContentSheetFromTemplate(String name) {
         try {
             workbook.cloneSheet(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME), name)
         } catch (IllegalArgumentException ignored) {
-            createContentSheetFromTemplate(workbook, "${name}.1")
+            createContentSheetFromTemplate("${name}.1")
         }
     }
 
-    XSSFWorkbook removeTemplateSheet(XSSFWorkbook workbook) {
+    XSSFWorkbook removeTemplateSheet() {
         log.debug('Removing the template sheet')
         workbook.tap {
             removeSheetAt(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME))
@@ -98,43 +104,11 @@ trait WorkbookExporter extends WorkbookHandler {
         }
     }
 
-    Sheet configureSheetStyle(Sheet sheet, int metadataColumnIndex, int numberOfHeaderRows, XSSFCellStyle defaultStyle, XSSFCellStyle colouredStyle) {
-        XSSFCellStyle metadataBorderStyle = sheet.workbook.createCellStyle().tap {
-            cloneStyleFrom defaultStyle
-            setBorderRight BorderStyle.DOUBLE
-        } as XSSFCellStyle
-        XSSFCellStyle metadataColouredBorderStyle = sheet.workbook.createCellStyle().tap {
-            cloneStyleFrom colouredStyle
-            setBorderRight BorderStyle.DOUBLE
-        } as XSSFCellStyle
-
-        int lastColumnIndex = sheet.max { it.lastCellNum }.lastCellNum
-        boolean colourRow = false
-
-        for (int rowNumber = numberOfHeaderRows; rowNumber <= sheet.lastRowNum; rowNumber++) {
-            Row row = sheet.getRow(rowNumber)
-            if (!row) continue
-
-            CellStyle mainCellStyle = colourRow ? colouredStyle : defaultStyle
-            CellStyle borderCellStyle = colourRow ? metadataColouredBorderStyle : metadataBorderStyle
-
-            setRowStyle(row, mainCellStyle, borderCellStyle, 0, lastColumnIndex, metadataColumnIndex)
-            rowNumber = configureExtraRowStyle(row, metadataColumnIndex, lastColumnIndex, defaultStyle, colouredStyle, mainCellStyle, borderCellStyle,
-                                               metadataBorderStyle, metadataColouredBorderStyle, colourRow)
-            colourRow = !colourRow
-        }
-
-        List<Integer> columnSizes = sheet.sheetName == ExcelPlugin.DATAMODELS_SHEET_NAME ? [3, 4, 5] : [5, 7, 9]
-        autoSizeColumns(sheet, [0, 1] + columnSizes)
-        autoSizeHeaderColumnsAfter(sheet, metadataColumnIndex)
-        sheet
-    }
-
-    XSSFCellStyle createDefaultCellStyle(XSSFWorkbook workbook) {
-        XSSFColor borderColour = new XSSFColor(BORDER_COLOUR).tap {
-            setTint BORDER_COLOUR_TINT
-        }
-        workbook.createCellStyle().tap {
+    void loadWorkbookCellAndBorderStyles() {
+        defaultCellStyle = workbook.createCellStyle().tap {
+            XSSFColor borderColour = new XSSFColor(BORDER_COLOUR).tap {
+                setTint BORDER_COLOUR_TINT
+            }
             setBorderTop BorderStyle.THIN
             setBorderLeft BorderStyle.THIN
             setBorderBottom BorderStyle.THIN
@@ -144,16 +118,56 @@ trait WorkbookExporter extends WorkbookHandler {
             setBorderColor BorderSide.BOTTOM, borderColour
             setBorderColor BorderSide.RIGHT, borderColour
         }
-    }
-
-    XSSFCellStyle createColouredCellStyle(XSSFWorkbook workbook, XSSFCellStyle defaultCellStyle) {
-        workbook.createCellStyle().tap {
+        colouredCellStyle = workbook.createCellStyle().tap {
             cloneStyleFrom defaultCellStyle
             setFillForegroundColor new XSSFColor(CELL_COLOUR).tap {
                 setTint CELL_COLOUR_TINT
             }
             setFillPattern FillPatternType.SOLID_FOREGROUND
         }
+        metadataBorderStyle = workbook.createCellStyle().tap {
+            cloneStyleFrom defaultCellStyle
+            setBorderRight BorderStyle.DOUBLE
+        } as XSSFCellStyle
+        metadataColouredBorderStyle = workbook.createCellStyle().tap {
+            cloneStyleFrom colouredCellStyle
+            setBorderRight BorderStyle.DOUBLE
+        } as XSSFCellStyle
+    }
+
+    Sheet configureSheetStyle(Sheet sheet, int metadataColumnIndex, int numberOfHeaderRows) {
+        boolean isRowColoured = false
+        int lastColumnIndex = sheet.max { it.lastCellNum }.lastCellNum
+
+        for (int rowIndex = numberOfHeaderRows; rowIndex <= sheet.lastRowNum; rowIndex++) {
+            Row row = sheet.getRow(rowIndex)
+            if (!row) continue
+
+            setRowStyle(row, isRowColoured, metadataColumnIndex, 0, lastColumnIndex)
+
+            CellRangeAddress enumRowsRegion = getMergeRegion(row.getCell(0))
+            if (!enumRowsRegion) rowIndex = row.rowNum
+            else {
+                boolean isEnumRowColoured = isRowColoured
+                (enumRowsRegion.firstRow..enumRowsRegion.lastRow).each { int enumRowIndex ->
+                    Closure setEnumRowStyle = { int start, int finish ->
+                        setRowStyle(sheet.getRow(enumRowIndex), isEnumRowColoured, metadataColumnIndex, start, finish)
+                    }
+                    setEnumRowStyle(0, EnumerationDataRow.KEY_COLUMN_INDEX)
+                    setEnumRowStyle(EnumerationDataRow.KEY_COLUMN_INDEX, EnumerationDataRow.VALUE_COLUMN_INDEX + 1)
+                    setEnumRowStyle(EnumerationDataRow.VALUE_COLUMN_INDEX + 1, lastColumnIndex)
+                    isEnumRowColoured = !isEnumRowColoured
+                }
+                rowIndex = enumRowsRegion.lastRow
+            }
+
+            isRowColoured = !isRowColoured
+        }
+
+        List<Integer> columnSizes = sheet.sheetName == ExcelPlugin.DATAMODELS_SHEET_NAME ? [3, 4, 5] : [5, 7, 9]
+        autoSizeColumns(sheet, [0, 1] + columnSizes)
+        autoSizeHeaderColumnsAfter(sheet, metadataColumnIndex)
+        sheet
     }
 
     private void autoSizeColumns(Sheet sheet, List<Integer> columns) {
@@ -183,11 +197,11 @@ trait WorkbookExporter extends WorkbookHandler {
             firstColumn = headerCell.columnIndex
             lastColumn = headerCell.columnIndex
         }
-        (newRegion.firstRow..newRegion.lastRow).each { int rowNumber ->
-            Row newRegionRow = headerRow.sheet.getRow(rowNumber)
+        (newRegion.firstRow..newRegion.lastRow).each { int rowIndex ->
+            Row newRegionRow = headerRow.sheet.getRow(rowIndex)
             Cell newRegionHeaderCell = CellUtil.getCell(newRegionRow, headerCell.columnIndex)
             newRegionHeaderCell.setCellStyle(copyCell.cellStyle)
-            if (rowNumber == newRegion.lastRow) {
+            if (rowIndex == newRegion.lastRow) {
                 CellUtil.setCellStyleProperty(newRegionHeaderCell, CellUtil.BORDER_BOTTOM,
                                               newRegionRow.getCell(cellStyleColumn).cellStyle.borderBottom)
             }
@@ -196,13 +210,15 @@ trait WorkbookExporter extends WorkbookHandler {
         headerCell
     }
 
-    private void setRowStyle(Row row, XSSFCellStyle cellStyle, XSSFCellStyle borderCellStyle, int start, int finish, int metadataColumnIndex) {
+    private void setRowStyle(Row row, boolean colourRow, int metadataColumnIndex, int start, int finish) {
+        XSSFCellStyle cellStyle = colourRow ? colouredCellStyle : defaultCellStyle
+        XSSFCellStyle borderStyle = colourRow ? metadataColouredBorderStyle : metadataBorderStyle
         CellStyle workbookDefaultStyle = row.sheet.workbook.getCellStyleAt(0)
-        (start..<finish).each { int cellNumber ->
-            Cell cell = row.getCell(cellNumber)
-            CellStyle styleToUse = cellNumber == metadataColumnIndex - 1 ? borderCellStyle : cellStyle
+        (start..<finish).each { int cellIndex ->
+            Cell cell = row.getCell(cellIndex)
+            CellStyle styleToUse = cellIndex == metadataColumnIndex - 1 ? borderStyle : cellStyle
             if (!cell) {
-                cell = CellUtil.getCell(row, cellNumber)
+                cell = CellUtil.getCell(row, cellIndex)
                 cell.setCellStyle(styleToUse)
             } else if (!cell.cellStyle || cell.cellStyle == workbookDefaultStyle) {
                 cell.setCellStyle(styleToUse)
@@ -210,23 +226,6 @@ trait WorkbookExporter extends WorkbookHandler {
                 copyCellStyleInto(cell, styleToUse)
             }
         }
-    }
-
-    private int configureExtraRowStyle(Row row, int metadataColumnIndex, int lastColumnIndex, XSSFCellStyle defaultStyle,
-                                       XSSFCellStyle colouredStyle, XSSFCellStyle mainCellStyle, XSSFCellStyle borderCellStyle,
-                                       XSSFCellStyle metadataBorderStyle, XSSFCellStyle metadataColouredBorderStyle, boolean colourRow) {
-        CellRangeAddress mergedRegion = getMergeRegion(row.getCell(0))
-        if (!mergedRegion) return row.rowNum
-
-        (mergedRegion.firstRow..mergedRegion.lastRow).each { int rowNumber ->
-            Row sheetRow = row.sheet.getRow(rowNumber)
-            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, 0, EnumerationDataRow.KEY_COLUMN_INDEX, metadataColumnIndex)
-            setRowStyle(sheetRow, colourRow ? colouredStyle : defaultStyle, colourRow ? metadataColouredBorderStyle : metadataBorderStyle,
-                        EnumerationDataRow.KEY_COLUMN_INDEX, EnumerationDataRow.VALUE_COLUMN_INDEX + 1, metadataColumnIndex)
-            setRowStyle(sheetRow, mainCellStyle, borderCellStyle, EnumerationDataRow.VALUE_COLUMN_INDEX + 1, lastColumnIndex, metadataColumnIndex)
-            colourRow = !colourRow
-        }
-        mergedRegion.lastRow
     }
 
     private void copyCellStyleInto(Cell cell, XSSFCellStyle style) {
