@@ -304,7 +304,7 @@ class ExcelSimpleDataModelImporterProviderService
 
             String dataClassPath = row["DataClass Path"]
             DataClass parentDataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath)
-            String name = row["Name"]
+            String name = row["DataElement Name"]
             String description = row["Description"]
             String minMult = row["Minimum Multiplicity"]
             String maxMult = row["Maximum Multiplicity"]
@@ -355,10 +355,8 @@ class ExcelSimpleDataModelImporterProviderService
                     }
                     modelDataTypes[typeName] = elementDataType
                 }
-                newDataElement.dataType = elementDataType
-                elementDataType.addToDataElements(newDataElement)
-                parentDataClass.addToDataElements(newDataElement)
-                createdElement = newDataElement
+                createdElement = dataElementService.findOrCreateDataElementForDataClass(
+                    parentDataClass, name, description, currentUser, elementDataType, newDataElement.minMultiplicity, newDataElement.maxMultiplicity)
             }
             addMetadataFromExtraColumns(createdElement, ExcelSimplePlugin.MODEL_SHEET_COLUMNS, row)
         }
