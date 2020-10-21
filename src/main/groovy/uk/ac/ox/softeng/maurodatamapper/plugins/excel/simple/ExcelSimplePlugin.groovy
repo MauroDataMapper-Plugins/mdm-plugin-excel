@@ -32,6 +32,7 @@ class ExcelSimplePlugin extends AbstractMauroDataMapperPlugin {
 
     static DATAMODEL_SHEET_COLUMNS = ["Name", "Description", "Author", "Organisation", "Sheet Key", "Type"]
     static ENUM_SHEET_COLUMNS = ["DataModel Name", "Name", "Description", "Key", "Value"]
-    static MODEL_SHEET_COLUMNS = ["DataClass Path", "Name", "Description", "Minimum Multiplicity", "Maximum Multiplicity", "DataType Name",
-                                  "DataType Reference"]
+    // TODO: Allow flexibility with whitespaces, e.g., 'Maximum Multiplicity' == 'Maximum\nMultiplicity'
+    static MODEL_SHEET_COLUMNS = ["DataClass Path", "DataElement Name", "Description", "Minimum\nMultiplicity", "Maximum\nMultiplicity",
+                                  "DataType Name", "DataType Reference"]
 }
