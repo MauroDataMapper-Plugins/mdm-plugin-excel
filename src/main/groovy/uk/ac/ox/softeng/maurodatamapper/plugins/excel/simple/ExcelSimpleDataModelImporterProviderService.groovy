@@ -353,7 +353,7 @@ class ExcelSimpleDataModelImporterProviderService
                 }
                 newDataElement.dataType = elementDataType
                 elementDataType.addToDataElements(newDataElement)
-                parentDataClass.addToChildDataElements(newDataElement)
+                parentDataClass.addToDataElements(newDataElement)
                 createdElement = newDataElement
             }
             addMetadataFromExtraColumns(createdElement, ExcelSimplePlugin.MODEL_SHEET_COLUMNS, row)
