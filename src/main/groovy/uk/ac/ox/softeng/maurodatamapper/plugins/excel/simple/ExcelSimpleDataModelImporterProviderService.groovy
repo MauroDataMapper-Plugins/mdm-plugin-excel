@@ -132,7 +132,7 @@ class ExcelSimpleDataModelImporterProviderService
             List<Map<String, String>> sheetValues = []
             Map<String, Map<String, EnumerationType>> enumerationTypes = [:]
             if (enumerationsSheet) {
-                enumerationTypes = calculateEnumerationTypes(sheetValues)
+                enumerationTypes = calculateEnumerationTypes(getSheetValues(ExcelSimplePlugin.ENUM_SHEET_COLUMNS, enumerationsSheet))
             }
 
             List<DataModel> dataModels = []
@@ -273,7 +273,7 @@ class ExcelSimpleDataModelImporterProviderService
         Map<String, Map<String, EnumerationType>> returnValues = [:]
         sheetValues.each { columnValues ->
             String dataModelName = columnValues["DataModel Name"]
-            String label = columnValues["Name"]
+            String label = columnValues["Enumeration Name"]
             String description = columnValues["Description"]
             String key = columnValues["Key"]
             String value = columnValues["Value"]
