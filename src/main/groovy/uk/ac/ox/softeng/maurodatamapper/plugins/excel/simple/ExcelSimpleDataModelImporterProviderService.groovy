@@ -139,7 +139,7 @@ class ExcelSimpleDataModelImporterProviderService
                     throw new ApiInternalException('EFS06', "The Excel file does not include a sheet called ${sheetKey} referenced for " +
                                                             "model'${dataModel.label}'")
                 }
-                addClassesAndElements(dataModel, modelSheet, enumerationTypes[dataModel.label] ?: [:])
+                addClassesAndElements(currentUser, dataModel, modelSheet, enumerationTypes[dataModel.label] ?: [:])
 
                 dataModels.add(dataModel)
             }
@@ -293,13 +293,13 @@ class ExcelSimpleDataModelImporterProviderService
 
     //    static MODEl_SHEET_COLUMNS = ["DataClass Path", "Name", "Description", "Minimum Multiplicity", "Maximum Multiplicity", "DataType Name",
     //                                  "DataType Reference"]
-    void addClassesAndElements(DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
+    void addClassesAndElements(User currentUser, DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
         List<Map<String, String>> sheetValues = getSheetValues(ExcelSimplePlugin.MODEL_SHEET_COLUMNS, dataModelSheet)
         Map<String, DataType> modelDataTypes = [:]
         sheetValues.each { row ->
 
             String dataClassPath = row["DataClass Path"]
-            DataClass parentDataClass = getOrCreateClassFromPath(dataModel, dataClassPath)
+            DataClass parentDataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath)
             String name = row["Name"]
             String description = row["Description"]
             String minMult = row["Minimum Multiplicity"]
@@ -343,7 +343,7 @@ class ExcelSimpleDataModelImporterProviderService
                     elementDataType = modelDataTypes[typeName]
                 } else {
                     if (typeReference) {
-                        DataClass referenceDataClass = getOrCreateClassFromPath(dataModel, typeReference)
+                        DataClass referenceDataClass = getOrCreateClassFromPath(currentUser, dataModel, typeReference)
                         elementDataType = new ReferenceType(label: typeName)
                         referenceDataClass.addToReferenceTypes(elementDataType)
                     } else {
@@ -366,10 +366,10 @@ class ExcelSimpleDataModelImporterProviderService
         }
     }
 
-    DataClass getOrCreateClassFromPath(DataModel dataModel, String path) {
+    DataClass getOrCreateClassFromPath(User currentUser, DataModel dataModel, String path) {
         List<String> pathComponents = path.split("\\|")
         DataClass parentDataClass = dataClassService.findOrCreateDataClassByPath(dataModel, pathComponents, "",
-                                                                                 null,
+                                                                                 currentUser,
                                                                                  null, null)
         return parentDataClass
     }
