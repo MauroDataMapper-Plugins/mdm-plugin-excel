@@ -300,10 +300,10 @@ class ExcelSimpleDataModelImporterProviderService
     void addClassesAndElements(User currentUser, DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
         List<Map<String, String>> sheetValues = getSheetValues(ExcelSimplePlugin.MODEL_SHEET_COLUMNS, dataModelSheet)
         Map<String, DataType> modelDataTypes = [:]
+        DataClass parentDataClass
         sheetValues.each { row ->
 
             String dataClassPath = row["DataClass Path"]
-            DataClass parentDataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath)
             String name = row["DataElement Name"]
             String description = row["Description"]
             String minMult = row["Minimum Multiplicity"]
@@ -313,20 +313,23 @@ class ExcelSimpleDataModelImporterProviderService
             MetadataAware createdElement = null
             if (!name || name == "") {
                 // We're dealing with a data class
+                // createdElement = parentDataClass
+                // if (description != "") {
+                //     parentDataClass.description = description
+                // }
+                // if (minMult) {
+                //     parentDataClass.minMultiplicity = Integer.parseInt(minMult)
+                // }
+                // if (maxMult) {
+                //     if (maxMult == "*") {
+                //         parentDataClass.maxMultiplicity = -1
+                //     } else {
+                //         parentDataClass.maxMultiplicity = Integer.parseInt(maxMult)
+                //     }
+                // }
+                parentDataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, minMult ? Integer.parseInt(minMult) : null,
+                                                           maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : null)
                 createdElement = parentDataClass
-                if (description != "") {
-                    parentDataClass.description = description
-                }
-                if (minMult) {
-                    parentDataClass.minMultiplicity = Integer.parseInt(minMult)
-                }
-                if (maxMult) {
-                    if (maxMult == "*") {
-                        parentDataClass.maxMultiplicity = -1
-                    } else {
-                        parentDataClass.maxMultiplicity = Integer.parseInt(maxMult)
-                    }
-                }
             } else {
                 // We're dealing with a data element
                 DataElement newDataElement = new DataElement(label: name, description: description)
@@ -368,8 +371,9 @@ class ExcelSimpleDataModelImporterProviderService
         }
     }
 
-    DataClass getOrCreateClassFromPath(User currentUser, DataModel dataModel, String path) {
-        dataClassService.findOrCreateDataClassByPath(dataModel, getDataClassPathLabels(path), "", currentUser, null, null)
+    DataClass getOrCreateClassFromPath(User currentUser, DataModel dataModel, String path, Integer minMultiplicity = null,
+                                       Integer maxMultiplicity = null) {
+        dataClassService.findOrCreateDataClassByPath(dataModel, getDataClassPathLabels(path), "", currentUser, minMultiplicity, maxMultiplicity)
     }
 
     String getCellValueAsString(Cell cell) {
