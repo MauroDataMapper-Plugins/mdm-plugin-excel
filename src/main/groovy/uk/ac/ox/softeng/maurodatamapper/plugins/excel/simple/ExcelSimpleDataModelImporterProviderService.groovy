@@ -348,7 +348,7 @@ class ExcelSimpleDataModelImporterProviderService
                 } else {
                     if (typeReference) {
                         DataClass referenceDataClass = getOrCreateClassFromPath(currentUser, dataModel, typeReference)
-                        elementDataType = new ReferenceType(label: typeName)
+                        elementDataType = new ReferenceType(label: typeName ?: getDataClassPathLabels(typeReference).last())
                         referenceDataClass.addToReferenceTypes(elementDataType)
                     } else {
                         elementDataType = new PrimitiveType(label: typeName)
@@ -369,14 +369,14 @@ class ExcelSimpleDataModelImporterProviderService
     }
 
     DataClass getOrCreateClassFromPath(User currentUser, DataModel dataModel, String path) {
-        List<String> pathComponents = path.split("\\|")
-        DataClass parentDataClass = dataClassService.findOrCreateDataClassByPath(dataModel, pathComponents, "",
-                                                                                 currentUser,
-                                                                                 null, null)
-        return parentDataClass
+        dataClassService.findOrCreateDataClassByPath(dataModel, getDataClassPathLabels(path), "", currentUser, null, null)
     }
 
     String getCellValueAsString(Cell cell) {
         cell ? dataFormatter.formatCellValue(cell).replaceAll(/’/, '\'').replaceAll(/—/, '-').trim() : ''
+    }
+
+    private List<String> getDataClassPathLabels(String dataClassPath) {
+        dataClassPath.split('\\|').toList()*.trim()
     }
 }
