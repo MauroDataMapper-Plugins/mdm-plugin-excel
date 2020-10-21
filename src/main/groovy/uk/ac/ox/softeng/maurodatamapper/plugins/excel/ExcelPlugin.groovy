@@ -17,6 +17,8 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple.ExcelSimpleDataModelExporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple.ExcelSimpleDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.provider.plugin.AbstractMauroDataMapperPlugin
 
 import groovy.transform.CompileDynamic
@@ -52,6 +54,8 @@ class ExcelPlugin extends AbstractMauroDataMapperPlugin {
         { ->
             excelDataModelImporterProviderService ExcelDataModelImporterProviderService
             excelDataModelExporterProviderService ExcelDataModelExporterProviderService
+            excelSimpleDataModelImporterProviderService ExcelSimpleDataModelImporterProviderService
+            excelSimpleDataModelExporterProviderService ExcelSimpleDataModelExporterProviderService
         }
     }
 }

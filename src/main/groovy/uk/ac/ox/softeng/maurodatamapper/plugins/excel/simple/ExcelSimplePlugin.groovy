@@ -30,14 +30,6 @@ class ExcelSimplePlugin extends AbstractMauroDataMapperPlugin {
         'Plugin : Simple Excel'
     }
 
-    @Override
-    Closure doWithSpring() {
-        { ->
-            excelSimpleDataModelImporterProviderService(ExcelSimpleDataModelImporterProviderService)
-            excelSimpleDataModelExporterProviderService(ExcelSimpleDataModelExporterProviderService)
-        }
-    }
-
     static DATAMODEL_SHEET_COLUMNS = ["Name", "Description", "Author", "Organisation", "Sheet Key", "Type"]
     static ENUM_SHEET_COLUMNS = ["DataModel Name", "Name", "Description", "Key", "Value"]
     static MODEL_SHEET_COLUMNS = ["DataClass Path", "Name", "Description", "Minimum Multiplicity", "Maximum Multiplicity", "DataType Name",
