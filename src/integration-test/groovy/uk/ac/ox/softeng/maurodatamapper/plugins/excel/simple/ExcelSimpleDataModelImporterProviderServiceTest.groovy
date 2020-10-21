@@ -20,8 +20,8 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
 import uk.ac.ox.softeng.maurodatamapper.core.importer.ImporterService
 import uk.ac.ox.softeng.maurodatamapper.core.rest.transport.importer.ImportParameterGroup
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.BaseExcelDataModelImporterExporterProviderServiceTest
 
+import org.junit.Ignore
 import org.junit.Test
 
 import groovy.transform.CompileStatic
@@ -31,7 +31,16 @@ import static org.junit.Assert.assertTrue
 
 @CompileStatic
 @SuppressWarnings('SpellCheckingInspection')
-class ExcelSimpleDataModelImporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
+class ExcelSimpleDataModelImporterProviderServiceTest extends BaseExcelSimpleDataModelImporterExporterProviderServiceTest {
+
+    @Ignore
+    void testSheetKey() {
+        Map<String, String> results = [
+            'My Model'                  : 'MM',
+            'GEL: CancerSchema-v1.0.1'  : 'GC101',
+            '[GEL: CancerSchema-v1.0.1]': 'GC101'
+        ].each { assertEquals ExcelSimpleDataModelExporterProviderService.createSheetKey(it.key), it.value }
+    }
 
     @Test
     void testImportParameters() {
@@ -49,23 +58,23 @@ class ExcelSimpleDataModelImporterProviderServiceTest extends BaseExcelDataModel
 
     @Test
     void testSimpleImport() {
-        DataModel dataModel = importSheet('simpleImport.xlsx') as DataModel
+        DataModel dataModel = importSheet('simpleImport.simple.xlsx') as DataModel
         verifySimpleDataModel dataModel
         verifySimpleDataModelContent dataModel
     }
 
     @Test
     void testSimpleImportWithComplexMetadata() {
-        DataModel dataModel = importSheet('simpleImportComplexMetadata.xlsx') as DataModel
+        DataModel dataModel = importSheet('simpleImportComplexMetadata.simple.xlsx') as DataModel
         verifySimpleDataModelWithComplexMetadata dataModel
         verifySimpleDataModelWithComplexMetadataContent dataModel
     }
 
     @Test
     void testMultipleDataModelImport() {
-        importerInstance.saveDataModelsOnCreate = false
+        // importerInstance.saveDataModelsOnCreate = false
 
-        List<DataModel> dataModels = importSheet('multiDataModelImport.xlsx', 3) as List<DataModel>
+        List<DataModel> dataModels = importSheet('multiDataModelImport.simple.xlsx', 3) as List<DataModel>
         assertEquals 'Number of DataModels imported', 3, dataModels.size()
 
         DataModel simpleDataModel = findByLabel(dataModels, 'test')

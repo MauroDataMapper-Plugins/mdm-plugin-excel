@@ -28,8 +28,6 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelDataModelFileImporterProviderServiceParameters
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseImportPluginTest
 
@@ -47,7 +45,7 @@ import static org.junit.Assert.fail
 
 @CompileStatic
 abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
-    extends BaseImportPluginTest<DataModel, ExcelDataModelFileImporterProviderServiceParameters, ExcelDataModelImporterProviderService> {
+    extends BaseImportPluginTest<DataModel, ExcelSimpleDataModelFileImporterProviderServiceParameters, ExcelSimpleDataModelImporterProviderService> {
 
     private static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
 
@@ -58,14 +56,14 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         dataModelService.saveWithBatching(domain)
     }
 
-    protected ExcelDataModelFileImporterProviderServiceParameters createImportParameters(String importFilename) throws IOException {
+    protected ExcelSimpleDataModelFileImporterProviderServiceParameters createImportParameters(String importFilename) throws IOException {
         Path importFilepath = Paths.get(IMPORT_FILEPATH, importFilename)
         if (!Files.exists(importFilepath)) fail("File ${importFilename} cannot be found")
         createImportParameters(importFilepath)
     }
 
-    protected ExcelDataModelFileImporterProviderServiceParameters createImportParameters(Path importFilepath) throws IOException {
-        new ExcelDataModelFileImporterProviderServiceParameters(finalised: false).tap {
+    protected ExcelSimpleDataModelFileImporterProviderServiceParameters createImportParameters(Path importFilepath) throws IOException {
+        new ExcelSimpleDataModelFileImporterProviderServiceParameters(finalised: false).tap {
             importFile = new FileParameter(importFilepath.toString(), ExcelPlugin.EXCEL_FILETYPE, Files.readAllBytes(importFilepath))
         }
     }

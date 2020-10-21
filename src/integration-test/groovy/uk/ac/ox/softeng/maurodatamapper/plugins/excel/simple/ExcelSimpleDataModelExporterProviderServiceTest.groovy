@@ -19,8 +19,6 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.BaseExcelDataModelImporterExporterProviderServiceTest
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelDataModelExporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.user.IntegrationTestUser
 
@@ -41,32 +39,34 @@ import static org.junit.Assert.assertNotNull
 @Slf4j
 @CompileStatic
 @SuppressWarnings('SpellCheckingInspection')
-class ExcelSimpleDataModelExporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
+class ExcelSimpleDataModelExporterProviderServiceTest extends BaseExcelSimpleDataModelImporterExporterProviderServiceTest {
 
     private static final String EXPORT_FILEPATH = 'build/tmp/'
 
     @Before
     void disableDataModelSavingOnCreate() {
-        importerInstance.saveDataModelsOnCreate = false
+        // importerInstance.saveDataModelsOnCreate = false
     }
 
     @Test
     void testSimpleExport() {
-        DataModel dataModel = importThenExportSheet('simpleImport.xlsx', 'simpleImport_export.xlsx') as DataModel
+        DataModel dataModel = importThenExportSheet('simpleImport.simple.xlsx', 'simpleImport_export.simple.xlsx') as DataModel
         verifySimpleDataModel dataModel
         verifySimpleDataModelContent dataModel
     }
 
     @Test
     void testSimpleExportWithComplexMetadata() {
-        DataModel dataModel = importThenExportSheet('simpleImportComplexMetadata.xlsx', 'simpleImportComplexMetadata_export.xlsx') as DataModel
+        DataModel dataModel = importThenExportSheet(
+            'simpleImportComplexMetadata.simple.xlsx', 'simpleImportComplexMetadata_export.simple.xlsx') as DataModel
         verifySimpleDataModelWithComplexMetadata dataModel
         verifySimpleDataModelWithComplexMetadataContent dataModel
     }
 
     @Test
     void testMultipleDataModelExport() {
-        List<DataModel> dataModels = importThenExportSheet('multiDataModelImport.xlsx', 'multiDataModelImport_export.xlsx', 3) as List<DataModel>
+        List<DataModel> dataModels = importThenExportSheet(
+            'multiDataModelImport.simple.xlsx', 'multiDataModelImport_export.simple.xlsx', 3) as List<DataModel>
 
         DataModel simpleDataModel = findByLabel(dataModels, 'test')
         verifySimpleDataModel simpleDataModel
@@ -92,7 +92,7 @@ class ExcelSimpleDataModelExporterProviderServiceTest extends BaseExcelDataModel
 
         // Export what has been saved into the database
         log.info('>>> Exporting {}', importedDataModels.size() == 1 ? 'Single' : 'Multiple')
-        ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
+        ExcelSimpleDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelSimpleDataModelExporterProviderService)
         ByteArrayOutputStream exportedDataModels = importedDataModels.size() == 1
             ? exporterService.exportDomain(IntegrationTestUser.instance, importedDataModels.first().id)
             : exporterService.exportDomains(IntegrationTestUser.instance, importedDataModels.id)

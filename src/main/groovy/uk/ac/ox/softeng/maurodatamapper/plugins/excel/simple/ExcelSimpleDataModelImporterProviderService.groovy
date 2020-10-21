@@ -59,7 +59,8 @@ import groovy.util.logging.Slf4j
  * @since 01/03/2018
  */
 @Slf4j
-class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProviderService<ExcelSimpleFileImporterProviderServiceParameters> {
+class ExcelSimpleDataModelImporterProviderService
+    extends DataModelImporterProviderService<ExcelSimpleDataModelFileImporterProviderServiceParameters> {
 
     @Autowired
     DataModelService dataModelService
@@ -97,12 +98,12 @@ class ExcelSimpleDataModelImporterProviderService extends DataModelImporterProvi
     }
 
     @Override
-    DataModel importDataModel(User currentUser, ExcelSimpleFileImporterProviderServiceParameters params) {
+    DataModel importDataModel(User currentUser, ExcelSimpleDataModelFileImporterProviderServiceParameters params) {
         importDataModels(currentUser, params)?.first()
     }
 
     @Override
-    List<DataModel> importDataModels(User currentUser, ExcelSimpleFileImporterProviderServiceParameters importerParameters) {
+    List<DataModel> importDataModels(User currentUser, ExcelSimpleDataModelFileImporterProviderServiceParameters importerParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         if (importerParameters.importFile.fileContents.size() == 0) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
         log.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)
