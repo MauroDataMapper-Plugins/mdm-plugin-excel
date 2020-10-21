@@ -21,6 +21,8 @@ import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiInternalException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
+import uk.ac.ox.softeng.maurodatamapper.core.authority.AuthorityService
+import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.core.model.facet.MetadataAware
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
@@ -80,6 +82,11 @@ class ExcelSimpleDataModelImporterProviderService
     @Autowired
     DataElementService dataElementService
 
+    @Autowired
+    AuthorityService authorityService
+
+    boolean saveDataModelsOnCreate = true
+
     static DataFormatter dataFormatter = new DataFormatter()
 
     @Override
@@ -131,7 +138,7 @@ class ExcelSimpleDataModelImporterProviderService
             List<DataModel> dataModels = []
             sheetValues = getSheetValues(ExcelSimplePlugin.DATAMODEL_SHEET_COLUMNS, dataModelsSheet)
             sheetValues.each { row ->
-                DataModel dataModel = dataModelFromRow(row)
+                DataModel dataModel = dataModelFromRow(currentUser, row)
                 addMetadataFromExtraColumns(dataModel, ExcelSimplePlugin.DATAMODEL_SHEET_COLUMNS, row)
                 String sheetKey = row["Sheet Key"]
                 Sheet modelSheet = workbook.getSheet(sheetKey)
@@ -239,7 +246,7 @@ class ExcelSimpleDataModelImporterProviderService
         }
     }
 
-    DataModel dataModelFromRow(Map<String, String> columnValues) {
+    DataModel dataModelFromRow(User currentUser, Map<String, String> columnValues) {
         String label = columnValues["Name"]
         String description = columnValues["Description"]
         String author = columnValues["Author"]
@@ -255,13 +262,10 @@ class ExcelSimpleDataModelImporterProviderService
             throw new ApiBadRequestException('SEIS03', "Invalid Data Model Type for Model '${label}'")
         }
 
-        DataModel dataModel = new DataModel(label: label,
-                                            description: description,
-                                            author: author,
-                                            organisation: organisation,
-                                            type: dataModelType)
-
-        return dataModel
+        dataModelService.createAndSaveDataModel(
+            currentUser, Folder.findOrCreateByLabel('random', [createdBy: currentUser.emailAddress]),
+            DataModelType.findForLabel(dataModelType.toString()), label, description, author, organisation,
+            authorityService.defaultAuthority, saveDataModelsOnCreate)
     }
 
     Map<String, Map<String, EnumerationType>> calculateEnumerationTypes(List<Map<String, String>> sheetValues) {
