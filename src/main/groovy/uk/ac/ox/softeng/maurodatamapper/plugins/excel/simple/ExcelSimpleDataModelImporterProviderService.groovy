@@ -38,7 +38,6 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationTypeService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveTypeService
-import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceTypeService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
@@ -358,9 +357,9 @@ class ExcelSimpleDataModelImporterProviderService
             elementDataType = modelDataTypes[typeName]
         } else {
             if (typeReference) {
-                DataClass referenceDataClass = getOrCreateClassFromPath(currentUser, dataModel, typeReference)
-                elementDataType = new ReferenceType(label: typeName ?: getDataClassPathLabels(typeReference).last())
-                referenceDataClass.addToReferenceTypes(elementDataType)
+                DataClass referenceDataClass = dataClassService.findDataClassByPath(dataModel, getDataClassPathLabels(typeReference))
+                elementDataType = referenceTypeService.findOrCreateDataTypeForDataModel(
+                    dataModel, referenceDataClass.label, null, currentUser, referenceDataClass)
             } else {
                 elementDataType = new PrimitiveType(label: typeName)
             }

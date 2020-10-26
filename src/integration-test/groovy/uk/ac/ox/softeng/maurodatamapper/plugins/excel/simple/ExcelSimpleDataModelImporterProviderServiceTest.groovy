@@ -72,7 +72,7 @@ class ExcelSimpleDataModelImporterProviderServiceTest extends BaseExcelSimpleDat
 
     @Test
     void testMultipleDataModelImport() {
-        // importerInstance.saveDataModelsOnCreate = false
+        importerInstance.saveDataModelsOnCreate = false
 
         List<DataModel> dataModels = importSheet('multiDataModelImport.simple.xlsx', 3) as List<DataModel>
         assertEquals 'Number of DataModels imported', 3, dataModels.size()
