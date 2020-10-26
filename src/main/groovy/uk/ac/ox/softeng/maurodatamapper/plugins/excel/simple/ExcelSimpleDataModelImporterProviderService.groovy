@@ -314,7 +314,8 @@ class ExcelSimpleDataModelImporterProviderService
                 String description = row["Description"]
                 String minMult = row["Minimum\nMultiplicity"]
                 String maxMult = row["Maximum\nMultiplicity"]
-                dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, description, minMult ? Integer.parseInt(minMult) : 1,
+                dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, name ? "" : description,
+                                                     minMult ? Integer.parseInt(minMult) : 1,
                                                      maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : 1)
                 createdElement = name ? addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row) : dataClass
             } else {
