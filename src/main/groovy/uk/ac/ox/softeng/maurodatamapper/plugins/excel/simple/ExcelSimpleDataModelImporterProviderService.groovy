@@ -312,8 +312,8 @@ class ExcelSimpleDataModelImporterProviderService
                 // We're dealing with a data class
                 previousDataClassPath = dataClassPath
                 String description = row["Description"]
-                String minMult = row["Minimum Multiplicity"]
-                String maxMult = row["Maximum Multiplicity"]
+                String minMult = row["Minimum\nMultiplicity"]
+                String maxMult = row["Maximum\nMultiplicity"]
                 dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, description, minMult ? Integer.parseInt(minMult) : 1,
                                                      maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : 1)
                 createdElement = name ? addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row) : dataClass
@@ -344,8 +344,8 @@ class ExcelSimpleDataModelImporterProviderService
                                        Map<String, EnumerationType> enumerationTypes, Map<String, String> row) {
         String name = row["DataElement Name"]
         String description = row["Description"]
-        String minMult = row["Minimum Multiplicity"]
-        String maxMult = row["Maximum Multiplicity"]
+        String minMult = row["Minimum\nMultiplicity"]
+        String maxMult = row["Maximum\nMultiplicity"]
         String typeName = row["DataType Name"]
         String typeReference = row["DataType Reference"]
         // We're dealing with a data element
