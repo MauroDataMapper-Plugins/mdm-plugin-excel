@@ -300,18 +300,14 @@ class ExcelSimpleDataModelImporterProviderService
     void addClassesAndElements(User currentUser, DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
         List<Map<String, String>> sheetValues = getSheetValues(ExcelSimplePlugin.MODEL_SHEET_COLUMNS, dataModelSheet)
         Map<String, DataType> modelDataTypes = [:]
-        DataClass parentDataClass
+        DataClass dataClass
+        String previousDataClassPath
         sheetValues.each { row ->
-
             String dataClassPath = row["DataClass Path"]
             String name = row["DataElement Name"]
-            String description = row["Description"]
-            String minMult = row["Minimum Multiplicity"]
-            String maxMult = row["Maximum Multiplicity"]
-            String typeName = row["DataType Name"]
-            String typeReference = row["DataType Reference"]
             MetadataAware createdElement = null
-            if (!name || name == "") {
+
+            if (!previousDataClassPath?.equals(dataClassPath) && name || !name) {
                 // We're dealing with a data class
                 // createdElement = parentDataClass
                 // if (description != "") {
@@ -327,39 +323,14 @@ class ExcelSimpleDataModelImporterProviderService
                 //         parentDataClass.maxMultiplicity = Integer.parseInt(maxMult)
                 //     }
                 // }
-                parentDataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, minMult ? Integer.parseInt(minMult) : null,
-                                                           maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : null)
-                createdElement = parentDataClass
+                previousDataClassPath = dataClassPath
+                String minMult = row["Minimum Multiplicity"]
+                String maxMult = row["Maximum Multiplicity"]
+                dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, minMult ? Integer.parseInt(minMult) : null,
+                                                     maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : null)
+                createdElement = name ? addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row) : dataClass
             } else {
-                // We're dealing with a data element
-                DataElement newDataElement = new DataElement(label: name, description: description)
-                if (minMult) {
-                    newDataElement.minMultiplicity = Integer.parseInt(minMult)
-                }
-                if (maxMult) {
-                    if (maxMult == "*") {
-                        newDataElement.maxMultiplicity = -1
-                    } else {
-                        newDataElement.maxMultiplicity = Integer.parseInt(maxMult)
-                    }
-                }
-                DataType elementDataType
-                if (enumerationTypes[typeName]) {
-                    elementDataType = enumerationTypes[typeName]
-                } else if (modelDataTypes[typeName]) {
-                    elementDataType = modelDataTypes[typeName]
-                } else {
-                    if (typeReference) {
-                        DataClass referenceDataClass = getOrCreateClassFromPath(currentUser, dataModel, typeReference)
-                        elementDataType = new ReferenceType(label: typeName ?: getDataClassPathLabels(typeReference).last())
-                        referenceDataClass.addToReferenceTypes(elementDataType)
-                    } else {
-                        elementDataType = new PrimitiveType(label: typeName)
-                    }
-                    modelDataTypes[typeName] = elementDataType
-                }
-                createdElement = dataElementService.findOrCreateDataElementForDataClass(
-                    parentDataClass, name, description, currentUser, elementDataType, newDataElement.minMultiplicity, newDataElement.maxMultiplicity)
+                createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
             }
             addMetadataFromExtraColumns(createdElement, ExcelSimplePlugin.MODEL_SHEET_COLUMNS, row)
         }
@@ -378,6 +349,45 @@ class ExcelSimpleDataModelImporterProviderService
 
     String getCellValueAsString(Cell cell) {
         cell ? dataFormatter.formatCellValue(cell).replaceAll(/’/, '\'').replaceAll(/—/, '-').trim() : ''
+    }
+
+    private DataElement addDataElement(User currentUser, DataModel dataModel, DataClass parentDataClass, Map<String, DataType> modelDataTypes,
+                                       Map<String, EnumerationType> enumerationTypes, Map<String, String> row) {
+        String name = row["DataElement Name"]
+        String description = row["Description"]
+        String minMult = row["Minimum Multiplicity"]
+        String maxMult = row["Maximum Multiplicity"]
+        String typeName = row["DataType Name"]
+        String typeReference = row["DataType Reference"]
+        // We're dealing with a data element
+        DataElement newDataElement = new DataElement(label: name, description: description)
+        if (minMult) {
+            newDataElement.minMultiplicity = Integer.parseInt(minMult)
+        }
+        if (maxMult) {
+            if (maxMult == "*") {
+                newDataElement.maxMultiplicity = -1
+            } else {
+                newDataElement.maxMultiplicity = Integer.parseInt(maxMult)
+            }
+        }
+        DataType elementDataType
+        if (enumerationTypes[typeName]) {
+            elementDataType = enumerationTypes[typeName]
+        } else if (modelDataTypes[typeName]) {
+            elementDataType = modelDataTypes[typeName]
+        } else {
+            if (typeReference) {
+                DataClass referenceDataClass = getOrCreateClassFromPath(currentUser, dataModel, typeReference)
+                elementDataType = new ReferenceType(label: typeName ?: getDataClassPathLabels(typeReference).last())
+                referenceDataClass.addToReferenceTypes(elementDataType)
+            } else {
+                elementDataType = new PrimitiveType(label: typeName)
+            }
+            modelDataTypes[typeName] = elementDataType
+        }
+        dataElementService.findOrCreateDataElementForDataClass(
+            parentDataClass, name, description, currentUser, elementDataType, newDataElement.minMultiplicity, newDataElement.maxMultiplicity)
     }
 
     private List<String> getDataClassPathLabels(String dataClassPath) {
