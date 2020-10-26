@@ -240,8 +240,9 @@ class ExcelSimpleDataModelImporterProviderService
                     namespace = components[0]
                     key = components[1]
                 }
-                entity.addToMetadata(new Metadata(namespace: namespace, key: key,
-                                                  value: columnValues[columnName]))
+                if (columnValues[columnName]) {
+                    entity.addToMetadata(new Metadata(namespace: namespace, key: key, value: columnValues[columnName]))
+                }
             }
         }
     }
