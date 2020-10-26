@@ -350,16 +350,6 @@ class ExcelSimpleDataModelImporterProviderService
         String typeReference = row["DataType Reference"]
         // We're dealing with a data element
         DataElement newDataElement = new DataElement(label: name, description: description)
-        if (minMult) {
-            newDataElement.minMultiplicity = Integer.parseInt(minMult)
-        }
-        if (maxMult) {
-            if (maxMult == "*") {
-                newDataElement.maxMultiplicity = -1
-            } else {
-                newDataElement.maxMultiplicity = Integer.parseInt(maxMult)
-            }
-        }
         DataType elementDataType
         if (enumerationTypes[typeName]) {
             elementDataType = enumerationTypes[typeName]
@@ -376,7 +366,8 @@ class ExcelSimpleDataModelImporterProviderService
             modelDataTypes[typeName] = elementDataType
         }
         dataElementService.findOrCreateDataElementForDataClass(
-            parentDataClass, name, description, currentUser, elementDataType, newDataElement.minMultiplicity, newDataElement.maxMultiplicity)
+            parentDataClass, name, description, currentUser, elementDataType, minMult ? Integer.parseInt(minMult) : 1,
+            maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : 1)
     }
 
     private List<String> getDataClassPathLabels(String dataClassPath) {
