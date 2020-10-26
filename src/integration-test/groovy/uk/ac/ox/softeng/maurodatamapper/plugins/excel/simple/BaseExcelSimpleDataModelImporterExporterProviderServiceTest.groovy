@@ -268,7 +268,7 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
     }
 
     private void verifyMetadata(CatalogueItem catalogueItem, String fullKeyName, String value) {
-        String[] keyNameParts = fullKeyName.split(/\|/)
+        String[] keyNameParts = fullKeyName.split(/[:|]/)
         String namespace = keyNameParts.size() > 1 ? keyNameParts[0] : importerInstance.namespace
         String key = keyNameParts[-1]
 
