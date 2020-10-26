@@ -309,24 +309,11 @@ class ExcelSimpleDataModelImporterProviderService
 
             if (!previousDataClassPath?.equals(dataClassPath) && name || !name) {
                 // We're dealing with a data class
-                // createdElement = parentDataClass
-                // if (description != "") {
-                //     parentDataClass.description = description
-                // }
-                // if (minMult) {
-                //     parentDataClass.minMultiplicity = Integer.parseInt(minMult)
-                // }
-                // if (maxMult) {
-                //     if (maxMult == "*") {
-                //         parentDataClass.maxMultiplicity = -1
-                //     } else {
-                //         parentDataClass.maxMultiplicity = Integer.parseInt(maxMult)
-                //     }
-                // }
                 previousDataClassPath = dataClassPath
+                String description = row["Description"]
                 String minMult = row["Minimum Multiplicity"]
                 String maxMult = row["Maximum Multiplicity"]
-                dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, minMult ? Integer.parseInt(minMult) : null,
+                dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, description, minMult ? Integer.parseInt(minMult) : null,
                                                      maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : null)
                 createdElement = name ? addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row) : dataClass
             } else {
@@ -342,9 +329,10 @@ class ExcelSimpleDataModelImporterProviderService
         }
     }
 
-    DataClass getOrCreateClassFromPath(User currentUser, DataModel dataModel, String path, Integer minMultiplicity = null,
+    DataClass getOrCreateClassFromPath(User currentUser, DataModel dataModel, String path, String description = "", Integer minMultiplicity = null,
                                        Integer maxMultiplicity = null) {
-        dataClassService.findOrCreateDataClassByPath(dataModel, getDataClassPathLabels(path), "", currentUser, minMultiplicity, maxMultiplicity)
+        dataClassService.findOrCreateDataClassByPath(
+            dataModel, getDataClassPathLabels(path), description, currentUser, minMultiplicity, maxMultiplicity)
     }
 
     String getCellValueAsString(Cell cell) {
