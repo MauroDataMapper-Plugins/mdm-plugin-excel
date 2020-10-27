@@ -299,10 +299,11 @@ class ExcelSimpleDataModelImporterProviderService
     //                                  "DataType Reference"]
     void addClassesAndElements(User currentUser, DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
         List<Map<String, String>> sheetValues = getSheetValues(ExcelSimplePlugin.MODEL_SHEET_COLUMNS, dataModelSheet)
+        List<Map<String, String>> referenceTypeDataElementRows = sheetValues.findAll { it['DataType Reference'] }
         Map<String, DataType> modelDataTypes = [:]
         DataClass dataClass
         String previousDataClassPath
-        sheetValues.each { row ->
+        (sheetValues - referenceTypeDataElementRows).each { row ->
             String dataClassPath = row["DataClass Path"]
             String name = row["DataElement Name"]
             MetadataAware createdElement = null
@@ -320,6 +321,18 @@ class ExcelSimpleDataModelImporterProviderService
             } else {
                 createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
             }
+            addMetadataFromExtraColumns(createdElement, ExcelSimplePlugin.MODEL_SHEET_COLUMNS, row)
+        }
+        referenceTypeDataElementRows.each { row ->
+            String dataClassPath = row["DataClass Path"]
+            String description = row["Description"]
+            String minMult = row["Minimum\nMultiplicity"]
+            String maxMult = row["Maximum\nMultiplicity"]
+            MetadataAware createdElement = null
+            dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, description,
+                                                 minMult ? Integer.parseInt(minMult) : 1,
+                                                 maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : 1)
+            createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
             addMetadataFromExtraColumns(createdElement, ExcelSimplePlugin.MODEL_SHEET_COLUMNS, row)
         }
         modelDataTypes.values().each {
