@@ -120,7 +120,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
                     enumType.enumerationValues.each { enumValue ->
                         LinkedHashMap<String, String> enumArray = new LinkedHashMap<String, String>()
                         enumArray["DataModel Name"] = dataModel.label
-                        enumArray["Name"] = enumType.label
+                        enumArray["Enumeration Name"] = enumType.label
                         enumArray["Description"] = enumType.description
                         enumArray["Key"] = enumValue.key
                         enumArray["Value"] = enumValue.value
@@ -225,19 +225,19 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
         LinkedHashMap<String, String> array = new LinkedHashMap<String, String>()
 
         array["DataClass Path"] = dataClassPath
-        array["Name"] = "" // dc.label
+        array["DataElement Name"] = "" // dc.label
         array["Description"] = dc.description
         if (dc.minMultiplicity || dc.minMultiplicity == 0) {
-            array["Minimum Multiplicity"] = dc.minMultiplicity.toString()
+            array["Minimum\nMultiplicity"] = dc.minMultiplicity.toString()
         } else {
             // Empty assignment helps ensure column order
-            array["Minimum Multiplicity"] = ""
+            array["Minimum\nMultiplicity"] = ""
         }
         if (dc.maxMultiplicity || dc.minMultiplicity == 0) {
-            array["Maximum Multiplicity"] = dc.maxMultiplicity.toString()
+            array["Maximum\nMultiplicity"] = dc.maxMultiplicity.toString()
         } else {
             // Empty assignment helps ensure column order
-            array["Maximum Multiplicity"] = ""
+            array["Maximum\nMultiplicity"] = ""
         }
 
         dc.metadata.each { metadata ->
@@ -251,13 +251,13 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
             array = new LinkedHashMap<String, String>()
 
             array["DataClass Path"] = dataClassPath
-            array["Name"] = dataElement.label
+            array["DataElement Name"] = dataElement.label
             array["Description"] = dataElement.description
             if (dataElement.minMultiplicity || dataElement.minMultiplicity == 0) {
-                array["Minimum Multiplicity"] = dataElement.minMultiplicity.toString()
+                array["Minimum\nMultiplicity"] = dataElement.minMultiplicity.toString()
             }
             if (dataElement.maxMultiplicity || dataElement.maxMultiplicity == 0) {
-                array["Maximum Multiplicity"] = dataElement.maxMultiplicity.toString()
+                array["Maximum\nMultiplicity"] = dataElement.maxMultiplicity.toString()
             }
             array["DataType Name"] = dataElement.dataType.label
             if (dataElement.dataType instanceof ReferenceType) {

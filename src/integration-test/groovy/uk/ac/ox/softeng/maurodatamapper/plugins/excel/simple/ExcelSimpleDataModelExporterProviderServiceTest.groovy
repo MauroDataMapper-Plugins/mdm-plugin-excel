@@ -45,7 +45,7 @@ class ExcelSimpleDataModelExporterProviderServiceTest extends BaseExcelSimpleDat
 
     @Before
     void disableDataModelSavingOnCreate() {
-        // importerInstance.saveDataModelsOnCreate = false
+        importerInstance.saveDataModelsOnCreate = false
     }
 
     @Test
