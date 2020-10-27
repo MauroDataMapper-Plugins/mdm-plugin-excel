@@ -106,7 +106,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
                 array["Author"] = dataModel.author
                 array["Organisation"] = dataModel.organisation
                 array["Sheet Key"] = sheetKey
-                array["Type"] = dataModel.type.toString()
+                array["Type"] = dataModel.modelType
 
                 dataModel.metadata.each { metadata ->
                     String key = "${metadata.namespace}:${metadata.key}"
@@ -247,7 +247,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
 
         dataClassSheetArray.add(array)
 
-        dc.childDataElements?.each { dataElement ->
+        dc.dataElements?.each { dataElement ->
             array = new LinkedHashMap<String, String>()
 
             array["DataClass Path"] = dataClassPath
@@ -262,7 +262,7 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
             array["DataType Name"] = dataElement.dataType.label
             if (dataElement.dataType instanceof ReferenceType) {
                 List<String> classPath = getClassPath(((ReferenceType) dataElement.dataType).referenceClass, [])
-                array["DataType Reference"] = StringUtils.join(classPath, " | ")
+                array["DataType Reference"] = classPath.join(" | ")
             }
 
             dataElement.metadata.each { metadata ->
@@ -271,8 +271,8 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
             }
             dataClassSheetArray.add(array)
         }
-        dc.childDataClasses.each { childDataClass ->
-            dataClassSheetArray.addAll(createArrayFromClass(childDataClass, dataClassPath))
+        dc.dataClasses.each { dataClass ->
+            dataClassSheetArray.addAll(createArrayFromClass(dataClass, dataClassPath))
         }
         return dataClassSheetArray
     }
