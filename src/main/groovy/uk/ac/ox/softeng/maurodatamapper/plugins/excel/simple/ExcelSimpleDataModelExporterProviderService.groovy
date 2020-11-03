@@ -239,6 +239,8 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
             // Empty assignment helps ensure column order
             array["Maximum\nMultiplicity"] = ""
         }
+        array["DataType Name"] = ""
+        array["DataType Reference"] = ""
 
         dc.metadata.each { metadata ->
             String key = "${metadata.namespace}:${metadata.key}"
