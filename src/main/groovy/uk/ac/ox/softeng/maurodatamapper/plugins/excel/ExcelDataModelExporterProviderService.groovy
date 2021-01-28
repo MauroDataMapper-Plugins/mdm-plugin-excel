@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford
+ * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,11 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.DataModelDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.workbook.WorkbookExporter
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.beans.factory.annotation.Autowired
-
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 
 @Slf4j
 @CompileStatic
