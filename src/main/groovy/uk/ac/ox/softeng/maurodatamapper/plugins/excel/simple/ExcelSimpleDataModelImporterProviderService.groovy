@@ -69,7 +69,7 @@ class ExcelSimpleDataModelImporterProviderService
     PrimitiveTypeService primitiveTypeService
 
     @Autowired
-    DataClassService dataClassService
+    DataClassService dataClassServiceBaseExcelDataModelImporterExporterProviderServiceTest
 
     @Autowired
     EnumerationTypeService enumerationTypeService
@@ -103,12 +103,12 @@ class ExcelSimpleDataModelImporterProviderService
     }
 
     @Override
-    DataModel importDataModel(User currentUser, ExcelSimpleDataModelFileImporterProviderServiceParameters params) {
-        importDataModels(currentUser, params)?.first()
+    DataModel importModel(User currentUser, ExcelSimpleDataModelFileImporterProviderServiceParameters params) {
+        importModels(currentUser, params)?.first()
     }
 
     @Override
-    List<DataModel> importDataModels(User currentUser, ExcelSimpleDataModelFileImporterProviderServiceParameters importerParameters) {
+    List<DataModel> importModels(User currentUser, ExcelSimpleDataModelFileImporterProviderServiceParameters importerParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         if (importerParameters.importFile.fileContents.size() == 0) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
         log.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)

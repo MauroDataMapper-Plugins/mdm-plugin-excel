@@ -113,7 +113,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     private void loadContentDataRowsToSheet(DataModelDataRow dataRow) {
         log.debug('Adding content rows to DataModel [{}] sheet', dataRow.sheetKey)
-        List<ContentDataRow> contentDataRows = createContentDataRows(dataRow.dataModel.childDataClasses.sort { it.label })
+        List<ContentDataRow> contentDataRows = createContentDataRows(dataRow.dataModel.id, dataRow.dataModel.childDataClasses.sort {it.label})
         if (!contentDataRows) return
         loadContentSheet(dataRow).with { Sheet contentSheet ->
             loadDataRowsIntoSheet contentSheet, contentDataRows
@@ -123,20 +123,23 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     private Sheet loadContentSheet(DataModelDataRow dataRow) {
         log.debug('Loading DataModel [{}] content sheet', dataRow.name)
-        createContentSheetFromTemplate(dataRow.sheetKey).tap { Sheet contentSheet ->
+        createContentSheetFromTemplate(dataRow.sheetKey).tap {Sheet contentSheet ->
             dataRow.sheetKey = contentSheet.sheetName
         }
     }
 
-    private <K extends CatalogueItem> List<ContentDataRow> createContentDataRows(List<K> catalogueItems, List<ContentDataRow> dataRows = []) {
+    private <K extends CatalogueItem> List<ContentDataRow> createContentDataRows(UUID dataModelId, List<K> catalogueItems,
+                                                                                 List<ContentDataRow> dataRows = []) {
         log.debug('Creating content rows')
-        catalogueItems.each { CatalogueItem catalogueItem ->
+        catalogueItems.each {CatalogueItem catalogueItem ->
             getLog().trace('Creating content {} : {}', catalogueItem.domainType, catalogueItem.label)
             dataRows << new ContentDataRow(catalogueItem)
             if (catalogueItem instanceof DataClass) {
-                dataRows = createContentDataRows(dataElementService.findAllByDataClassIdJoinDataType(catalogueItem.id), dataRows)
-                dataRows = createContentDataRows(
-                    dataClassService.findAllByParentDataClassId(catalogueItem.id, [sort: 'label']) as List<DataClass>, dataRows)
+                dataRows = createContentDataRows(dataModelId, dataElementService.findAllByDataClassIdJoinDataType(catalogueItem.id), dataRows)
+                dataRows = createContentDataRows(dataModelId,
+                                                 dataClassService.findAllByDataModelIdAndParentDataClassId(dataModelId, catalogueItem.id,
+                                                                                                           [sort: 'label']) as List<DataClass>,
+                                                 dataRows)
             }
         }
         dataRows

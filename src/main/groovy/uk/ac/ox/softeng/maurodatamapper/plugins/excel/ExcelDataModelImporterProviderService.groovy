@@ -95,12 +95,12 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     }
 
     @Override
-    DataModel importDataModel(User currentUser, ExcelDataModelFileImporterProviderServiceParameters importParameters) {
-        importDataModels(currentUser, importParameters)?.first()
+    DataModel importModel(User currentUser, ExcelDataModelFileImporterProviderServiceParameters importParameters) {
+        importModels(currentUser, importParameters)?.first()
     }
 
     @Override
-    List<DataModel> importDataModels(User currentUser, ExcelDataModelFileImporterProviderServiceParameters importParameters) {
+    List<DataModel> importModels(User currentUser, ExcelDataModelFileImporterProviderServiceParameters importParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         this.currentUser = currentUser
 
@@ -108,8 +108,8 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
         if (!importFile.fileContents.size()) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
 
         log.info('Importing {} as {}', importFile.fileName, currentUser.emailAddress)
-        loadWorkbookFromInputStream(importFile).withCloseable { Workbook workbook ->
-            loadDataModels(workbook, importFile.fileName).findAll { it.dataClasses }
+        loadWorkbookFromInputStream(importFile).withCloseable {Workbook workbook ->
+            loadDataModels(workbook, importFile.fileName).findAll {it.dataClasses}
         }
     }
 
@@ -224,27 +224,5 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     private PrimitiveType findOrCreatePrimitiveType(DataModel dataModel, ContentDataRow dataRow) {
         log.debug('DataElement [{}] is a PrimitiveType', dataRow.dataElementName)
         primitiveTypeService.findOrCreateDataTypeForDataModel(dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, currentUser)
-    }
-
-    // The following are hacks– exact reimplementations of methods inherited from DataModelImporterProviderService. Despite having little to no
-    // substantial differences in the code, simply calling importDomain() and importDomains()––prior to reimplementing––results in a build error
-    // for some reason. But re-overriding them does, hence the code duplication below. Requires deeper investigation.
-    //
-    // TODO: Investigate why...
-    // - Casting currentUser `as User` in importDomain() does not work
-    // - Calling checkImport() does not work despite matching parameter types
-
-    @Override
-    DataModel importDomain(User currentUser, ExcelDataModelFileImporterProviderServiceParameters importParameters) {
-        DataModel dataModel = importDataModel(currentUser, importParameters)
-        if (!dataModel) return null
-        if (importParameters.modelName) dataModel.label = importParameters.modelName
-        checkImport(currentUser as User, dataModel, importParameters.finalised, importParameters.importAsNewDocumentationVersion)
-    }
-
-    @Override
-    List<DataModel> importDomains(User currentUser, ExcelDataModelFileImporterProviderServiceParameters importParameters) {
-        List<DataModel> dataModels = importDataModels(currentUser, importParameters)
-        dataModels?.collect { checkImport(currentUser, it, importParameters.finalised, importParameters.importAsNewDocumentationVersion) }
     }
 }

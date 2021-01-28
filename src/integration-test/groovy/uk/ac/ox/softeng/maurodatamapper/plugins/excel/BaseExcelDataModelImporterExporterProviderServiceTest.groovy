@@ -52,7 +52,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     @Override
     DataModel saveDomain(DataModel domain) {
-        dataModelService.saveWithBatching(domain)
+        dataModelService.saveModelWithContent(domain)
     }
 
     protected ExcelDataModelFileImporterProviderServiceParameters createImportParameters(String importFilename) throws IOException {
