@@ -45,14 +45,14 @@ class ExcelSimpleDataModelImporterProviderServiceTest extends BaseExcelSimpleDat
     void testImportParameters() {
         List<ImportParameterGroup> importParameters = applicationContext.getBean(ImporterService).describeImporterParams(importerInstance)
 
-        assertEquals 'Number of parameter groups', 2, importParameters.size()
-        assertEquals 'Number of standard parameters', 4, importParameters[0].size()
-        assertEquals 'Number of source parameters', 1, importParameters[1].size()
+        assertEquals 'Number of parameter groups', 4, importParameters.size()
+        assertEquals 'Number of source parameters', 1, importParameters[0].size()
+        assertEquals 'Number of standard parameters', 5, importParameters[1].size()
 
-        assertTrue 'Has Finalised parameter', importParameters[0].any { it.name == 'finalised' }
-        assertTrue 'Has ImportAsNewDocumentationVersion parameter', importParameters[0].any { it.name == 'importAsNewDocumentationVersion' }
-        assertTrue 'Has FolderId parameter', importParameters[0].any { it.name == 'folderId' }
-        assertTrue 'Has ImportFile parameter', importParameters[1].first().name == 'importFile'
+        assertTrue 'Has Finalised parameter', importParameters[1].any {it.name == 'finalised'}
+        assertTrue 'Has ImportAsNewDocumentationVersion parameter', importParameters[1].any {it.name == 'importAsNewDocumentationVersion'}
+        assertTrue 'Has FolderId parameter', importParameters[1].any {it.name == 'folderId'}
+        assertTrue 'Has ImportFile parameter', importParameters[0].first().name == 'importFile'
     }
 
     @Test

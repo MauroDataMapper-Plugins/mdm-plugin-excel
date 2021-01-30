@@ -69,7 +69,7 @@ class ExcelSimpleDataModelImporterProviderService
     PrimitiveTypeService primitiveTypeService
 
     @Autowired
-    DataClassService dataClassServiceBaseExcelDataModelImporterExporterProviderServiceTest
+    DataClassService dataClassService
 
     @Autowired
     EnumerationTypeService enumerationTypeService
@@ -130,7 +130,7 @@ class ExcelSimpleDataModelImporterProviderService
             List<Map<String, String>> sheetValues = []
             Map<String, Map<String, EnumerationType>> enumerationTypes = [:]
             if (enumerationsSheet) {
-                enumerationTypes = calculateEnumerationTypes(getSheetValues(ExcelSimplePlugin.ENUM_SHEET_COLUMNS, enumerationsSheet))
+                enumerationTypes = calculateEnumerationTypes(currentUser, getSheetValues(ExcelSimplePlugin.ENUM_SHEET_COLUMNS, enumerationsSheet))
             }
 
             List<DataModel> dataModels = []
@@ -267,10 +267,10 @@ class ExcelSimpleDataModelImporterProviderService
             authorityService.defaultAuthority, saveDataModelsOnCreate)
     }
 
-    Map<String, Map<String, EnumerationType>> calculateEnumerationTypes(List<Map<String, String>> sheetValues) {
+    Map<String, Map<String, EnumerationType>> calculateEnumerationTypes(User createdBy, List<Map<String, String>> sheetValues) {
 
         Map<String, Map<String, EnumerationType>> returnValues = [:]
-        sheetValues.each { columnValues ->
+        sheetValues.each {columnValues ->
             String dataModelName = columnValues["DataModel Name"]
             String label = columnValues["Enumeration Name"]
             String description = columnValues["Description"]
@@ -284,10 +284,10 @@ class ExcelSimpleDataModelImporterProviderService
             }
             EnumerationType enumerationType = modelEnumTypes[label]
             if (!enumerationType) {
-                enumerationType = new EnumerationType(label: label, description: description)
+                enumerationType = new EnumerationType(createdBy: createdBy.emailAddress, label: label, description: description)
                 modelEnumTypes[label] = enumerationType
             }
-            EnumerationValue enumerationValue = new EnumerationValue(key: key, value: value)
+            EnumerationValue enumerationValue = new EnumerationValue(createdBy: createdBy.emailAddress, key: key, value: value)
             addMetadataFromExtraColumns(enumerationValue, ExcelSimplePlugin.ENUM_SHEET_COLUMNS, columnValues)
             enumerationType.addToEnumerationValues(enumerationValue)
         }
@@ -373,7 +373,7 @@ class ExcelSimpleDataModelImporterProviderService
                 elementDataType = referenceTypeService.findOrCreateDataTypeForDataModel(
                     dataModel, referenceDataClass.label, null, currentUser, referenceDataClass)
             } else {
-                elementDataType = new PrimitiveType(label: typeName)
+                elementDataType = new PrimitiveType(createdBy: currentUser.emailAddress, label: typeName)
             }
             modelDataTypes[typeName] = elementDataType
         }
