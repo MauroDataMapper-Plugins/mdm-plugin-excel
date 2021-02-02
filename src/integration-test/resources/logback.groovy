@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford
+ * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import ch.qos.logback.classic.filter.ThresholdFilter
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.filter.Filter
@@ -73,7 +72,6 @@ appender("FILE", FileAppender) {
     }
 }
 root(INFO, ['STDOUT', 'FILE'])
-
 
 logger('uk.ac.ox.softeng', DEBUG)
 

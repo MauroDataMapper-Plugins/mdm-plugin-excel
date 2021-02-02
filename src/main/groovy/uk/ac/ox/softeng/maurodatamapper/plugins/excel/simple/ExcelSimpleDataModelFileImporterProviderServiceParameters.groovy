@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford
+ * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.template
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
 
-import uk.ac.ox.softeng.maurodatamapper.provider.plugin.AbstractMauroDataMapperPlugin
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
 
-class TemplatePlugin extends AbstractMauroDataMapperPlugin {
+/**
+ * @since 01/03/2018
+ */
+class ExcelSimpleDataModelFileImporterProviderServiceParameters extends DataModelFileImporterProviderServiceParameters {
 
-    @Override
-    String getName() {
-        'Plugin : XXXXXXX'
-    }
-
-    @Override
-    Closure doWithSpring() {
-        {->
-            // This closure will be passed to grails.spring.BeanBuilder
-        }
-    }
+    // So we don't ask for the DataModel name
+    String dataModelName
 }
