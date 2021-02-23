@@ -28,8 +28,6 @@ import groovy.transform.CompileStatic
 @SuppressWarnings('SpellCheckingInspection')
 class ExcelPlugin extends AbstractMauroDataMapperPlugin {
 
-    static final String VERSION = '2.0.0-SNAPSHOT'
-
     static final String CHARSET = 'ISO-8859-1'
     static final String EXCEL_FILETYPE = 'application/vnd.ms-excel'
     static final String EXCEL_FILE_EXTENSION = 'xlsx'

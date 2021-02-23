@@ -86,7 +86,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
     @Override
     String getVersion() {
-        ExcelPlugin.VERSION
+        getClass().getPackage().getSpecificationVersion() ?: 'SNAPSHOT'
     }
 
     @Override

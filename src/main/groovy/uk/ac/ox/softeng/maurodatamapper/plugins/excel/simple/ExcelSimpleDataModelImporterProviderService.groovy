@@ -94,7 +94,7 @@ class ExcelSimpleDataModelImporterProviderService
 
     @Override
     String getVersion() {
-        '1.0.0'
+        getClass().getPackage().getSpecificationVersion() ?: 'SNAPSHOT'
     }
 
     @Override
