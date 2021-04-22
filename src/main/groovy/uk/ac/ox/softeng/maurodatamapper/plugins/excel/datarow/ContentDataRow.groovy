@@ -26,12 +26,13 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
 
-import groovy.transform.CompileStatic
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.ss.util.CellUtil
+
+import groovy.transform.CompileStatic
 
 @CompileStatic
 class ContentDataRow extends StandardDataRow<EnumerationDataRow> {
@@ -57,13 +58,13 @@ class ContentDataRow extends StandardDataRow<EnumerationDataRow> {
 
         if (catalogueItem instanceof DataClass) {
             dataClassPath = buildPath(catalogueItem)
-            minMultiplicity = catalogueItem.minMultiplicity
-            maxMultiplicity = catalogueItem.maxMultiplicity
+            minMultiplicity = catalogueItem.minMultiplicity ?: 0
+            maxMultiplicity = catalogueItem.maxMultiplicity ?: 0
         } else if (catalogueItem instanceof DataElement) {
             dataClassPath = buildPath(catalogueItem.dataClass)
             dataElementName = catalogueItem.label
-            minMultiplicity = catalogueItem.minMultiplicity
-            maxMultiplicity = catalogueItem.maxMultiplicity
+            minMultiplicity = catalogueItem.minMultiplicity ?: 0
+            maxMultiplicity = catalogueItem.maxMultiplicity ?: 0
 
             DataType dataType = catalogueItem.dataType
             dataTypeName = dataType.label
@@ -77,7 +78,7 @@ class ContentDataRow extends StandardDataRow<EnumerationDataRow> {
             }
         }
 
-        catalogueItem.metadata.each { Metadata metadataEntry ->
+        catalogueItem.metadata?.each { Metadata metadataEntry ->
             metadata << new MetadataColumn(namespace: metadataEntry.namespace, key: metadataEntry.key, value: metadataEntry.value)
         }
     }
