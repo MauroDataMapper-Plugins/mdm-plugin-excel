@@ -46,7 +46,7 @@ import static org.junit.Assert.fail
 abstract class BaseExcelDataModelImporterExporterProviderServiceTest
     extends BaseImportPluginTest<DataModel, ExcelDataModelFileImporterProviderServiceParameters, ExcelDataModelImporterProviderService> {
 
-    private static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
+    protected static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
 
     private final DataModelService dataModelService = applicationContext.getBean(DataModelService)
 

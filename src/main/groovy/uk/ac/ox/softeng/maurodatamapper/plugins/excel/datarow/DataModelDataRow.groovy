@@ -20,8 +20,9 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 
-import groovy.transform.CompileStatic
 import org.apache.poi.ss.usermodel.Row
+
+import groovy.transform.CompileStatic
 
 @CompileStatic
 class DataModelDataRow extends StandardDataRow {
@@ -53,7 +54,7 @@ class DataModelDataRow extends StandardDataRow {
         author = dataModel.author
         organisation = dataModel.organisation
         type = dataModel.modelType
-        dataModel.metadata.each { Metadata metadataEntry ->
+        dataModel.metadata?.each { Metadata metadataEntry ->
             metadata << new MetadataColumn(namespace: metadataEntry.namespace, key: metadataEntry.key, value: metadataEntry.value)
         }
     }
