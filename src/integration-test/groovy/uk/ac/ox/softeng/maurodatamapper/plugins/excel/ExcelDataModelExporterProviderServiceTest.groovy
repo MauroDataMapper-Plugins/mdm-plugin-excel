@@ -103,8 +103,8 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
 
         DataClass testDataClass = testDataModel.dataClasses.find { it.label == 'Data Class with Unset Multiplicities' }
         assertNotNull "DataClass ${testDataClass.label} must exist", testDataClass
-        assertEquals "DataClass ${testDataClass.label} minMultiplicity must default to 1", 1, testDataClass.minMultiplicity
-        assertEquals "DataClass ${testDataClass.label} maxMultiplicity must default to 1", 1, testDataClass.maxMultiplicity
+        assertEquals "DataClass ${testDataClass.label} minMultiplicity must default to 0", 0, testDataClass.minMultiplicity
+        assertEquals "DataClass ${testDataClass.label} maxMultiplicity must default to 0", 0, testDataClass.maxMultiplicity
 
         // The following is commented out because the target Data Element cannot be retrieved as expected (a NullPointerException is returned). A bug?
         //
@@ -112,8 +112,8 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
         // DataElement testDataElement = testDataClass.findDataElement(dataElementLabel)
         //     ?: testDataClass.dataElements.find { it.label == dataElementLabel }
         // assertNotNull "DataElement ${testDataElement.label} must exist", testDataElement
-        // assertEquals "DataElement ${testDataElement.label} minMultiplicity must default to 1", 1, testDataElement.minMultiplicity
-        // assertEquals "DataElement ${testDataElement.label} maxMultiplicity must default to 1", 1, testDataElement.maxMultiplicity
+        // assertEquals "DataElement ${testDataElement.label} minMultiplicity must default to 0", 0, testDataElement.minMultiplicity
+        // assertEquals "DataElement ${testDataElement.label} maxMultiplicity must default to 0", 0, testDataElement.maxMultiplicity
     }
 
     private static DataModel findByLabel(List<DataModel> dataModels, String label) {

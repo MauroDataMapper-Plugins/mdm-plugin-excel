@@ -58,13 +58,13 @@ class ContentDataRow extends StandardDataRow<EnumerationDataRow> {
 
         if (catalogueItem instanceof DataClass) {
             dataClassPath = buildPath(catalogueItem)
-            minMultiplicity = catalogueItem.minMultiplicity ?: 1
-            maxMultiplicity = catalogueItem.maxMultiplicity ?: 1
+            minMultiplicity = catalogueItem.minMultiplicity ?: 0
+            maxMultiplicity = catalogueItem.maxMultiplicity ?: 0
         } else if (catalogueItem instanceof DataElement) {
             dataClassPath = buildPath(catalogueItem.dataClass)
             dataElementName = catalogueItem.label
-            minMultiplicity = catalogueItem.minMultiplicity ?: 1
-            maxMultiplicity = catalogueItem.maxMultiplicity ?: 1
+            minMultiplicity = catalogueItem.minMultiplicity ?: 0
+            maxMultiplicity = catalogueItem.maxMultiplicity ?: 0
 
             DataType dataType = catalogueItem.dataType
             dataTypeName = dataType.label
