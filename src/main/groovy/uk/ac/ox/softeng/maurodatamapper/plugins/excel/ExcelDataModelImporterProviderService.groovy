@@ -20,7 +20,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
 import uk.ac.ox.softeng.maurodatamapper.core.authority.AuthorityService
-import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
+import uk.ac.ox.softeng.maurodatamapper.core.container.FolderService
 import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
@@ -75,6 +75,9 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     @Autowired
     ReferenceTypeService referenceTypeService
 
+    @Autowired
+    FolderService folderService
+
     boolean saveDataModelsOnCreate = true
 
     private User currentUser
@@ -114,18 +117,18 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     }
 
     private static Collection<List<ContentDataRow>> loadDataClassRows(List<ContentDataRow> dataRows) {
-        dataRows.groupBy { it.dataClassPath }.sort().values()
+        dataRows.groupBy {it.dataClassPath}.sort().values()
     }
 
     private static List<ContentDataRow> loadDataElementRows(List<ContentDataRow> dataRows) {
-        dataRows.findAll { it.dataElementName }
+        dataRows.findAll {it.dataElementName}
     }
 
     private List<DataModel> loadDataModels(Workbook workbook, String filename) {
         List<DataModel> dataModels = []
-        loadDataModelDataRows(workbook, filename).each { DataModelDataRow dataRow ->
+        loadDataModelDataRows(workbook, filename).each {DataModelDataRow dataRow ->
             if (!workbook.getSheet(dataRow.sheetKey)) {
-                getLog().warn('DataModel [{}] with key [{}] will not be imported as it has no corresponding sheet', dataRow.name, dataRow.sheetKey)
+                log.warn('DataModel [{}] with key [{}] will not be imported as it has no corresponding sheet', dataRow.name, dataRow.sheetKey)
                 return []
             }
 
@@ -149,36 +152,38 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
     private DataModel loadDataModel(DataModelDataRow dataModelDataRow, List<ContentDataRow> contentDataRows) {
         log.info('Loading DataModel [{}]', dataModelDataRow.name)
-        createDataModel(dataModelDataRow).tap { DataModel dataModel ->
+        createDataModel(dataModelDataRow).tap {DataModel dataModel ->
             // Generate DataClasses in path-descending order, ensuring specific parent data is created before creating children
             getLog().info('Loading DataClass rows for DataModel [{}]', dataModel.label)
-            loadDataClassRows(contentDataRows).each { findOrCreateDataClass(dataModel, it) }
+            loadDataClassRows(contentDataRows).each {findOrCreateDataClass(dataModel, it)}
 
             getLog().info('Loading DataElement rows for DataModel [{}]', dataModel.label)
-            loadDataElementRows(contentDataRows).each { findOrCreateDataElement(dataModel, it) }
+            loadDataElementRows(contentDataRows).each {findOrCreateDataElement(dataModel, it)}
         }
     }
 
     private DataModel createDataModel(DataModelDataRow dataRow) {
         log.debug('Creating DataModel [{}]', dataRow.name)
-        dataModelService.createAndSaveDataModel(
-            currentUser, Folder.findOrCreateByLabel('random', [createdBy: currentUser.emailAddress]),
-            DataModelType.findForLabel(dataRow.type), dataRow.name, dataRow.description, dataRow.author, dataRow.organisation,
-            authorityService.defaultAuthority, saveDataModelsOnCreate).tap { DataModel dataModel ->
-            addMetadataToCatalogueItem(dataModel, dataRow.metadata)
-        }
+        DataModel dataModel = new DataModel(label: dataRow.name,
+                                            description: dataRow.description,
+                                            organisation: dataRow.organisation,
+                                            author: dataRow.author,
+                                            modelType: DataModelType.findForLabel(dataRow.type)
+        )
+        addMetadataToCatalogueItem(dataModel, dataRow.metadata)
+        dataModel
     }
 
     private DataClass findOrCreateDataClass(DataModel dataModel, List<ContentDataRow> dataRows) {
         // Find the row with no DataElement name. If none exists, then just grab the first row.
-        ContentDataRow dataRow = dataRows.find { !it.dataElementName } ?: dataRows.first()
+        ContentDataRow dataRow = dataRows.find {!it.dataElementName} ?: dataRows.first()
         log.debug('Creating DataClass [{}]', dataRow.dataClassPath)
         dataClassService.findOrCreateDataClassByPath(
             dataModel, dataRow.dataClassPathList,
             dataRow.dataElementName ? null : dataRow.description,
             currentUser,
             dataRow.dataElementName ? 1 : dataRow.minMultiplicity,
-            dataRow.dataElementName ? 1 : dataRow.maxMultiplicity).tap { DataClass dataClass ->
+            dataRow.dataElementName ? 1 : dataRow.maxMultiplicity).tap {DataClass dataClass ->
             if (!dataRow.dataElementName) addMetadataToCatalogueItem(dataClass, dataRow.metadata)
         }
     }
@@ -194,7 +199,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     }
 
     private void addMetadataToCatalogueItem(CatalogueItem catalogueItem, List<MetadataColumn> metadata) {
-        metadata.each { MetadataColumn metadataColumn ->
+        metadata.each {MetadataColumn metadataColumn ->
             getLog().debug('Adding Metadata [{}] to CatalogueItem [{}]', metadataColumn.key, catalogueItem.label)
             catalogueItem.addToMetadata(metadataColumn.namespace ?: namespace, metadataColumn.key, metadataColumn.value, currentUser)
         }
@@ -209,8 +214,8 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     private EnumerationType findOrCreateEnumerationType(DataModel dataModel, ContentDataRow dataRow) {
         log.debug('DataElement [{}] is an EnumerationType', dataRow.dataElementName)
         enumerationTypeService.findOrCreateDataTypeForDataModel(
-            dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, currentUser).tap { EnumerationType enumerationType ->
-            dataRow.mergedContentRows.each { enumerationType.addToEnumerationValues(it.key, it.value, currentUser as User) }
+            dataModel, dataRow.dataTypeName, dataRow.dataTypeDescription, currentUser).tap {EnumerationType enumerationType ->
+            dataRow.mergedContentRows.each {enumerationType.addToEnumerationValues(it.key, it.value, currentUser as User)}
         }
     }
 

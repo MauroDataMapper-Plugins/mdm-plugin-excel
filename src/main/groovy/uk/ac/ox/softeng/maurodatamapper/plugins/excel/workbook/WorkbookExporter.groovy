@@ -24,7 +24,6 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.EnumerationDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.StandardDataRow
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellStyle
@@ -40,7 +39,6 @@ import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide
 
 import java.awt.Color
 
-@Slf4j
 @CompileStatic
 trait WorkbookExporter extends WorkbookHandler {
 

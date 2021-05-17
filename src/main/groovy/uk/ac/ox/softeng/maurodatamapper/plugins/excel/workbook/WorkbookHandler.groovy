@@ -24,7 +24,6 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.CellHandler
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.StandardDataRow
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import org.apache.poi.EncryptedDocumentException
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException
 import org.apache.poi.openxml4j.util.ZipSecureFile
@@ -34,7 +33,6 @@ import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.apache.poi.ss.util.CellRangeAddress
 
-@Slf4j
 @CompileStatic
 trait WorkbookHandler extends CellHandler {
 

@@ -18,7 +18,6 @@
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.DataFormatter
 import org.apache.poi.ss.usermodel.Row
@@ -27,7 +26,6 @@ import org.apache.poi.ss.util.CellRangeAddress
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-@Slf4j
 @CompileStatic
 trait CellHandler {
 
