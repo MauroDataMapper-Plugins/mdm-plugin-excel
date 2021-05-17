@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2021 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ class DataModelDataRow extends StandardDataRow {
         author = dataModel.author
         organisation = dataModel.organisation
         type = dataModel.modelType
-        dataModel.metadata.each { Metadata metadataEntry ->
+        dataModel.metadata?.each { Metadata metadataEntry ->
             metadata << new MetadataColumn(namespace: metadataEntry.namespace, key: metadataEntry.key, value: metadataEntry.value)
         }
     }

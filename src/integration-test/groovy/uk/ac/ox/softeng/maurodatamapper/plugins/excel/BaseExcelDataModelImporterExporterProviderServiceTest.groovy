@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2021 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import static org.junit.Assert.fail
 abstract class BaseExcelDataModelImporterExporterProviderServiceTest
     extends BaseImportPluginTest<DataModel, ExcelDataModelFileImporterProviderServiceParameters, ExcelDataModelImporterProviderService> {
 
-    private static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
+    protected static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
 
     private final DataModelService dataModelService = applicationContext.getBean(DataModelService)
 
@@ -335,7 +335,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     @CompileDynamic
     private static Metadata findMetadataByValues(UUID catalogueItemId, String namespace, String key) {
-        Metadata.findByCatalogueItemIdAndNamespaceAndKey(catalogueItemId, namespace, key)
+        Metadata.findByMultiFacetAwareItemIdAndNamespaceAndKey(catalogueItemId, namespace, key)
     }
 
     @CompileDynamic
@@ -345,6 +345,6 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     @CompileDynamic
     private static int countMetadataById(UUID catalogueItemId) {
-        Metadata.countByCatalogueItemId(catalogueItemId)
+        Metadata.countByMultiFacetAwareItemId(catalogueItemId)
     }
 }

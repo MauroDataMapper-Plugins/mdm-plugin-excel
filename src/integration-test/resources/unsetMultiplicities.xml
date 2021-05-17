@@ -1,0 +1,62 @@
+<?xml version='1.0'?>
+<exp:exportModel xmlns:exp='http://maurodatamapper.com/export/3.1'
+                 xmlns:mdm='http://maurodatamapper.com/dataModel/3.1'>
+    <mdm:dataModel>
+        <mdm:id>6afecacf-d476-478e-a38c-7d63a1d9c849</mdm:id>
+        <mdm:label>Unset Multiplicities</mdm:label>
+        <mdm:description>XML file to test setting default Data Class and Data Element multiplicities if unset</mdm:description>
+        <mdm:lastUpdated>2020-05-06T13:44:15.903Z</mdm:lastUpdated>
+        <mdm:type>Data Standard</mdm:type>
+        <mdm:author>Test Author</mdm:author>
+        <mdm:organisation>Mauro</mdm:organisation>
+        <mdm:documentationVersion>1.0.0</mdm:documentationVersion>
+        <mdm:finalised>false</mdm:finalised>
+        <mdm:authority>
+            <mdm:id>fc804e56-6b0d-4c80-8387-78a538700456</mdm:id>
+            <mdm:label>mauro</mdm:label>
+            <mdm:url>http://maurodatamapper.com</mdm:url>
+            <mdm:lastUpdated>2021-02-22T09:50:35.345Z</mdm:lastUpdated>
+        </mdm:authority>
+        <mdm:dataTypes>
+            <mdm:dataType>
+                <mdm:id>e40d9229-df6e-4a0c-93b5-55698a050e50</mdm:id>
+                <mdm:label>Test</mdm:label>
+                <mdm:description>Test Data Type</mdm:description>
+                <mdm:lastUpdated>2020-03-20T09:21:57.318Z</mdm:lastUpdated>
+                <mdm:domainType>PrimitiveType</mdm:domainType>
+            </mdm:dataType>
+        </mdm:dataTypes>
+        <mdm:childDataClasses>
+            <mdm:dataClass>
+                <mdm:id>caa12043-d88d-4ce4-b33a-27dd7885c03c</mdm:id>
+                <mdm:label>Data Class with Unset Multiplicities</mdm:label>
+                <mdm:description>This Data Class does not have its min and max multiplicities set</mdm:description>
+                <mdm:lastUpdated>2020-01-27T11:12:54.168Z</mdm:lastUpdated>
+                <mdm:dataElements>
+                    <mdm:dataElement>
+                        <mdm:id>1fa472ea-da1c-40ad-b815-f7dc7f856fd0</mdm:id>
+                        <mdm:label>Data Element with Unset Multiplicities</mdm:label>
+                        <mdm:description>This Data Element does not have its min and max multiplicities set</mdm:description>
+                        <mdm:lastUpdated>2020-01-29T11:35:25.436Z</mdm:lastUpdated>
+                        <mdm:dataType>
+                            <mdm:id>e40d9229-df6e-4a0c-93b5-55698a050e50</mdm:id>
+                            <mdm:label>Test</mdm:label>
+                            <mdm:description>Test Data Type</mdm:description>
+                            <mdm:lastUpdated>2020-03-20T09:21:57.318Z</mdm:lastUpdated>
+                            <mdm:domainType>PrimitiveType</mdm:domainType>
+                        </mdm:dataType>
+                    </mdm:dataElement>
+                </mdm:dataElements>
+            </mdm:dataClass>
+        </mdm:childDataClasses>
+    </mdm:dataModel>
+    <exp:exportMetadata>
+        <exp:exportedBy>Test User</exp:exportedBy>
+        <exp:exportedOn>2021-04-13T10:17:10.249075404Z</exp:exportedOn>
+        <exp:exporter>
+            <exp:namespace>uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter</exp:namespace>
+            <exp:name>DataModelXmlExporterService</exp:name>
+            <exp:version>3.1</exp:version>
+        </exp:exporter>
+    </exp:exportMetadata>
+</exp:exportModel>

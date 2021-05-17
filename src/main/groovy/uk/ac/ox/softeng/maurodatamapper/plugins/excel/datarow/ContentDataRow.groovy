@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2021 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,13 +57,13 @@ class ContentDataRow extends StandardDataRow<EnumerationDataRow> {
 
         if (catalogueItem instanceof DataClass) {
             dataClassPath = buildPath(catalogueItem)
-            minMultiplicity = catalogueItem.minMultiplicity
-            maxMultiplicity = catalogueItem.maxMultiplicity
+            minMultiplicity = catalogueItem.minMultiplicity ?: 0
+            maxMultiplicity = catalogueItem.maxMultiplicity ?: 0
         } else if (catalogueItem instanceof DataElement) {
             dataClassPath = buildPath(catalogueItem.dataClass)
             dataElementName = catalogueItem.label
-            minMultiplicity = catalogueItem.minMultiplicity
-            maxMultiplicity = catalogueItem.maxMultiplicity
+            minMultiplicity = catalogueItem.minMultiplicity ?: 0
+            maxMultiplicity = catalogueItem.maxMultiplicity ?: 0
 
             DataType dataType = catalogueItem.dataType
             dataTypeName = dataType.label
@@ -77,7 +77,7 @@ class ContentDataRow extends StandardDataRow<EnumerationDataRow> {
             }
         }
 
-        catalogueItem.metadata.each { Metadata metadataEntry ->
+        catalogueItem.metadata?.each { Metadata metadataEntry ->
             metadata << new MetadataColumn(namespace: metadataEntry.namespace, key: metadataEntry.key, value: metadataEntry.value)
         }
     }

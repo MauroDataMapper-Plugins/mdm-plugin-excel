@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2021 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.EnumerationDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.StandardDataRow
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellStyle
@@ -40,7 +39,6 @@ import org.apache.poi.xssf.usermodel.extensions.XSSFCellBorder.BorderSide
 
 import java.awt.Color
 
-@Slf4j
 @CompileStatic
 trait WorkbookExporter extends WorkbookHandler {
 
