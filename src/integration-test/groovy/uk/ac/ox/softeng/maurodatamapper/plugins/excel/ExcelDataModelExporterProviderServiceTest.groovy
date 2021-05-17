@@ -26,11 +26,9 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.Da
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.user.IntegrationTestUser
 
 import com.google.common.base.Strings
-import org.junit.Before
-import org.junit.Test
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.junit.Test
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -46,11 +44,6 @@ import static org.junit.Assert.assertNotNull
 class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
 
     private static final String EXPORT_FILEPATH = 'build/tmp/'
-
-    @Before
-    void disableDataModelSavingOnCreate() {
-        importerInstance.saveDataModelsOnCreate = false
-    }
 
     @Test
     void testSimpleExport() {

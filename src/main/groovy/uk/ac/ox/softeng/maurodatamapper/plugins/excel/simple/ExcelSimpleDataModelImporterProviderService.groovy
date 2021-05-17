@@ -22,7 +22,6 @@ import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiInternalException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
 import uk.ac.ox.softeng.maurodatamapper.core.authority.AuthorityService
-import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.core.model.facet.MetadataAware
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
@@ -83,8 +82,6 @@ class ExcelSimpleDataModelImporterProviderService
     @Autowired
     AuthorityService authorityService
 
-    boolean saveDataModelsOnCreate = true
-
     static DataFormatter dataFormatter = new DataFormatter()
 
     @Override
@@ -135,7 +132,7 @@ class ExcelSimpleDataModelImporterProviderService
 
             List<DataModel> dataModels = []
             sheetValues = getSheetValues(ExcelSimplePlugin.DATAMODEL_SHEET_COLUMNS, dataModelsSheet)
-            sheetValues.each { row ->
+            sheetValues.each {row ->
                 DataModel dataModel = dataModelFromRow(currentUser, row)
                 addMetadataFromExtraColumns(dataModel, ExcelSimplePlugin.DATAMODEL_SHEET_COLUMNS, row)
                 String sheetKey = row["Sheet Key"]
@@ -192,7 +189,7 @@ class ExcelSimpleDataModelImporterProviderService
         while (row.getCell(col)) {
             String headerText = getCellValueAsString(row.getCell(col))
             boolean found = false
-            intendedColumns.each { columnName ->
+            intendedColumns.each {columnName ->
                 if (headerText.toLowerCase().trim() == columnName.toLowerCase().trim()) {
                     expectedSheetColumns[columnName] = col
                     found = true
@@ -215,11 +212,11 @@ class ExcelSimpleDataModelImporterProviderService
         while (rowIterator.hasNext()) {
             row = rowIterator.next()
             Map<String, String> rowValues = [:]
-            intendedColumns.each { columnName ->
+            intendedColumns.each {columnName ->
                 String value = getCellValueAsString(row.getCell(expectedSheetColumns[columnName]))
                 rowValues[columnName] = value
             }
-            otherSheetColumns.keySet().each { columnName ->
+            otherSheetColumns.keySet().each {columnName ->
                 String value = getCellValueAsString(row.getCell(otherSheetColumns[columnName]))
                 rowValues[columnName] = value
             }
@@ -229,7 +226,7 @@ class ExcelSimpleDataModelImporterProviderService
     }
 
     void addMetadataFromExtraColumns(MetadataAware entity, List<String> expectedColumns, Map<String, String> columnValues) {
-        columnValues.keySet().each { columnName ->
+        columnValues.keySet().each {columnName ->
             if (!expectedColumns.contains(columnName)) {
                 String key = columnName
                 String namespace = this.getNamespace()
@@ -261,10 +258,12 @@ class ExcelSimpleDataModelImporterProviderService
             throw new ApiBadRequestException('SEIS03', "Invalid Data Model Type for Model '${label}'")
         }
 
-        dataModelService.createAndSaveDataModel(
-            currentUser, Folder.findOrCreateByLabel('random', [createdBy: currentUser.emailAddress]),
-            DataModelType.findForLabel(dataModelType.toString()), label, description, author, organisation,
-            authorityService.defaultAuthority, saveDataModelsOnCreate)
+        new DataModel(label: label,
+                      description: description,
+                      organisation: organisation,
+                      author: author,
+                      type: DataModelType.findForLabel(dataModelType.toString()),
+                      createdBy: currentUser.emailAddress)
     }
 
     Map<String, Map<String, EnumerationType>> calculateEnumerationTypes(User createdBy, List<Map<String, String>> sheetValues) {
@@ -298,11 +297,11 @@ class ExcelSimpleDataModelImporterProviderService
     //                                  "DataType Reference"]
     void addClassesAndElements(User currentUser, DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
         List<Map<String, String>> sheetValues = getSheetValues(ExcelSimplePlugin.MODEL_SHEET_COLUMNS, dataModelSheet)
-        List<Map<String, String>> referenceTypeDataElementRows = sheetValues.findAll { it['DataType Reference'] }
+        List<Map<String, String>> referenceTypeDataElementRows = sheetValues.findAll {it['DataType Reference']}
         Map<String, DataType> modelDataTypes = [:]
         DataClass dataClass
         String previousDataClassPath
-        (sheetValues - referenceTypeDataElementRows).each { row ->
+        (sheetValues - referenceTypeDataElementRows).each {row ->
             String dataClassPath = row["DataClass Path"]
             String name = row["DataElement Name"]
             MetadataAware createdElement = null
@@ -322,7 +321,7 @@ class ExcelSimpleDataModelImporterProviderService
             }
             addMetadataFromExtraColumns(createdElement, ExcelSimplePlugin.MODEL_SHEET_COLUMNS, row)
         }
-        referenceTypeDataElementRows.each { row ->
+        referenceTypeDataElementRows.each {row ->
             String dataClassPath = row["DataClass Path"]
             String description = row["Description"]
             String minMult = row["Minimum\nMultiplicity"]

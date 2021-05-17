@@ -335,7 +335,7 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     @CompileDynamic
     private static Metadata findMetadataByValues(UUID catalogueItemId, String namespace, String key) {
-        Metadata.findByCatalogueItemIdAndNamespaceAndKey(catalogueItemId, namespace, key)
+        Metadata.findByMultiFacetAwareItemIdAndNamespaceAndKey(catalogueItemId, namespace, key)
     }
 
     @CompileDynamic
@@ -345,6 +345,6 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceTest
 
     @CompileDynamic
     private static int countMetadataById(UUID catalogueItemId) {
-        Metadata.countByCatalogueItemId(catalogueItemId)
+        Metadata.countByMultiFacetAwareItemId(catalogueItemId)
     }
 }

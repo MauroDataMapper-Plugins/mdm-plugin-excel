@@ -25,7 +25,6 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.user.IntegrationTe
 import com.google.common.base.Strings
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.junit.Before
 import org.junit.Test
 
 import java.nio.file.Files
@@ -42,10 +41,6 @@ class ExcelSimpleDataModelExporterProviderServiceTest extends BaseExcelSimpleDat
 
     private static final String EXPORT_FILEPATH = 'build/tmp/'
 
-    @Before
-    void disableDataModelSavingOnCreate() {
-        importerInstance.saveDataModelsOnCreate = false
-    }
 
     @Test
     void testSimpleExport() {
