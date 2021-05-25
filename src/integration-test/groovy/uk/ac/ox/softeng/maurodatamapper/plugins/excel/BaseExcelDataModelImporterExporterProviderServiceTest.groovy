@@ -28,6 +28,8 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.ExcelDataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.parameters.ExcelDataModelFileImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseImportPluginTest
 
 import groovy.transform.CompileDynamic

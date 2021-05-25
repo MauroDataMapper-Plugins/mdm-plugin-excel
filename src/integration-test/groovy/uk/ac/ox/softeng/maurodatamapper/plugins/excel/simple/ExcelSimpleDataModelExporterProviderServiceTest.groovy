@@ -19,7 +19,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter.SimpleExcelDataModelExporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.user.IntegrationTestUser
 
 import com.google.common.base.Strings
@@ -86,13 +86,13 @@ class ExcelSimpleDataModelExporterProviderServiceTest extends BaseExcelSimpleDat
 
         // Export what has been saved into the database
         log.info('>>> Exporting {}', importedDataModels.size() == 1 ? 'Single' : 'Multiple')
-        ExcelSimpleDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelSimpleDataModelExporterProviderService)
+        SimpleExcelDataModelExporterProviderService exporterService = applicationContext.getBean(SimpleExcelDataModelExporterProviderService)
         ByteArrayOutputStream exportedDataModels = importedDataModels.size() == 1
             ? exporterService.exportDomain(IntegrationTestUser.instance, importedDataModels.first().id)
             : exporterService.exportDomains(IntegrationTestUser.instance, importedDataModels.id)
 
         assertNotNull 'Should have exported DataModel(s)', exportedDataModels
-        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(exportedDataModels.toString(ExcelPlugin.CHARSET))
+        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(exportedDataModels.toString('ISO-8859-1'))
 
         Path exportFilepath = Paths.get(EXPORT_FILEPATH, exportFilename)
         Files.write(exportFilepath, exportedDataModels.toByteArray())

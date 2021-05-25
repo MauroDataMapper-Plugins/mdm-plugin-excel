@@ -15,7 +15,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
@@ -43,15 +43,9 @@ import org.springframework.beans.factory.annotation.Autowired
  * @since 01/03/2018
  */
 @Slf4j
-class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProviderService {
+class SimpleExcelDataModelExporterProviderService extends DataModelExporterProviderService {
 
-    @Autowired
-    DataModelService dataModelService
-
-    @Autowired
     DataElementService dataElementService
-
-    @Autowired
     DataClassService dataClassService
 
     @Override
@@ -77,6 +71,11 @@ class ExcelSimpleDataModelExporterProviderService extends DataModelExporterProvi
     @Override
     Boolean canExportMultipleDomains() {
         true
+    }
+
+    @Override
+    String getNamespace() {
+        'uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel'
     }
 
     @Override

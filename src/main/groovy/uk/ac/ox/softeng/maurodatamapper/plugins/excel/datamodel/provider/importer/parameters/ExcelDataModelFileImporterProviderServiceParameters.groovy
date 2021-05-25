@@ -15,15 +15,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.parameters
 
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportParameterConfig
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
 
-/**
- * @since 01/03/2018
- */
-class ExcelSimpleDataModelFileImporterProviderServiceParameters extends DataModelFileImporterProviderServiceParameters {
-
-    // So we don't ask for the DataModel name
-    String dataModelName
+class ExcelDataModelFileImporterProviderServiceParameters extends DataModelFileImporterProviderServiceParameters {
+    @ImportParameterConfig(hidden = true)
+    String modelName
 }

@@ -15,7 +15,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
@@ -40,6 +40,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveTypeSer
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceTypeService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.parameters.ExcelDataModelFileImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import groovy.util.logging.Slf4j
@@ -58,31 +59,21 @@ import org.springframework.beans.factory.annotation.Autowired
  * @since 01/03/2018
  */
 @Slf4j
-class ExcelSimpleDataModelImporterProviderService
-    extends DataModelImporterProviderService<ExcelSimpleDataModelFileImporterProviderServiceParameters> {
+class SimpleExcelDataModelImporterProviderService
+    extends DataModelImporterProviderService<ExcelDataModelFileImporterProviderServiceParameters> {
 
-    @Autowired
-    DataModelService dataModelService
-
-    @Autowired
-    PrimitiveTypeService primitiveTypeService
-
-    @Autowired
-    DataClassService dataClassService
-
-    @Autowired
-    EnumerationTypeService enumerationTypeService
-
-    @Autowired
-    ReferenceTypeService referenceTypeService
-
-    @Autowired
-    DataElementService dataElementService
-
-    @Autowired
-    AuthorityService authorityService
-
+    static final DATAMODEL_SHEET_COLUMNS = ["Name", "Description", "Author", "Organisation", "Sheet Key", "Type"]
+    static final ENUM_SHEET_COLUMNS = ["DataModel Name", "Enumeration Name", "Description", "Key", "Value"]
+    // TODO: Allow flexibility with whitespaces, e.g., 'Maximum Multiplicity' == 'Maximum\nMultiplicity'
+    static final MODEL_SHEET_COLUMNS = ["DataClass Path", "DataElement Name", "Description", "Minimum\nMultiplicity", "Maximum\nMultiplicity",
+                                  "DataType Name", "DataType Reference"]
     static DataFormatter dataFormatter = new DataFormatter()
+
+    PrimitiveTypeService primitiveTypeService
+    DataClassService dataClassService
+    EnumerationTypeService enumerationTypeService
+    ReferenceTypeService referenceTypeService
+    DataElementService dataElementService
 
     @Override
     String getDisplayName() {
@@ -100,12 +91,17 @@ class ExcelSimpleDataModelImporterProviderService
     }
 
     @Override
-    DataModel importModel(User currentUser, ExcelSimpleDataModelFileImporterProviderServiceParameters params) {
+    String getNamespace() {
+        'uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel'
+    }
+
+    @Override
+    DataModel importModel(User currentUser, ExcelDataModelFileImporterProviderServiceParameters params) {
         importModels(currentUser, params)?.first()
     }
 
     @Override
-    List<DataModel> importModels(User currentUser, ExcelSimpleDataModelFileImporterProviderServiceParameters importerParameters) {
+    List<DataModel> importModels(User currentUser, ExcelDataModelFileImporterProviderServiceParameters importerParameters) {
         if (!currentUser) throw new ApiUnauthorizedException('EISP01', 'User must be logged in to import model')
         if (importerParameters.importFile.fileContents.size() == 0) throw new ApiBadRequestException('EIS02', 'Cannot import empty file')
         log.info('Importing {} as {}', importerParameters.importFile.fileName, currentUser.emailAddress)
@@ -127,14 +123,14 @@ class ExcelSimpleDataModelImporterProviderService
             List<Map<String, String>> sheetValues = []
             Map<String, Map<String, EnumerationType>> enumerationTypes = [:]
             if (enumerationsSheet) {
-                enumerationTypes = calculateEnumerationTypes(currentUser, getSheetValues(ExcelSimplePlugin.ENUM_SHEET_COLUMNS, enumerationsSheet))
+                enumerationTypes = calculateEnumerationTypes(currentUser, getSheetValues(ENUM_SHEET_COLUMNS, enumerationsSheet))
             }
 
             List<DataModel> dataModels = []
-            sheetValues = getSheetValues(ExcelSimplePlugin.DATAMODEL_SHEET_COLUMNS, dataModelsSheet)
+            sheetValues = getSheetValues(DATAMODEL_SHEET_COLUMNS, dataModelsSheet)
             sheetValues.each {row ->
                 DataModel dataModel = dataModelFromRow(currentUser, row)
-                addMetadataFromExtraColumns(dataModel, ExcelSimplePlugin.DATAMODEL_SHEET_COLUMNS, row)
+                addMetadataFromExtraColumns(dataModel, DATAMODEL_SHEET_COLUMNS, row)
                 String sheetKey = row["Sheet Key"]
                 Sheet modelSheet = workbook.getSheet(sheetKey)
                 if (!dataModelsSheet) {
@@ -287,7 +283,7 @@ class ExcelSimpleDataModelImporterProviderService
                 modelEnumTypes[label] = enumerationType
             }
             EnumerationValue enumerationValue = new EnumerationValue(createdBy: createdBy.emailAddress, key: key, value: value)
-            addMetadataFromExtraColumns(enumerationValue, ExcelSimplePlugin.ENUM_SHEET_COLUMNS, columnValues)
+            addMetadataFromExtraColumns(enumerationValue, ENUM_SHEET_COLUMNS, columnValues)
             enumerationType.addToEnumerationValues(enumerationValue)
         }
         return returnValues
@@ -296,7 +292,7 @@ class ExcelSimpleDataModelImporterProviderService
     //    static MODEl_SHEET_COLUMNS = ["DataClass Path", "Name", "Description", "Minimum Multiplicity", "Maximum Multiplicity", "DataType Name",
     //                                  "DataType Reference"]
     void addClassesAndElements(User currentUser, DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
-        List<Map<String, String>> sheetValues = getSheetValues(ExcelSimplePlugin.MODEL_SHEET_COLUMNS, dataModelSheet)
+        List<Map<String, String>> sheetValues = getSheetValues(MODEL_SHEET_COLUMNS, dataModelSheet)
         List<Map<String, String>> referenceTypeDataElementRows = sheetValues.findAll {it['DataType Reference']}
         Map<String, DataType> modelDataTypes = [:]
         DataClass dataClass
@@ -319,7 +315,7 @@ class ExcelSimpleDataModelImporterProviderService
             } else {
                 createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
             }
-            addMetadataFromExtraColumns(createdElement, ExcelSimplePlugin.MODEL_SHEET_COLUMNS, row)
+            addMetadataFromExtraColumns(createdElement, MODEL_SHEET_COLUMNS, row)
         }
         referenceTypeDataElementRows.each {row ->
             String dataClassPath = row["DataClass Path"]
@@ -331,7 +327,7 @@ class ExcelSimpleDataModelImporterProviderService
                                                  minMult ? Integer.parseInt(minMult) : 1,
                                                  maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : 1)
             createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
-            addMetadataFromExtraColumns(createdElement, ExcelSimplePlugin.MODEL_SHEET_COLUMNS, row)
+            addMetadataFromExtraColumns(createdElement, MODEL_SHEET_COLUMNS, row)
         }
         modelDataTypes.values().each {
             dataModel.addToDataTypes(it)

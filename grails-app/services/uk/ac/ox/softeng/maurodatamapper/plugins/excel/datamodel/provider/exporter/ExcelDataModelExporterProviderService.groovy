@@ -15,7 +15,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
@@ -40,13 +40,16 @@ import org.springframework.beans.factory.annotation.Autowired
 @CompileStatic
 class ExcelDataModelExporterProviderService extends DataModelExporterProviderService implements WorkbookExporter {
 
-    @Autowired
-    DataModelService dataModelService
+    static final String DATAMODELS_IMPORT_TEMPLATE_FILENAME = 'Template_DataModel_Import_File.xlsx'
+    static final String DATAMODELS_SHEET_NAME = 'DataModels'
+    static final String CONTENT_TEMPLATE_SHEET_NAME = 'KEY_1'
 
-    @Autowired
+    static final int DATAMODELS_NUM_HEADER_ROWS = 2
+    static final int CONTENT_NUM_HEADER_ROWS = 2
+    static final int DATAMODELS_ID_COLUMN_INDEX = 1
+    static final int CONTENT_ID_COLUMN_INDEX = 0
+
     DataClassService dataClassService
-
-    @Autowired
     DataElementService dataElementService
 
     @Override
@@ -61,17 +64,22 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     @Override
     String getFileType() {
-        ExcelPlugin.EXCEL_FILETYPE
+        'application/vnd.ms-excel'
     }
 
     @Override
     String getFileExtension() {
-        ExcelPlugin.EXCEL_FILE_EXTENSION
+        'xlsx'
     }
 
     @Override
     Boolean canExportMultipleDomains() {
         true
+    }
+
+    @Override
+    String getNamespace() {
+        'uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel'
     }
 
     @Override
@@ -82,7 +90,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
     @Override
     ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
         log.info('Exporting DataModels to Excel')
-        workbook = loadWorkbookFromFilename(ExcelPlugin.DATAMODELS_IMPORT_TEMPLATE_FILENAME) as XSSFWorkbook
+        workbook = loadWorkbookFromFilename(DATAMODELS_IMPORT_TEMPLATE_FILENAME) as XSSFWorkbook
         loadDataModelsIntoWorkbook(dataModels).withCloseable { XSSFWorkbook workbook ->
             if (!workbook) return null
             new ByteArrayOutputStream().tap { ByteArrayOutputStream exportStream ->
@@ -95,7 +103,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
     private XSSFWorkbook loadDataModelsIntoWorkbook(List<DataModel> dataModels) {
         loadWorkbookCellAndBorderStyles()
         List<DataModelDataRow> dataRows = dataModels.collect { new DataModelDataRow(it) }
-        Sheet dataModelSheet = workbook.getSheet(ExcelPlugin.DATAMODELS_SHEET_NAME).tap { Sheet sheet ->
+        Sheet dataModelSheet = workbook.getSheet(DATAMODELS_SHEET_NAME).tap { Sheet sheet ->
             addMetadataHeadersToSheet sheet, dataRows
         }
         dataRows.each { DataModelDataRow dataRow ->
@@ -147,11 +155,11 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     private void configureDataModelSheetStyle(Sheet sheet, DataModelDataRow dataRow) {
         log.debug('Configuring DataModel [{}] sheet style', sheet.sheetName)
-        configureSheetStyle(sheet, dataRow.firstMetadataColumn, ExcelPlugin.DATAMODELS_NUM_HEADER_ROWS)
+        configureSheetStyle(sheet, dataRow.firstMetadataColumn, DATAMODELS_NUM_HEADER_ROWS)
     }
 
     private void configureContentSheetStyle(Sheet sheet, List<ContentDataRow> dataRows) {
         log.debug('Configuring DataModel [{}] content sheet style', sheet.sheetName)
-        configureSheetStyle(sheet, dataRows.first().firstMetadataColumn, ExcelPlugin.CONTENT_NUM_HEADER_ROWS)
+        configureSheetStyle(sheet, dataRows.first().firstMetadataColumn, CONTENT_NUM_HEADER_ROWS)
     }
 }

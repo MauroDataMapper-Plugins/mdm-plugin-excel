@@ -20,6 +20,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
 import uk.ac.ox.softeng.maurodatamapper.core.importer.ImporterService
 import uk.ac.ox.softeng.maurodatamapper.core.rest.transport.importer.ImportParameterGroup
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter.SimpleExcelDataModelExporterProviderService
 
 import groovy.transform.CompileStatic
 import org.junit.Ignore
@@ -38,7 +39,7 @@ class ExcelSimpleDataModelImporterProviderServiceTest extends BaseExcelSimpleDat
             'My Model'                  : 'MM',
             'GEL: CancerSchema-v1.0.1'  : 'GC101',
             '[GEL: CancerSchema-v1.0.1]': 'GC101'
-        ].each { assertEquals ExcelSimpleDataModelExporterProviderService.createSheetKey(it.key), it.value }
+        ].each { assertEquals SimpleExcelDataModelExporterProviderService.createSheetKey(it.key), it.value }
     }
 
     @Test

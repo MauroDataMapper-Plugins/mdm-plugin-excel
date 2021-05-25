@@ -23,6 +23,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelXmlImporterService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter.ExcelDataModelExporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.user.IntegrationTestUser
 
 import com.google.common.base.Strings
@@ -126,7 +127,7 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
             : exporterService.exportDomains(IntegrationTestUser.instance, importedDataModels.id)
 
         assertNotNull 'Should have exported DataModel(s)', exportedDataModels
-        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(exportedDataModels.toString(ExcelPlugin.CHARSET))
+        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(exportedDataModels.toString('ISO-8859-1'))
 
         Path exportFilepath = Paths.get(EXPORT_FILEPATH, exportFilename)
         Files.write(exportFilepath, exportedDataModels.toByteArray())

@@ -15,16 +15,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
-import uk.ac.ox.softeng.maurodatamapper.core.authority.AuthorityService
-import uk.ac.ox.softeng.maurodatamapper.core.container.FolderService
 import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
-import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
@@ -38,6 +35,8 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveTypeSer
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceTypeService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter.ExcelDataModelExporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.parameters.ExcelDataModelFileImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.ContentDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.DataModelDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.MetadataColumn
@@ -47,36 +46,17 @@ import uk.ac.ox.softeng.maurodatamapper.security.User
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.poi.ss.usermodel.Workbook
-import org.springframework.beans.factory.annotation.Autowired
 
 @Slf4j
 @CompileStatic
 class ExcelDataModelImporterProviderService extends DataModelImporterProviderService<ExcelDataModelFileImporterProviderServiceParameters>
     implements WorkbookHandler {
 
-    @Autowired
-    DataModelService dataModelService
-
-    @Autowired
-    AuthorityService authorityService
-
-    @Autowired
     DataClassService dataClassService
-
-    @Autowired
     DataElementService dataElementService
-
-    @Autowired
     PrimitiveTypeService primitiveTypeService
-
-    @Autowired
     EnumerationTypeService enumerationTypeService
-
-    @Autowired
     ReferenceTypeService referenceTypeService
-
-    @Autowired
-    FolderService folderService
 
     @Override
     String getDisplayName() {
@@ -91,6 +71,11 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     @Override
     Boolean canImportMultipleDomains() {
         true
+    }
+
+    @Override
+    String getNamespace() {
+        'uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel'
     }
 
     @Override
@@ -136,13 +121,16 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
     private List<DataModelDataRow> loadDataModelDataRows(Workbook workbook, String filename) {
         log.info('Loading DataModel rows from {}', filename)
-        loadDataRows(workbook, DataModelDataRow, filename, ExcelPlugin.DATAMODELS_SHEET_NAME, ExcelPlugin.DATAMODELS_NUM_HEADER_ROWS,
-                     ExcelPlugin.DATAMODELS_ID_COLUMN_INDEX)
+        loadDataRows(workbook, DataModelDataRow, filename, ExcelDataModelExporterProviderService.DATAMODELS_SHEET_NAME,
+                     ExcelDataModelExporterProviderService.DATAMODELS_NUM_HEADER_ROWS,
+                     ExcelDataModelExporterProviderService.DATAMODELS_ID_COLUMN_INDEX)
     }
 
     private List<ContentDataRow> loadContentDataRows(Workbook workbook, String filename, String sheetName) {
         log.info('Loading content (DataClass/DataElement) rows from {} in sheet {}', filename, sheetName)
-        loadDataRows(workbook, ContentDataRow, filename, sheetName, ExcelPlugin.CONTENT_NUM_HEADER_ROWS, ExcelPlugin.CONTENT_ID_COLUMN_INDEX)
+        loadDataRows(workbook, ContentDataRow, filename, sheetName,
+                     ExcelDataModelExporterProviderService.CONTENT_NUM_HEADER_ROWS,
+                     ExcelDataModelExporterProviderService.CONTENT_ID_COLUMN_INDEX)
     }
 
     private DataModel loadDataModel(DataModelDataRow dataModelDataRow, List<ContentDataRow> contentDataRows, User currentUser) {
