@@ -18,6 +18,7 @@
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
+import uk.ac.ox.softeng.maurodatamapper.core.facet.MetadataService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
@@ -47,6 +48,7 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
 
     DataElementService dataElementService
     DataClassService dataClassService
+    MetadataService metadataService
 
     @Override
     String getDisplayName() {
@@ -106,7 +108,7 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
                 array["Sheet Key"] = sheetKey
                 array["Type"] = dataModel.modelType
 
-                dataModel.metadata.each { metadata ->
+               metadataService.findAllByMultiFacetAwareItemId(dataModel.id).each { metadata ->
                     String key = "${metadata.namespace}:${metadata.key}"
                     array[key] = metadata.value
                 }
@@ -122,7 +124,7 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
                         enumArray["Description"] = enumType.description
                         enumArray["Key"] = enumValue.key
                         enumArray["Value"] = enumValue.value
-                        enumValue.metadata.each { metadata ->
+                        metadataService.findAllByMultiFacetAwareItemId(enumValue.id).each { metadata ->
                             String key = "${metadata.namespace}:${metadata.key}"
                             enumArray[key] = metadata.value
                         }
@@ -240,7 +242,7 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
         array["DataType Name"] = ""
         array["DataType Reference"] = ""
 
-        dc.metadata.each { metadata ->
+        metadataService.findAllByMultiFacetAwareItemId(dc.id).each { metadata ->
             String key = "${metadata.namespace}:${metadata.key}"
             array[key] = metadata.value
         }
@@ -265,7 +267,7 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
                 array["DataType Reference"] = classPath.join(" | ")
             }
 
-            dataElement.metadata.each { metadata ->
+            metadataService.findAllByMultiFacetAwareItemId(dataElement.id).each { metadata ->
                 String key = "${metadata.namespace}:${metadata.key}"
                 array[key] = metadata.value
             }

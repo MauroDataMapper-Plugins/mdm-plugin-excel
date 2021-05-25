@@ -18,9 +18,9 @@
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter
 
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
+import uk.ac.ox.softeng.maurodatamapper.core.facet.MetadataService
 import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
-import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElementService
@@ -34,15 +34,12 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.springframework.beans.factory.annotation.Autowired
 
 @Slf4j
 @CompileStatic
 class ExcelDataModelExporterProviderService extends DataModelExporterProviderService implements WorkbookExporter {
 
     static final String DATAMODELS_IMPORT_TEMPLATE_FILENAME = 'Template_DataModel_Import_File.xlsx'
-    static final String DATAMODELS_SHEET_NAME = 'DataModels'
-    static final String CONTENT_TEMPLATE_SHEET_NAME = 'KEY_1'
 
     static final int DATAMODELS_NUM_HEADER_ROWS = 2
     static final int CONTENT_NUM_HEADER_ROWS = 2
@@ -51,6 +48,7 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     DataClassService dataClassService
     DataElementService dataElementService
+    MetadataService metadataService
 
     @Override
     String getDisplayName() {
@@ -102,8 +100,14 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
 
     private XSSFWorkbook loadDataModelsIntoWorkbook(List<DataModel> dataModels) {
         loadWorkbookCellAndBorderStyles()
-        List<DataModelDataRow> dataRows = dataModels.collect { new DataModelDataRow(it) }
-        Sheet dataModelSheet = workbook.getSheet(DATAMODELS_SHEET_NAME).tap { Sheet sheet ->
+        List<DataModelDataRow> dataRows = dataModels.collect {dataModel ->
+            DataModelDataRow dmdr = new DataModelDataRow(dataModel)
+            metadataService.findAllByMultiFacetAwareItemId(dataModel.id).each {md ->
+                dmdr.addToMetadata(md.namespace, md.key, md.value)
+            }
+            dmdr
+        }
+        Sheet dataModelSheet = workbook.getSheet(dataModelsSheetName).tap {Sheet sheet ->
             addMetadataHeadersToSheet sheet, dataRows
         }
         dataRows.each { DataModelDataRow dataRow ->
@@ -141,7 +145,11 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
         log.debug('Creating content rows')
         catalogueItems.each {CatalogueItem catalogueItem ->
             getLog().trace('Creating content {} : {}', catalogueItem.domainType, catalogueItem.label)
-            dataRows << new ContentDataRow(catalogueItem)
+            ContentDataRow cdr = new ContentDataRow(catalogueItem)
+            metadataService.findAllByMultiFacetAwareItemId(catalogueItem.id).each {md ->
+                cdr.addToMetadata(md.namespace, md.key, md.value)
+            }
+            dataRows << cdr
             if (catalogueItem instanceof DataClass) {
                 dataRows = createContentDataRows(dataModelId, dataElementService.findAllByDataClassIdJoinDataType(catalogueItem.id), dataRows)
                 dataRows = createContentDataRows(dataModelId,

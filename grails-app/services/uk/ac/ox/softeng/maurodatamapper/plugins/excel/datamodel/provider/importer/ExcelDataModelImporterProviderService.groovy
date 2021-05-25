@@ -121,7 +121,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
 
     private List<DataModelDataRow> loadDataModelDataRows(Workbook workbook, String filename) {
         log.info('Loading DataModel rows from {}', filename)
-        loadDataRows(workbook, DataModelDataRow, filename, ExcelDataModelExporterProviderService.DATAMODELS_SHEET_NAME,
+        loadDataRows(workbook, DataModelDataRow, filename, dataModelsSheetName,
                      ExcelDataModelExporterProviderService.DATAMODELS_NUM_HEADER_ROWS,
                      ExcelDataModelExporterProviderService.DATAMODELS_ID_COLUMN_INDEX)
     }

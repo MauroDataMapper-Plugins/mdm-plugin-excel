@@ -15,21 +15,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter
 
-import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
+
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelExporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelXmlImporterService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter.ExcelDataModelExporterProviderService
-import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.user.IntegrationTestUser
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.BaseExcelDataModelImporterExporterProviderServiceSpec
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.ExcelDataModelImporterProviderService
 
 import com.google.common.base.Strings
-import groovy.transform.CompileStatic
+import grails.gorm.transactions.Rollback
+import grails.testing.mixin.integration.Integration
 import groovy.util.logging.Slf4j
-import org.junit.Test
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -40,62 +42,98 @@ import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertNotNull
 
 @Slf4j
-@CompileStatic
-@SuppressWarnings('SpellCheckingInspection')
-class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImporterExporterProviderServiceTest {
+@Integration
+@Rollback
+class ExcelDataModelExporterProviderServiceSpec extends BaseExcelDataModelImporterExporterProviderServiceSpec {
 
-    private static final String EXPORT_FILEPATH = 'build/tmp/'
+    DataModelXmlImporterService dataModelXmlImporterService
+    ExcelDataModelExporterProviderService excelDataModelExporterProviderService
+    ExcelDataModelImporterProviderService excelDataModelImporterProviderService
 
-    @Test
-    void testSimpleExport() {
-        DataModel dataModel = importThenExportSheet('simpleImport.xlsx', 'simpleImport_export.xlsx') as DataModel
+    @Override
+    DataModelImporterProviderService getDataModelImporterProviderService() {
+        excelDataModelImporterProviderService
+    }
+
+    @Override
+    DataModelExporterProviderService getDataModelExporterProviderService() {
+        excelDataModelExporterProviderService
+    }
+
+    def 'testSimpleExport'() {
+        given:
+        setupDomainData()
+
+        when:
+        DataModel dataModel = importThenExportWorkbook('simpleImport.xlsx', 'simpleImport_export.xlsx') as DataModel
+
+        then:
         verifySimpleDataModel dataModel
         verifySimpleDataModelContent dataModel
     }
 
-    @Test
-    void testSimpleExportWithComplexMetadata() {
-        DataModel dataModel = importThenExportSheet('simpleImportComplexMetadata.xlsx', 'simpleImportComplexMetadata_export.xlsx') as DataModel
+    def 'testSimpleExportWithComplexMetadata'() {
+        given:
+        setupDomainData()
+
+        when:
+        DataModel dataModel = importThenExportWorkbook('simpleImportComplexMetadata.xlsx', 'simpleImportComplexMetadata_export.xlsx') as DataModel
+
+        then:
         verifySimpleDataModelWithComplexMetadata dataModel
         verifySimpleDataModelWithComplexMetadataContent dataModel
     }
 
-    @Test
-    void testMultipleDataModelExport() {
-        List<DataModel> dataModels = importThenExportSheet('multiDataModelImport.xlsx', 'multiDataModelImport_export.xlsx', 3) as List<DataModel>
+    def 'testMultipleDataModelExport'() {
+        given:
+        setupDomainData()
 
+        when:
+        List<DataModel> dataModels = importThenExportWorkbook('multiDataModelImport.xlsx', 'multiDataModelImport_export.xlsx') as List<DataModel>
         DataModel simpleDataModel = findByLabel(dataModels, 'test')
+
+        then:
         verifySimpleDataModel simpleDataModel
         verifySimpleDataModelContent simpleDataModel
 
+        when:
         DataModel dataFlowDataModel = findByLabel(dataModels, 'Another Model')
+
+        then:
         verifyDataFlowDataModel dataFlowDataModel
         verifyDataFlowDataModelContent dataFlowDataModel
 
+        when:
         DataModel complexDataModel = findByLabel(dataModels, 'complex.xsd')
+
+        then:
         verifyComplexDataModel complexDataModel
         verifyComplexDataModelContent complexDataModel
     }
 
-    @Test
-    void testDefaultMultiplicitiesIfUnset() {
+    def 'testDefaultMultiplicitiesIfUnset'() {
+        given:
+        setupDomainData()
+
+        when:
         // Import test Data Model from XML file
         Path importFilepath = Paths.get(IMPORT_FILEPATH, 'unsetMultiplicities.xml')
         DataModelFileImporterProviderServiceParameters importParameters = new DataModelFileImporterProviderServiceParameters().tap {
             importFile = new FileParameter(importFilepath.toString(), 'text/xml', Files.readAllBytes(importFilepath))
         }
-        DataModel dataModel = applicationContext.getBean(DataModelXmlImporterService).importModel(IntegrationTestUser.instance, importParameters)
+        DataModel dataModel = dataModelXmlImporterService.importModel(admin, importParameters)
 
         // Export Data Model as Excel file
-        ByteArrayOutputStream exportedDataModel = applicationContext.getBean(ExcelDataModelExporterProviderService)
-                                                                    .exportDataModel(IntegrationTestUser.instance, dataModel)
+        ByteArrayOutputStream exportedDataModel =excelDataModelExporterProviderService.exportDataModel(admin, dataModel)
         Path exportFilepath = Paths.get(EXPORT_FILEPATH, 'unsetMultiplicities_export.xlsx')
         Files.write(exportFilepath, exportedDataModel.toByteArray())
 
         // Import Data Model from Excel file to test exporting
-        DataModel testDataModel = importDomain(createImportParameters(exportFilepath), false)
+        DataModel testDataModel = importAndValidateModel(createImportParameters(exportFilepath))
 
         DataClass testDataClass = testDataModel.dataClasses.find { it.label == 'Data Class with Unset Multiplicities' }
+
+        then:
         assertNotNull "DataClass ${testDataClass.label} must exist", testDataClass
         assertEquals "DataClass ${testDataClass.label} minMultiplicity must default to 0", 0, testDataClass.minMultiplicity
         assertEquals "DataClass ${testDataClass.label} maxMultiplicity must default to 0", 0, testDataClass.maxMultiplicity
@@ -108,33 +146,5 @@ class ExcelDataModelExporterProviderServiceTest extends BaseExcelDataModelImport
         // assertNotNull "DataElement ${testDataElement.label} must exist", testDataElement
         // assertEquals "DataElement ${testDataElement.label} minMultiplicity must default to 0", 0, testDataElement.minMultiplicity
         // assertEquals "DataElement ${testDataElement.label} maxMultiplicity must default to 0", 0, testDataElement.maxMultiplicity
-    }
-
-    private static DataModel findByLabel(List<DataModel> dataModels, String label) {
-        dataModels.find { it.label == label }
-    }
-
-    private importThenExportSheet(String importFilename, String exportFilename, int expectedSize = 1) throws IOException, ApiException {
-        // Import DataModels under test first
-        List<DataModel> importedDataModels = importDomains(createImportParameters(importFilename), expectedSize)
-        log.debug('DataModel(s) to export: {}', importedDataModels.size() == 1 ? importedDataModels.first().id : importedDataModels.id)
-
-        // Export what has been saved into the database
-        log.info('>>> Exporting {}', importedDataModels.size() == 1 ? 'Single' : 'Multiple')
-        ExcelDataModelExporterProviderService exporterService = applicationContext.getBean(ExcelDataModelExporterProviderService)
-        ByteArrayOutputStream exportedDataModels = importedDataModels.size() == 1
-            ? exporterService.exportDomain(IntegrationTestUser.instance, importedDataModels.first().id)
-            : exporterService.exportDomains(IntegrationTestUser.instance, importedDataModels.id)
-
-        assertNotNull 'Should have exported DataModel(s)', exportedDataModels
-        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(exportedDataModels.toString('ISO-8859-1'))
-
-        Path exportFilepath = Paths.get(EXPORT_FILEPATH, exportFilename)
-        Files.write(exportFilepath, exportedDataModels.toByteArray())
-
-        // Test using the exported DataModels instead of the ones from the first import
-        log.info('>>> Importing')
-        List<DataModel> importedExportedDataModels = importDomains(createImportParameters(exportFilepath), expectedSize, false)
-        importedExportedDataModels.size() == 1 ? importedExportedDataModels.first() : importedExportedDataModels
     }
 }
