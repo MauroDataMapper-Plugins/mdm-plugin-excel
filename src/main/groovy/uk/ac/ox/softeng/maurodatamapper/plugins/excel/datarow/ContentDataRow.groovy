@@ -76,10 +76,6 @@ class ContentDataRow extends StandardDataRow<EnumerationDataRow> {
                 }
             }
         }
-
-        catalogueItem.metadata?.each { Metadata metadataEntry ->
-            metadata << new MetadataColumn(namespace: metadataEntry.namespace, key: metadataEntry.key, value: metadataEntry.value)
-        }
     }
 
     @Override

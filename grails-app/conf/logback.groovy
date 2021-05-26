@@ -19,6 +19,8 @@ import ch.qos.logback.classic.filter.ThresholdFilter
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.filter.Filter
 import ch.qos.logback.core.spi.FilterReply
+import grails.util.BuildSettings
+import grails.util.Environment
 import org.springframework.boot.logging.logback.ColorConverter
 import org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter
 
@@ -27,38 +29,50 @@ import java.nio.charset.Charset
 conversionRule 'clr', ColorConverter
 conversionRule 'wex', WhitespaceThrowableProxyConverter
 
-
 // Message
+String ansiPattern = '%clr(%d{ISO8601}){faint} ' + // Date
+                     '%clr([%10.10thread]){faint} ' + // Thread
+                     '%clr(%-5level) ' + // Log level
+                     '%clr(%-40.40logger{39}){cyan} %clr(:){faint} ' + // Logger
+                     '%m%n%wex'
+// Message
+
 String nonAnsiPattern = '%d{ISO8601} [%10.10thread] %-5level %-40.40logger{39} : %msg%n'
 
-def buildDir = new File('.', 'build').canonicalFile
-def logDir = new File(buildDir, 'logs').canonicalFile
-if (!logDir) logDir.mkdirs()
+String cIProp = System.getProperty('mdm.ciMode')
+boolean ciEnv = cIProp ? cIProp.toBoolean() : false
 
-String logFileName = buildDir.parentFile.name
+def baseDir = Environment.current == Environment.PRODUCTION ? BuildSettings.BASE_DIR.canonicalFile : BuildSettings.TARGET_DIR.canonicalFile
+def clazz = Environment.current == Environment.PRODUCTION ? RollingFileAppender : FileAppender
 
-String logMsg = "==> Log File available at ${logDir}/${logFileName}.log <=="
+File logDir = new File(baseDir, 'logs').canonicalFile
+String logFilename = System.getProperty('mdm.logFileName') ?: Environment.current == Environment.PRODUCTION ? baseDir.name : baseDir.parentFile.name
 
-println(logMsg)
 
 // See http://logback.qos.ch/manual/groovy.html for details on configuration
 appender('STDOUT', ConsoleAppender) {
     encoder(PatternLayoutEncoder) {
         charset = Charset.forName('UTF-8')
-        pattern = nonAnsiPattern
+        pattern = ciEnv || Environment.current == Environment.TEST ? nonAnsiPattern : ansiPattern
     }
 
-    filter(ThresholdFilter) {
-        level = INFO
+    if (Environment.current == Environment.TEST) {
+        filter(ThresholdFilter) {
+            level = INFO
+        }
+    } else {
+        filter(ThresholdFilter) {
+            level = WARN
+        }
     }
     filter(HibernateMappingFilter)
     filter HibernateDeprecationFilter
     filter HibernateNarrowingFilter
 }
 
-appender("FILE", FileAppender) {
-    file = "${logDir}/${logFileName}.log"
-    append = true
+appender("FILE", clazz) {
+    file = "${logDir}/${logFilename}.log"
+    append = false
 
     encoder(PatternLayoutEncoder) {
         pattern = nonAnsiPattern
@@ -67,13 +81,21 @@ appender("FILE", FileAppender) {
     filter HibernateDeprecationFilter
     filter HibernateNarrowingFilter
 
+    if (clazz == RollingFileAppender) {
+        rollingPolicy(TimeBasedRollingPolicy) {
+            maxHistory = 90
+            fileNamePattern = "${logDir}/${logFilename}.%d{yyyy-MM-dd}.log"
+        }
+    }
     filter(ThresholdFilter) {
         level = TRACE
     }
 }
 root(INFO, ['STDOUT', 'FILE'])
 
+
 logger('uk.ac.ox.softeng', DEBUG)
+logger('db.migration', DEBUG)
 
 logger('org.springframework.jdbc.core.JdbcTemplate', DEBUG)
 
@@ -84,6 +106,8 @@ logger('org.hibernate.search.batchindexing.impl', WARN)
 // logger 'org.hibernate.type', TRACE
 logger('org.flyway', DEBUG)
 // Track interceptor order
+logger 'grails.artefact.Interceptor', DEBUG
+logger 'org.simplejavamail.mailer.internal.mailsender.MailSender', OFF
 
 logger('org.grails.spring.beans.factory.OptimizedAutowireCapableBeanFactory', ERROR)
 logger('org.springframework.context.support.PostProcessorRegistrationDelegate', WARN)
@@ -93,8 +117,6 @@ logger 'org.hibernate.engine.jdbc.spi.SqlExceptionHelper', ERROR
 
 logger 'org.springframework.mock.web.MockServletContext', ERROR
 logger 'StackTrace', OFF
-
-logger 'uk.ac.ox.softeng.maurodatamapper.datamodel', TRACE
 
 class HibernateMappingFilter extends Filter<ILoggingEvent> {
 

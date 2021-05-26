@@ -17,7 +17,7 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.workbook
 
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin
+import uk.ac.ox.softeng.maurodatamapper.core.facet.MetadataService
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.ContentDataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.DataRow
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.EnumerationDataRow
@@ -53,9 +53,11 @@ trait WorkbookExporter extends WorkbookHandler {
     XSSFCellStyle metadataBorderStyle
     XSSFCellStyle metadataColouredBorderStyle
 
+    abstract MetadataService getMetadataService()
+
     Sheet createContentSheetFromTemplate(String name) {
         try {
-            workbook.cloneSheet(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME), name)
+            workbook.cloneSheet(workbook.getSheetIndex(contentTemplateSheetName), name)
         } catch (IllegalArgumentException ignored) {
             createContentSheetFromTemplate("${name}.1")
         }
@@ -64,7 +66,7 @@ trait WorkbookExporter extends WorkbookHandler {
     XSSFWorkbook removeTemplateSheet() {
         log.debug('Removing the template sheet')
         workbook.tap {
-            removeSheetAt(workbook.getSheetIndex(ExcelPlugin.CONTENT_TEMPLATE_SHEET_NAME))
+            removeSheetAt(workbook.getSheetIndex(contentTemplateSheetName))
             setActiveSheet(0)
         }
     }
@@ -72,7 +74,7 @@ trait WorkbookExporter extends WorkbookHandler {
     void loadDataRowsIntoSheet(Sheet sheet, List<ContentDataRow> dataRows) {
         log.debug('Loading DataRows into sheet')
         addMetadataHeadersToSheet(sheet, dataRows, 3)
-        dataRows.each { ContentDataRow dataRow ->
+        dataRows.each {ContentDataRow dataRow ->
             log.debug('Adding to row {}', sheet.lastRowNum + 1)
             dataRow.buildRow(sheet.createRow(sheet.lastRowNum + 1))
         }
@@ -84,7 +86,7 @@ trait WorkbookExporter extends WorkbookHandler {
         Row secondRow = sheet.getRow(1)
         int namespaceColumnIndex = firstRow.lastCellNum
 
-        metadataMapping.sort().each { String namespace, Set<String> keys ->
+        metadataMapping.sort().each {String namespace, Set<String> keys ->
             Cell namespaceHeader = buildHeaderCell(firstRow, namespaceColumnIndex, cellStyleColumn, namespace)
             if (keys.size() == 1) {
                 buildHeaderCell(secondRow, namespaceHeader.columnIndex, cellStyleColumn, keys.first())
@@ -93,7 +95,7 @@ trait WorkbookExporter extends WorkbookHandler {
                 sheet.addMergedRegion(new CellRangeAddress(
                     DataRow.METADATA_NAMESPACE_ROW_INDEX, DataRow.METADATA_NAMESPACE_ROW_INDEX,
                     namespaceHeader.columnIndex, namespaceHeader.columnIndex + keys.size() - 1))
-                keys.eachWithIndex { String key, int i ->
+                keys.eachWithIndex {String key, int i ->
                     buildHeaderCell(secondRow, namespaceHeader.columnIndex + i, cellStyleColumn, key)
                 }
                 namespaceColumnIndex += keys.size()
@@ -134,7 +136,7 @@ trait WorkbookExporter extends WorkbookHandler {
 
     Sheet configureSheetStyle(Sheet sheet, int metadataColumnIndex, int numberOfHeaderRows) {
         boolean isRowColoured = false
-        int lastColumnIndex = sheet.max { it.lastCellNum }.lastCellNum
+        int lastColumnIndex = sheet.max {it.lastCellNum}.lastCellNum
 
         for (int rowIndex = numberOfHeaderRows; rowIndex <= sheet.lastRowNum; rowIndex++) {
             Row row = sheet.getRow(rowIndex)
@@ -146,8 +148,8 @@ trait WorkbookExporter extends WorkbookHandler {
             if (!enumRowsRegion) rowIndex = row.rowNum
             else {
                 boolean isEnumRowColoured = isRowColoured
-                (enumRowsRegion.firstRow..enumRowsRegion.lastRow).each { int enumRowIndex ->
-                    Closure setEnumRowStyle = { int start, int finish ->
+                (enumRowsRegion.firstRow..enumRowsRegion.lastRow).each {int enumRowIndex ->
+                    Closure setEnumRowStyle = {int start, int finish ->
                         setRowStyle(sheet.getRow(enumRowIndex), isEnumRowColoured, metadataColumnIndex, start, finish)
                     }
                     setEnumRowStyle(0, EnumerationDataRow.KEY_COLUMN_INDEX)
@@ -161,20 +163,20 @@ trait WorkbookExporter extends WorkbookHandler {
             isRowColoured = !isRowColoured
         }
 
-        List<Integer> columnSizes = sheet.sheetName == ExcelPlugin.DATAMODELS_SHEET_NAME ? [3, 4, 5] : [5, 7, 9]
+        List<Integer> columnSizes = sheet.sheetName == dataModelsSheetName ? [3, 4, 5] : [5, 7, 9]
         autoSizeColumns(sheet, [0, 1] + columnSizes)
         autoSizeHeaderColumnsAfter(sheet, metadataColumnIndex)
         sheet
     }
 
     private void autoSizeColumns(Sheet sheet, List<Integer> columns) {
-        columns.each { sheet.autoSizeColumn(it, true) }
+        columns.each {sheet.autoSizeColumn(it, true)}
     }
 
     private void autoSizeHeaderColumnsAfter(Sheet sheet, int columnIndex) {
         sheet.getRow(0)
-             .findAll { Cell cell -> cell.columnIndex >= columnIndex && getCellValue(cell) }
-             .each { sheet.autoSizeColumn((it as Cell).columnIndex, true) }
+            .findAll {Cell cell -> cell.columnIndex >= columnIndex && getCellValue(cell)}
+            .each {sheet.autoSizeColumn((it as Cell).columnIndex, true)}
     }
 
     private Cell buildHeaderCell(Row headerRow, int columnIndex, int cellStyleColumn, String cellValue, boolean createMergeRegion = false) {
@@ -194,7 +196,7 @@ trait WorkbookExporter extends WorkbookHandler {
             firstColumn = headerCell.columnIndex
             lastColumn = headerCell.columnIndex
         }
-        (newRegion.firstRow..newRegion.lastRow).each { int rowIndex ->
+        (newRegion.firstRow..newRegion.lastRow).each {int rowIndex ->
             Row newRegionRow = headerRow.sheet.getRow(rowIndex)
             Cell newRegionHeaderCell = CellUtil.getCell(newRegionRow, headerCell.columnIndex)
             newRegionHeaderCell.setCellStyle(copyCell.cellStyle)
@@ -211,7 +213,7 @@ trait WorkbookExporter extends WorkbookHandler {
         XSSFCellStyle cellStyle = colourRow ? colouredCellStyle : defaultCellStyle
         XSSFCellStyle borderStyle = colourRow ? metadataColouredBorderStyle : metadataBorderStyle
         CellStyle workbookDefaultStyle = row.sheet.workbook.getCellStyleAt(0)
-        (start..<finish).each { int cellIndex ->
+        (start..<finish).each {int cellIndex ->
             Cell cell = row.getCell(cellIndex)
             CellStyle styleToUse = cellIndex == metadataColumnIndex - 1 ? borderStyle : cellStyle
             if (!cell) {
