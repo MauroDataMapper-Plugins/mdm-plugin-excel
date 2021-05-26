@@ -21,12 +21,10 @@ import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiInternalException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
-import uk.ac.ox.softeng.maurodatamapper.core.authority.AuthorityService
 import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.core.model.facet.MetadataAware
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
-import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
@@ -43,6 +41,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImp
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.parameters.ExcelDataModelFileImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.poi.EncryptedDocumentException
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException
@@ -53,25 +52,36 @@ import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
-import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * @since 01/03/2018
  */
 @Slf4j
+@CompileStatic
 class SimpleExcelDataModelImporterProviderService
     extends DataModelImporterProviderService<ExcelDataModelFileImporterProviderServiceParameters> {
 
-    static final DATAMODEL_SHEET_COLUMNS = ["Name", "Description", "Author", "Organisation", "Sheet Key", "Type"]
-    static final ENUM_SHEET_COLUMNS = ["DataModel Name", "Enumeration Name", "Description", "Key", "Value"]
-    // TODO: Allow flexibility with whitespaces, e.g., 'Maximum Multiplicity' == 'Maximum\nMultiplicity'
-    static final MODEL_SHEET_COLUMNS = ["DataClass Path", "DataElement Name", "Description", "Minimum\nMultiplicity", "Maximum\nMultiplicity",
-                                  "DataType Name", "DataType Reference"]
+    static final Map<String, String> DATAMODEL_SHEET_COLUMNS = [name: 'Name',
+                                                                description: 'Description',
+                                                                author: 'Author',
+                                                                organisation: 'Organisation',
+                                                                sheetKey: 'Sheet Key',
+                                                                type: 'Type']
+    static final Map<String, String> ENUM_SHEET_COLUMNS = [dataModelName: 'DataModel Name',
+                                                           enumerationName: 'Enumeration Name',
+                                                           description: 'Description',
+                                                           key: 'Key',
+                                                           value: 'Value']
+    static final Map<String, String> MODEL_SHEET_COLUMNS = [dataClassPath  : 'DataClass Path',
+                                                            dataElementName: 'DataElement Name',
+                                                            description: 'Description',
+                                                            minMultiplicity: 'Minimum[ \r\n]+Multiplicity',
+                                                            maxMultiplicity: 'Maximum[ \r\n]+Multiplicity',
+                                                            dataTypeName   : 'DataType Name',
+                                                            dataTypeReference: 'DataType Reference']
     static DataFormatter dataFormatter = new DataFormatter()
 
-    PrimitiveTypeService primitiveTypeService
     DataClassService dataClassService
-    EnumerationTypeService enumerationTypeService
     ReferenceTypeService referenceTypeService
     DataElementService dataElementService
 
@@ -113,11 +123,11 @@ class SimpleExcelDataModelImporterProviderService
 
             workbook = loadWorkbookFromInputStream(importFile.fileName, importFile.inputStream)
 
-            Sheet dataModelsSheet = workbook.getSheet("DataModels")
-            Sheet enumerationsSheet = workbook.getSheet("Enumerations")
+            Sheet dataModelsSheet = workbook.getSheet('DataModels')
+            Sheet enumerationsSheet = workbook.getSheet('Enumerations')
 
             if (!dataModelsSheet) {
-                throw new ApiInternalException('EFS02', "The Excel file does not include a sheet called 'DataModels'")
+                throw new ApiInternalException('EFS02', 'The Excel file does not include a sheet called [DataModels]')
             }
             Map<String, DataType> dataTypes = [:]
             List<Map<String, String>> sheetValues = []
@@ -131,13 +141,13 @@ class SimpleExcelDataModelImporterProviderService
             sheetValues.each {row ->
                 DataModel dataModel = dataModelFromRow(currentUser, row)
                 addMetadataFromExtraColumns(dataModel, DATAMODEL_SHEET_COLUMNS, row)
-                String sheetKey = row["Sheet Key"]
+                String sheetKey = row.sheetKey
                 Sheet modelSheet = workbook.getSheet(sheetKey)
                 if (!dataModelsSheet) {
                     throw new ApiInternalException('EFS06', "The Excel file does not include a sheet called ${sheetKey} referenced for " +
                                                             "model'${dataModel.label}'")
                 }
-                addClassesAndElements(currentUser, dataModel, modelSheet, enumerationTypes[dataModel.label] ?: [:])
+                addClassesAndElements(currentUser, dataModel, modelSheet, enumerationTypes[dataModel.label] ?: [:] as Map<String,EnumerationType> )
 
                 dataModels.add(dataModel)
             }
@@ -176,7 +186,7 @@ class SimpleExcelDataModelImporterProviderService
         }
     }
 
-    List<Map<String, String>> getSheetValues(List<String> intendedColumns, Sheet sheet) {
+    List<Map<String, String>> getSheetValues(Map<String,String> intendedColumnMappings, Sheet sheet) {
         List<Map<String, String>> returnValues = []
         Map<String, Integer> expectedSheetColumns = [:]
         Map<String, Integer> otherSheetColumns = [:]
@@ -185,8 +195,8 @@ class SimpleExcelDataModelImporterProviderService
         while (row.getCell(col)) {
             String headerText = getCellValueAsString(row.getCell(col))
             boolean found = false
-            intendedColumns.each {columnName ->
-                if (headerText.toLowerCase().trim() == columnName.toLowerCase().trim()) {
+            intendedColumnMappings.each {columnName, regex ->
+                if (headerText.toLowerCase().trim() ==~regex.toLowerCase().trim()) {
                     expectedSheetColumns[columnName] = col
                     found = true
                 }
@@ -196,9 +206,9 @@ class SimpleExcelDataModelImporterProviderService
             }
             col++
         }
-        if (expectedSheetColumns.size() != intendedColumns.size()) {
+        if (expectedSheetColumns.size() != intendedColumnMappings.size()) {
             throw new ApiBadRequestException('EIS03',
-                                             "Missing header: ${sheet.getSheetName()} sheet should include the following headers: ${intendedColumns}")
+                                             "Missing header: ${sheet.getSheetName()} sheet should include the following headers: ${intendedColumnMappings.values()}")
         }
 
         Iterator<Row> rowIterator = sheet.rowIterator()
@@ -208,7 +218,7 @@ class SimpleExcelDataModelImporterProviderService
         while (rowIterator.hasNext()) {
             row = rowIterator.next()
             Map<String, String> rowValues = [:]
-            intendedColumns.each {columnName ->
+            intendedColumnMappings.each {columnName,regex ->
                 String value = getCellValueAsString(row.getCell(expectedSheetColumns[columnName]))
                 rowValues[columnName] = value
             }
@@ -221,13 +231,14 @@ class SimpleExcelDataModelImporterProviderService
         return returnValues
     }
 
-    void addMetadataFromExtraColumns(MetadataAware entity, List<String> expectedColumns, Map<String, String> columnValues) {
+    void addMetadataFromExtraColumns(MetadataAware entity, Map<String,String> expectedColumnMappings, Map<String, String> columnValues) {
+        Set<String> expectedKeys = expectedColumnMappings.keySet()
         columnValues.keySet().each {columnName ->
-            if (!expectedColumns.contains(columnName)) {
+            if (!expectedKeys.contains(columnName)) {
                 String key = columnName
                 String namespace = this.getNamespace()
-                if (key.contains(":")) {
-                    String[] components = key.split(":")
+                if (key.contains(':')) {
+                    String[] components = key.split(':')
                     namespace = components[0]
                     key = components[1]
                 }
@@ -239,16 +250,15 @@ class SimpleExcelDataModelImporterProviderService
     }
 
     DataModel dataModelFromRow(User currentUser, Map<String, String> columnValues) {
-        String label = columnValues["Name"]
-        String description = columnValues["Description"]
-        String author = columnValues["Author"]
-        String organisation = columnValues["Organisation"]
-        //String sheetKey = columnValues["Sheet Key"]
-        String type = columnValues["Type"]
+        String label = columnValues.name
+        String description = columnValues.description
+        String author = columnValues.author
+        String organisation = columnValues.organisation
+        String type = columnValues.type
         DataModelType dataModelType
-        if (type.toLowerCase().replaceAll("[ _]", "") == "dataasset") {
+        if (type.toLowerCase().replaceAll('[ _]', '') == 'dataasset') {
             dataModelType = DataModelType.DATA_ASSET
-        } else if (type.toLowerCase().replaceAll("[ _]", "") == "datastandard") {
+        } else if (type.toLowerCase().replaceAll('[ _]', '') == 'datastandard') {
             dataModelType = DataModelType.DATA_STANDARD
         } else {
             throw new ApiBadRequestException('SEIS03', "Invalid Data Model Type for Model '${label}'")
@@ -266,11 +276,11 @@ class SimpleExcelDataModelImporterProviderService
 
         Map<String, Map<String, EnumerationType>> returnValues = [:]
         sheetValues.each {columnValues ->
-            String dataModelName = columnValues["DataModel Name"]
-            String label = columnValues["Enumeration Name"]
-            String description = columnValues["Description"]
-            String key = columnValues["Key"]
-            String value = columnValues["Value"]
+            String dataModelName = columnValues.dataModelName
+            String label = columnValues.enumerationName
+            String description = columnValues.description
+            String key = columnValues.key
+            String value = columnValues.value
 
             Map<String, EnumerationType> modelEnumTypes = returnValues[dataModelName]
             if (!modelEnumTypes) {
@@ -289,28 +299,26 @@ class SimpleExcelDataModelImporterProviderService
         return returnValues
     }
 
-    //    static MODEl_SHEET_COLUMNS = ["DataClass Path", "Name", "Description", "Minimum Multiplicity", "Maximum Multiplicity", "DataType Name",
-    //                                  "DataType Reference"]
     void addClassesAndElements(User currentUser, DataModel dataModel, Sheet dataModelSheet, Map<String, EnumerationType> enumerationTypes) {
         List<Map<String, String>> sheetValues = getSheetValues(MODEL_SHEET_COLUMNS, dataModelSheet)
-        List<Map<String, String>> referenceTypeDataElementRows = sheetValues.findAll {it['DataType Reference']}
+        List<Map<String, String>> referenceTypeDataElementRows = sheetValues.findAll {it.dataTypeReference}
         Map<String, DataType> modelDataTypes = [:]
         DataClass dataClass
         String previousDataClassPath
         (sheetValues - referenceTypeDataElementRows).each {row ->
-            String dataClassPath = row["DataClass Path"]
-            String name = row["DataElement Name"]
+            String dataClassPath = row.dataClassPath
+            String name = row.dataElementName
             MetadataAware createdElement = null
 
             if (!previousDataClassPath?.equals(dataClassPath) && name || !name) {
                 // We're dealing with a data class
                 previousDataClassPath = dataClassPath
-                String description = row["Description"]
-                String minMult = row["Minimum\nMultiplicity"]
-                String maxMult = row["Maximum\nMultiplicity"]
-                dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, name ? "" : description,
+                String description = row.description
+                String minMult = row.minMultiplicity
+                String maxMult = row.maxMultiplicity
+                dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, name ? '' : description,
                                                      name ? 1 : minMult ? Integer.parseInt(minMult) : 1,
-                                                     name ? 1 : maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : 1)
+                                                     name ? 1 : maxMult ? maxMult == '*' ? -1 : Integer.parseInt(maxMult) : 1)
                 createdElement = name ? addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row) : dataClass
             } else {
                 createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
@@ -318,14 +326,14 @@ class SimpleExcelDataModelImporterProviderService
             addMetadataFromExtraColumns(createdElement, MODEL_SHEET_COLUMNS, row)
         }
         referenceTypeDataElementRows.each {row ->
-            String dataClassPath = row["DataClass Path"]
-            String description = row["Description"]
-            String minMult = row["Minimum\nMultiplicity"]
-            String maxMult = row["Maximum\nMultiplicity"]
+            String dataClassPath = row.dataClassPath
+            String description = row.description
+            String minMult = row.minMultiplicity
+            String maxMult = row.maxMultiplicity
             MetadataAware createdElement = null
             dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, description,
                                                  minMult ? Integer.parseInt(minMult) : 1,
-                                                 maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : 1)
+                                                 maxMult ? maxMult == '*' ? -1 : Integer.parseInt(maxMult) : 1)
             createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
             addMetadataFromExtraColumns(createdElement, MODEL_SHEET_COLUMNS, row)
         }
@@ -337,7 +345,7 @@ class SimpleExcelDataModelImporterProviderService
         }
     }
 
-    DataClass getOrCreateClassFromPath(User currentUser, DataModel dataModel, String path, String description = "", Integer minMultiplicity = null,
+    DataClass getOrCreateClassFromPath(User currentUser, DataModel dataModel, String path, String description = '', Integer minMultiplicity = null,
                                        Integer maxMultiplicity = null) {
         dataClassService.findOrCreateDataClassByPath(
             dataModel, getDataClassPathLabels(path), description, currentUser, minMultiplicity, maxMultiplicity)
@@ -349,12 +357,12 @@ class SimpleExcelDataModelImporterProviderService
 
     private DataElement addDataElement(User currentUser, DataModel dataModel, DataClass parentDataClass, Map<String, DataType> modelDataTypes,
                                        Map<String, EnumerationType> enumerationTypes, Map<String, String> row) {
-        String name = row["DataElement Name"]
-        String description = row["Description"]
-        String minMult = row["Minimum\nMultiplicity"]
-        String maxMult = row["Maximum\nMultiplicity"]
-        String typeName = row["DataType Name"]
-        String typeReference = row["DataType Reference"]
+        String name = row.dataElementName
+        String description = row.description
+        String minMult = row.minMultiplicity
+        String maxMult = row.maxMultiplicity
+        String typeName = row.dataTypeName
+        String typeReference = row.dataTypeReference
         // We're dealing with a data element
         DataElement newDataElement = new DataElement(label: name, description: description)
         DataType elementDataType
@@ -374,7 +382,7 @@ class SimpleExcelDataModelImporterProviderService
         }
         dataElementService.findOrCreateDataElementForDataClass(
             parentDataClass, name, description, currentUser, elementDataType, minMult ? Integer.parseInt(minMult) : 1,
-            maxMult ? maxMult == "*" ? -1 : Integer.parseInt(maxMult) : 1)
+            maxMult ? maxMult == '*' ? -1 : Integer.parseInt(maxMult) : 1)
     }
 
     private List<String> getDataClassPathLabels(String dataClassPath) {

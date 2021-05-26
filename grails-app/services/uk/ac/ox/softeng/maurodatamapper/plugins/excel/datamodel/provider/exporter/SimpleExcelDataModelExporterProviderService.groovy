@@ -20,14 +20,15 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.export
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
 import uk.ac.ox.softeng.maurodatamapper.core.facet.MetadataService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
-import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClassService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElementService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.enumeration.EnumerationValue
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelExporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.security.User
+import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
 import groovy.util.logging.Slf4j
 import org.apache.poi.ss.usermodel.Cell
@@ -38,7 +39,6 @@ import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * @since 01/03/2018
@@ -92,52 +92,27 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
         XSSFWorkbook workbook = null
         try {
             workbook = new XSSFWorkbook()
-            XSSFSheet dataModelsSheet = workbook.createSheet("DataModels")
-            XSSFSheet enumerationsSheet = workbook.createSheet("Enumerations")
+            XSSFSheet dataModelsSheet = workbook.createSheet('DataModels')
+            XSSFSheet enumerationsSheet = workbook.createSheet('Enumerations')
 
-            List<LinkedHashMap<String, String>> dataModelsSheetArray = []
-            List<LinkedHashMap<String, String>> enumerationsSheetArray = []
+            List<Map<String, String>> dataModelsSheetArray = []
+            List<Map<String, String>> enumerationsSheetArray = []
 
-            dataModels.each { dataModel ->
+            dataModels.each {dataModel ->
                 String sheetKey = createSheetKey(dataModel.label)
-                LinkedHashMap<String, String> array = new LinkedHashMap<String, String>()
-                array["Name"] = dataModel.label
-                array["Description"] = dataModel.description
-                array["Author"] = dataModel.author
-                array["Organisation"] = dataModel.organisation
-                array["Sheet Key"] = sheetKey
-                array["Type"] = dataModel.modelType
-
-               metadataService.findAllByMultiFacetAwareItemId(dataModel.id).each { metadata ->
-                    String key = "${metadata.namespace}:${metadata.key}"
-                    array[key] = metadata.value
-                }
-                dataModelsSheetArray.add(array)
-
-                List<LinkedHashMap<String, String>> enumerationsArray = []
-                dataModel.dataTypes.findAll { it instanceof EnumerationType }.each { dataType ->
-                    EnumerationType enumType = (EnumerationType) dataType
-                    enumType.enumerationValues.each { enumValue ->
-                        LinkedHashMap<String, String> enumArray = new LinkedHashMap<String, String>()
-                        enumArray["DataModel Name"] = dataModel.label
-                        enumArray["Enumeration Name"] = enumType.label
-                        enumArray["Description"] = enumType.description
-                        enumArray["Key"] = enumValue.key
-                        enumArray["Value"] = enumValue.value
-                        metadataService.findAllByMultiFacetAwareItemId(enumValue.id).each { metadata ->
-                            String key = "${metadata.namespace}:${metadata.key}"
-                            enumArray[key] = metadata.value
-                        }
-                        enumerationsArray.add(enumArray)
-                    }
-                }
-                enumerationsSheetArray.addAll(enumerationsArray)
-
+                // Create the sheet for the DM data
                 XSSFSheet dataModelSheet = workbook.createSheet(sheetKey)
-                List<LinkedHashMap<String, String>> dataModelSheetArray = []
 
-                dataModel.childDataClasses.each { dataClass ->
-                    dataModelSheetArray.addAll(createArrayFromClass(dataClass, null))
+                // Add row to the DM sheet
+                dataModelsSheetArray.add(buildDataModelRow(dataModel, sheetKey))
+
+                // Add the enumerations to the enumeration sheet
+                enumerationsSheetArray.addAll(buildEnumerationDataRows(dataModel.label, dataModel.enumerationTypes))
+
+                List<Map<String, String>> dataModelSheetArray = []
+
+                dataModel.childDataClasses.each {dataClass ->
+                    dataModelSheetArray.addAll(buildDataClassRows(dataClass, null))
                 }
                 writeArrayToSheet(workbook, dataModelSheet, dataModelSheetArray)
             }
@@ -157,126 +132,93 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
         null
     }
 
-    void closeWorkbook(Workbook workbook) {
-        if (workbook != null) {
-            try {
-                workbook.close()
-            } catch (IOException ignored) {
-                // ignored
-            }
-        }
-    }
+    Map<String, String> buildDataModelRow(DataModel dataModel, String sheetKey) {
+        Map<String, String> dataRow = [
+            Name        : dataModel.label,
+            Description : dataModel.description,
+            Author      : dataModel.author,
+            Organisation: dataModel.organisation,
+            'Sheet Key' : sheetKey,
+            Type        : dataModel.modelType,
+        ]
 
-    void autoSizeColumns(Sheet sheet, List<Integer> columns) {
-        columns.each { sheet.autoSizeColumn(it, true) }
-    }
-
-    void writeArrayToSheet(Workbook workbook, XSSFSheet sheet, List<LinkedHashMap<String, String>> array) {
-        LinkedHashSet<String> headers = new LinkedHashSet<String>()
-        if (array.size() > 0) {
-            headers.addAll(array.get(0).keySet())
-        }
-        array.eachWithIndex { entry, i ->
-            if (i != 0) {
-                headers.addAll(entry.keySet())
-            }
-        }
-        Row headerRow = sheet.createRow(0)
-        headers.eachWithIndex { header, idx ->
-            Cell headerCell = headerRow.createCell(idx)
-            headerCell.setCellValue(header)
-        }
-        setHeaderRow(headerRow, workbook)
-
-        array.eachWithIndex { map, rowIdx ->
-            Row valueRow = sheet.createRow(rowIdx + 1)
-            headers.eachWithIndex { header, cellIdx ->
-                Cell valueCell = valueRow.createCell(cellIdx)
-                valueCell.setCellValue(map[header] ?: "")
-            }
-        }
-        autoSizeColumns(sheet, 0..(headers.size() + 1))
-    }
-
-    static String createSheetKey(String dataModelName) {
-
-        String sheetKey = ''
-        String[] words = dataModelName.split(' ')
-        if (words.size() == 1) {
-            sheetKey = dataModelName.toUpperCase()
-        } else {
-            words.each { word ->
-                if (word.length() > 0) {
-                    String newWord = word.replaceAll("^[^A-Za-z]*", "")
-
-                    sheetKey += newWord[0].toUpperCase() + newWord.replaceAll("[^0-9]", "")
-                }
-            }
-        }
-        return sheetKey
-    }
-
-    List<LinkedHashMap<String, String>> createArrayFromClass(DataClass dc, String path) {
-
-        List<LinkedHashMap<String, String>> dataClassSheetArray = []
-
-        String dataClassPath = (!path) ? dc.label : (path + " | " + dc.label)
-
-        LinkedHashMap<String, String> array = new LinkedHashMap<String, String>()
-
-        array["DataClass Path"] = dataClassPath
-        array["DataElement Name"] = "" // dc.label
-        array["Description"] = dc.description
-        if (dc.minMultiplicity || dc.minMultiplicity == 0) {
-            array["Minimum\nMultiplicity"] = dc.minMultiplicity.toString()
-        } else {
-            // Empty assignment helps ensure column order
-            array["Minimum\nMultiplicity"] = ""
-        }
-        if (dc.maxMultiplicity || dc.minMultiplicity == 0) {
-            array["Maximum\nMultiplicity"] = dc.maxMultiplicity.toString()
-        } else {
-            // Empty assignment helps ensure column order
-            array["Maximum\nMultiplicity"] = ""
-        }
-        array["DataType Name"] = ""
-        array["DataType Reference"] = ""
-
-        metadataService.findAllByMultiFacetAwareItemId(dc.id).each { metadata ->
+        metadataService.findAllByMultiFacetAwareItemId(dataModel.id).each {metadata ->
             String key = "${metadata.namespace}:${metadata.key}"
-            array[key] = metadata.value
+            dataRow[key] = metadata.value
+        }
+        dataRow
+    }
+
+    List<Map<String, String>> buildEnumerationDataRows(String dataModelLabel, Collection<EnumerationType> enumerationTypes) {
+        enumerationTypes.collect {enumerationType ->
+            enumerationType.enumerationValues.collect {enumValue ->
+                buildEnumerationValueRow(dataModelLabel, enumerationType, enumValue)
+            }
+        }.flatten() as List<Map<String, String>>
+    }
+
+    Map<String, String> buildEnumerationValueRow(String dataModelLabel, EnumerationType enumerationType, EnumerationValue enumerationValue) {
+        Map<String, String> dataRow = [
+            'DataModel Name'  : dataModelLabel,
+            'Enumeration Name': enumerationType.label,
+            Description       : enumerationType.description,
+            Key               : enumerationValue.key,
+            Value             : enumerationValue.value,
+        ]
+        metadataService.findAllByMultiFacetAwareItemId(enumerationValue.id).each {metadata ->
+            String key = "${metadata.namespace}:${metadata.key}"
+            dataRow[key] = metadata.value
+        }
+        dataRow
+    }
+
+    List<Map<String, String>> buildDataClassRows(DataClass dataClass, String path) {
+
+        List<Map<String, String>> dataClassSheetArray = []
+
+        String dataClassPath = (!path) ? dataClass.label : ("${path} | ${dataClass.label}")
+
+        Map<String, String> dataRow = [
+            'DataClass Path'          : dataClassPath,
+            'DataElement Name'        : '',
+            Description               : dataClass.description,
+            'Minimum \r\nMultiplicity': dataClass.minMultiplicity || dataClass.minMultiplicity == 0 ? dataClass.minMultiplicity.toString() : '',
+            'Maximum \r\nMultiplicity': dataClass.maxMultiplicity || dataClass.maxMultiplicity == 0 ? dataClass.maxMultiplicity.toString() : '',
+            'DataType Name'           : '',
+            'DataType Reference'      : ''
+        ]
+
+        metadataService.findAllByMultiFacetAwareItemId(dataClass.id).each {metadata ->
+            String key = "${metadata.namespace}:${metadata.key}"
+            dataRow[key] = metadata.value
         }
 
-        dataClassSheetArray.add(array)
+        dataClassSheetArray.add(dataRow)
 
-        dc.dataElements?.each { dataElement ->
-            array = new LinkedHashMap<String, String>()
-
-            array["DataClass Path"] = dataClassPath
-            array["DataElement Name"] = dataElement.label
-            array["Description"] = dataElement.description
-            if (dataElement.minMultiplicity || dataElement.minMultiplicity == 0) {
-                array["Minimum\nMultiplicity"] = dataElement.minMultiplicity.toString()
-            }
-            if (dataElement.maxMultiplicity || dataElement.maxMultiplicity == 0) {
-                array["Maximum\nMultiplicity"] = dataElement.maxMultiplicity.toString()
-            }
-            array["DataType Name"] = dataElement.dataType.label
+        dataClass.dataElements?.each {dataElement ->
+            Map dataElementDataRow = [
+                'DataClass Path'          : dataClassPath,
+                'DataElement Name'        : dataElement.label,
+                Description               : dataElement.description,
+                'Minimum \r\nMultiplicity': dataElement.minMultiplicity || dataElement.minMultiplicity == 0 ? dataElement.minMultiplicity.toString() : '',
+                'Maximum \r\nMultiplicity': dataElement.maxMultiplicity || dataElement.maxMultiplicity == 0 ? dataElement.maxMultiplicity.toString() : '',
+                'DataType Name'           : dataElement.dataType.label,
+            ]
             if (dataElement.dataType instanceof ReferenceType) {
                 List<String> classPath = getClassPath(((ReferenceType) dataElement.dataType).referenceClass, [])
-                array["DataType Reference"] = classPath.join(" | ")
+                dataElementDataRow['DataType Reference'] = classPath.join(' | ')
             }
 
-            metadataService.findAllByMultiFacetAwareItemId(dataElement.id).each { metadata ->
+            metadataService.findAllByMultiFacetAwareItemId(dataElement.id).each {metadata ->
                 String key = "${metadata.namespace}:${metadata.key}"
-                array[key] = metadata.value
+                dataElementDataRow[key] = metadata.value
             }
-            dataClassSheetArray.add(array)
+            dataClassSheetArray.add(dataElementDataRow)
         }
-        dc.dataClasses.each { dataClass ->
-            dataClassSheetArray.addAll(createArrayFromClass(dataClass, dataClassPath))
+        dataClass.dataClasses?.each {childDataClass ->
+            dataClassSheetArray.addAll(buildDataClassRows(childDataClass, dataClassPath))
         }
-        return dataClassSheetArray
+        dataClassSheetArray
     }
 
     void setHeaderRow(Row row, Workbook workbook) {
@@ -305,5 +247,74 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
         } else {
             return path
         }
+    }
+
+    void writeArrayToSheet(Workbook workbook, XSSFSheet sheet, List<Map<String, String>> array) {
+        long start = System.currentTimeMillis()
+        Set<String> headers = [] as Set
+        if (array.size() > 0) {
+            headers.addAll(array.get(0).keySet())
+        }
+        array.eachWithIndex {entry, i ->
+            if (i != 0) {
+                headers.addAll(entry.keySet())
+            }
+        }
+        Row headerRow = sheet.createRow(0)
+        headers.eachWithIndex {header, idx ->
+            Cell headerCell = headerRow.createCell(idx)
+            headerCell.setCellValue(header)
+        }
+        setHeaderRow(headerRow, workbook)
+
+        long substart = System.currentTimeMillis()
+
+        array.eachWithIndex {map, rowIdx ->
+
+            Row valueRow = sheet.createRow(rowIdx + 1)
+            headers.eachWithIndex {header, cellIdx ->
+                Cell valueCell = valueRow.createCell(cellIdx)
+                valueCell.setCellValue(map[header] ?: '')
+            }
+        }
+        log.debug('Writing rows took {}', Utils.timeTaken(substart))
+        // Disabled this as it adds 1/3 of the time to run
+        // substart = System.currentTimeMillis()
+
+        // autoSizeColumns(sheet, 0..(headers.size() + 1))
+        // log.debug('Resizing columns took {}',  Utils.timeTaken(substart))
+        log.debug('Writing array of {} rows to sheet took {}', array.size(), Utils.timeTaken(start))
+    }
+
+    void closeWorkbook(Workbook workbook) {
+        if (workbook != null) {
+            try {
+                workbook.close()
+            } catch (IOException ignored) {
+                // ignored
+            }
+        }
+    }
+
+    void autoSizeColumns(Sheet sheet, List<Integer> columns) {
+        columns.each {sheet.autoSizeColumn(it, true)}
+    }
+
+    static String createSheetKey(String dataModelName) {
+
+        String sheetKey = ''
+        String[] words = dataModelName.split(' ')
+        if (words.size() == 1) {
+            sheetKey = dataModelName.toUpperCase()
+        } else {
+            words.each {word ->
+                if (word.length() > 0) {
+                    String newWord = word.replaceAll('^[^A-Za-z]*', '')
+
+                    sheetKey += newWord[0].toUpperCase() + newWord.replaceAll('[^0-9]', '')
+                }
+            }
+        }
+        return sheetKey
     }
 }

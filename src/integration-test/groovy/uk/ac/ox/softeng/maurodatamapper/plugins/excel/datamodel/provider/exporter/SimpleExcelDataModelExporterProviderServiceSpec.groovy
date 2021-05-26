@@ -17,16 +17,23 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter
 
-
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelExporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelJsonImporterService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.BaseExcelDataModelImporterExporterProviderServiceSpec
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.SimpleExcelDataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import groovy.util.logging.Slf4j
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 @Slf4j
 @Integration
@@ -37,6 +44,7 @@ class SimpleExcelDataModelExporterProviderServiceSpec extends BaseExcelDataModel
 
     SimpleExcelDataModelExporterProviderService simpleExcelDataModelExporterProviderService
     SimpleExcelDataModelImporterProviderService simpleExcelDataModelImporterProviderService
+    DataModelJsonImporterService dataModelJsonImporterService
 
     @Override
     DataModelImporterProviderService getDataModelImporterProviderService() {
@@ -56,7 +64,7 @@ class SimpleExcelDataModelExporterProviderServiceSpec extends BaseExcelDataModel
         true
     }
 
-    def 'testSimpleExport'() {
+    void 'testSimpleExport'() {
         given:
         setupDomainData()
 
@@ -68,7 +76,7 @@ class SimpleExcelDataModelExporterProviderServiceSpec extends BaseExcelDataModel
         verifySimpleDataModelContent dataModel
     }
 
-    def 'testSimpleExportWithComplexMetadata'() {
+    void 'testSimpleExportWithComplexMetadata'() {
         given:
         setupDomainData()
 
@@ -81,7 +89,7 @@ class SimpleExcelDataModelExporterProviderServiceSpec extends BaseExcelDataModel
         verifySimpleDataModelWithComplexMetadataContent dataModel
     }
 
-    def 'testMultipleDataModelExport'() {
+    void 'testMultipleDataModelExport'() {
         given:
         setupDomainData()
 
@@ -107,5 +115,26 @@ class SimpleExcelDataModelExporterProviderServiceSpec extends BaseExcelDataModel
         then:
         verifyComplexDataModel complexDataModel
         verifyComplexDataModelContent complexDataModel
+    }
+
+    void 'test import and export of badgernet to check for speed'(){
+
+        given:
+        setupDomainData()
+
+        Path importFilepath = Paths.get(IMPORT_FILEPATH, 'badgernet.json')
+        DataModelFileImporterProviderServiceParameters importParameters = new DataModelFileImporterProviderServiceParameters().tap {
+            importFile = new FileParameter(importFilepath.toString(), 'text/json', Files.readAllBytes(importFilepath))
+        }
+        DataModel dataModel = dataModelJsonImporterService.importDomain(admin, importParameters)
+        validateAndSave(dataModel)
+
+        when:
+        long start = System.currentTimeMillis()
+        Path exportPath = exportDataModel(dataModel,'badgernet.simple.xlsx')
+        log.warn('Took {}', Utils.timeTaken(start))
+
+        then:
+        Files.exists(exportPath)
     }
 }

@@ -402,26 +402,37 @@ abstract class BaseExcelDataModelImporterExporterProviderServiceSpec extends Bas
         dataModels.collect {dataModelService.get(it.id)}
     }
 
+    Path writeByteArrayOutputStream(ByteArrayOutputStream byteArrayOutputStream, String exportFilename){
+        assertNotNull 'Should have exported DataModel(s)', byteArrayOutputStream
+        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(byteArrayOutputStream.toString('ISO-8859-1'))
+        Path exportFilepath = Paths.get(EXPORT_FILEPATH, exportFilename)
+        Files.write(exportFilepath, byteArrayOutputStream.toByteArray())
+        exportFilepath
+    }
+
+    Path exportDataModel(DataModel dataModel, String exportFilename){
+        // Export what has been saved into the database
+        ByteArrayOutputStream byteArrayOutputStream = dataModelExporterProviderService.exportDomain(admin,dataModel.id)
+        writeByteArrayOutputStream(byteArrayOutputStream, exportFilename)
+    }
+
+    Path exportDataModels(List<DataModel> dataModels, String exportFilename){
+        // Export what has been saved into the database
+        ByteArrayOutputStream byteArrayOutputStream = dataModelExporterProviderService.exportDomains(admin,dataModels*.id)
+        writeByteArrayOutputStream(byteArrayOutputStream, exportFilename)
+    }
+
     def importThenExportWorkbook(String importFilename, String exportFilename) throws IOException, ApiException {
         // Import DataModels under test first
         List<DataModel> importedDataModels = importAndValidateModels(createImportParameters(importFilename))
         log.debug('DataModel(s) to export: {}', importedDataModels.size() == 1 ? importedDataModels.first().id : importedDataModels.id)
 
-        // Export what has been saved into the database
         log.info('>>> Exporting {}', importedDataModels.size() == 1 ? 'Single' : 'Multiple')
-        ByteArrayOutputStream exportedDataModels = importedDataModels.size() == 1
-            ? dataModelExporterProviderService.exportDomain(admin, importedDataModels.first().id)
-            : dataModelExporterProviderService.exportDomains(admin, importedDataModels.id)
-
-        assertNotNull 'Should have exported DataModel(s)', exportedDataModels
-        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(exportedDataModels.toString('ISO-8859-1'))
-
-        Path exportFilepath = Paths.get(EXPORT_FILEPATH, exportFilename)
-        Files.write(exportFilepath, exportedDataModels.toByteArray())
+        Path exportPath = importedDataModels.size() == 1 ? exportDataModel(importedDataModels.first(), exportFilename) : exportDataModels(importedDataModels, exportFilename)
 
         // Test using the exported DataModels instead of the ones from the first import
         log.info('>>> Importing')
-        List<DataModel> importedExportedDataModels = importAndValidateModels(createImportParameters(exportFilepath).tap {
+        List<DataModel> importedExportedDataModels = importAndValidateModels(createImportParameters(exportPath).tap {
             it.importAsNewBranchModelVersion = true
         })
         importedExportedDataModels.size() == 1 ? importedExportedDataModels.first() : importedExportedDataModels

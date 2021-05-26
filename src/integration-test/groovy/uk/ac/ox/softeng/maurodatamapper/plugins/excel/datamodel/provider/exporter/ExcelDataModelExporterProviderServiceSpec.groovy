@@ -23,15 +23,18 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelExporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelJsonImporterService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelXmlImporterService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.BaseExcelDataModelImporterExporterProviderServiceSpec
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.ExcelDataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
 import com.google.common.base.Strings
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import groovy.util.logging.Slf4j
+import spock.lang.Ignore
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -49,6 +52,7 @@ class ExcelDataModelExporterProviderServiceSpec extends BaseExcelDataModelImport
     DataModelXmlImporterService dataModelXmlImporterService
     ExcelDataModelExporterProviderService excelDataModelExporterProviderService
     ExcelDataModelImporterProviderService excelDataModelImporterProviderService
+    DataModelJsonImporterService dataModelJsonImporterService
 
     @Override
     DataModelImporterProviderService getDataModelImporterProviderService() {
@@ -137,14 +141,27 @@ class ExcelDataModelExporterProviderServiceSpec extends BaseExcelDataModelImport
         assertNotNull "DataClass ${testDataClass.label} must exist", testDataClass
         assertEquals "DataClass ${testDataClass.label} minMultiplicity must default to 0", 0, testDataClass.minMultiplicity
         assertEquals "DataClass ${testDataClass.label} maxMultiplicity must default to 0", 0, testDataClass.maxMultiplicity
+    }
 
-        // The following is commented out because the target Data Element cannot be retrieved as expected (a NullPointerException is returned). A bug?
-        //
-        // String dataElementLabel = 'Data Element with Unset Multiplicities'
-        // DataElement testDataElement = testDataClass.findDataElement(dataElementLabel)
-        //     ?: testDataClass.dataElements.find { it.label == dataElementLabel }
-        // assertNotNull "DataElement ${testDataElement.label} must exist", testDataElement
-        // assertEquals "DataElement ${testDataElement.label} minMultiplicity must default to 0", 0, testDataElement.minMultiplicity
-        // assertEquals "DataElement ${testDataElement.label} maxMultiplicity must default to 0", 0, testDataElement.maxMultiplicity
+    @Ignore('too long to run')
+    void 'test import and export of badgernet to check for speed'(){
+
+        given:
+        setupDomainData()
+
+        Path importFilepath = Paths.get(IMPORT_FILEPATH, 'badgernet.json')
+        DataModelFileImporterProviderServiceParameters importParameters = new DataModelFileImporterProviderServiceParameters().tap {
+            importFile = new FileParameter(importFilepath.toString(), 'text/json', Files.readAllBytes(importFilepath))
+        }
+        DataModel dataModel = dataModelJsonImporterService.importDomain(admin, importParameters)
+        validateAndSave(dataModel)
+
+        when:
+        long start = System.currentTimeMillis()
+        Path exportPath = exportDataModel(dataModel,'badgernet.xlsx')
+        log.warn('Took {}', Utils.timeTaken(start))
+
+        then:
+        Files.exists(exportPath)
     }
 }
