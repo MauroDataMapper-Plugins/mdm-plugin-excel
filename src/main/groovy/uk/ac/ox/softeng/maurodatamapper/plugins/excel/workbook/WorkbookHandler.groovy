@@ -36,6 +36,14 @@ import org.apache.poi.ss.util.CellRangeAddress
 @CompileStatic
 trait WorkbookHandler extends CellHandler {
 
+    String getContentTemplateSheetName(){
+        'KEY_1'
+    }
+
+    String getDataModelsSheetName(){
+        'DataModels'
+    }
+
     Workbook loadWorkbookFromFilename(String filename) throws ApiException {
         loadWorkbookFromInputStream(filename, getClass().classLoader.getResourceAsStream(filename))
     }

@@ -53,9 +53,6 @@ class DataModelDataRow extends StandardDataRow {
         author = dataModel.author
         organisation = dataModel.organisation
         type = dataModel.modelType
-        dataModel.metadata?.each { Metadata metadataEntry ->
-            metadata << new MetadataColumn(namespace: metadataEntry.namespace, key: metadataEntry.key, value: metadataEntry.value)
-        }
     }
 
     @Override

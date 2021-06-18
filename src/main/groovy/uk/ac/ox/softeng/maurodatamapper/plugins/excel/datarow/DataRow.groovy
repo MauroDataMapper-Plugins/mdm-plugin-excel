@@ -33,13 +33,17 @@ abstract class DataRow implements CellHandler {
     static final int METADATA_KEY_ROW_INDEX = 1
 
     Row row
-    List<MetadataColumn> metadata = []
+    private List<MetadataColumn> metadata = []
 
     @CompileDynamic
     static Map<String, Set<String>> getMetadataNamespaceAndKeys(List<DataRow> dataRows) {
         dataRows.collect { it.metadata }.flatten().groupBy { it.namespace }
                 .collectEntries { [it.key, it.value.key as Set] }
                 .findAll { it.value } as Map<String, Set<String>>
+    }
+
+    List<MetadataColumn> getMetadata() {
+        return metadata
     }
 
     abstract void initialiseRow(Row row)
@@ -76,8 +80,8 @@ abstract class DataRow implements CellHandler {
         }
     }
 
-    void addToMetadata(String key, String value) {
-        metadata << new MetadataColumn(key: key, value: value)
+    void addToMetadata(String namespace, String key, String value) {
+        metadata << new MetadataColumn(namespace: namespace, key: key, value: value)
     }
 
     void extractMetadataFromColumnIndex() {

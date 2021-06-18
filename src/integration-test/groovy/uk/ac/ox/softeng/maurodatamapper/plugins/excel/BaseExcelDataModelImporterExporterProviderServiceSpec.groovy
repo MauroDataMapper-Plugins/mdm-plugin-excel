@@ -15,8 +15,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.excel.simple
+package uk.ac.ox.softeng.maurodatamapper.plugins.excel
 
+import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiException
+import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.core.model.CatalogueItem
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
@@ -28,47 +30,68 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.ReferenceType
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.ExcelPlugin
-import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseImportPluginTest
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelExporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.parameters.ExcelDataModelFileImporterProviderServiceParameters
+import uk.ac.ox.softeng.maurodatamapper.test.integration.BaseIntegrationSpec
+import uk.ac.ox.softeng.maurodatamapper.util.GormUtils
 
-import groovy.transform.CompileDynamic
-import groovy.transform.CompileStatic
+import com.google.common.base.Strings
+import grails.validation.ValidationException
+import groovy.util.logging.Slf4j
+import org.grails.orm.hibernate.proxy.HibernateProxyHandler
+import org.hibernate.proxy.HibernateProxyHelper
 
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
 import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertNull
 import static org.junit.Assert.fail
 
-@CompileStatic
-abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
-    extends BaseImportPluginTest<DataModel, ExcelSimpleDataModelFileImporterProviderServiceParameters, ExcelSimpleDataModelImporterProviderService> {
+@Slf4j
+abstract class BaseExcelDataModelImporterExporterProviderServiceSpec extends BaseIntegrationSpec {
 
-    private static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
+    static final String EXPORT_FILEPATH = 'build/tmp/'
+    protected static final String IMPORT_FILEPATH = 'src/integration-test/resources/'
 
-    private final DataModelService dataModelService = applicationContext.getBean(DataModelService)
+    DataModelService dataModelService
+    HibernateProxyHandler hibernateProxyHandler = new HibernateProxyHandler()
 
-    @Override
+    abstract DataModelImporterProviderService getDataModelImporterProviderService()
+
+    abstract DataModelExporterProviderService getDataModelExporterProviderService()
+
     DataModel saveDomain(DataModel domain) {
         dataModelService.saveModelWithContent(domain)
     }
 
-    protected ExcelSimpleDataModelFileImporterProviderServiceParameters createImportParameters(String importFilename) throws IOException {
+    @Override
+    void setupDomainData() {
+        folder = new Folder(label: 'catalogue', createdBy: admin.emailAddress)
+        checkAndSave(folder)
+    }
+
+    ExcelDataModelFileImporterProviderServiceParameters createImportParameters(String importFilename) throws IOException {
         Path importFilepath = Paths.get(IMPORT_FILEPATH, importFilename)
         if (!Files.exists(importFilepath)) fail("File ${importFilename} cannot be found")
         createImportParameters(importFilepath)
     }
 
-    protected ExcelSimpleDataModelFileImporterProviderServiceParameters createImportParameters(Path importFilepath) throws IOException {
-        new ExcelSimpleDataModelFileImporterProviderServiceParameters(finalised: false).tap {
-            importFile = new FileParameter(importFilepath.toString(), ExcelPlugin.EXCEL_FILETYPE, Files.readAllBytes(importFilepath))
-        }
+    ExcelDataModelFileImporterProviderServiceParameters createImportParameters(Path importFilepath) throws IOException {
+        new ExcelDataModelFileImporterProviderServiceParameters(finalised: true,
+                                                                importFile: new FileParameter(importFilepath.toString(), 'xlsx', Files.readAllBytes(importFilepath)),
+                                                                folderId: folder.id)
     }
 
-    protected void verifySimpleDataModel(DataModel dataModel, int metadataCount = 3) {
+    boolean isSimpleImport() {
+        false
+    }
+
+    void verifySimpleDataModel(DataModel dataModel, int metadataCount = 3) {
         assertNotNull 'Simple DataModel must exist', dataModel
 
         assertEquals 'DataModel Name', 'test', dataModel.label
@@ -94,12 +117,12 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         verifyEnumerationType dataModel, 'possibly', null, ['0': 'lazy', '1': 'not lazy', '2': 'very lazy']
     }
 
-    protected void verifySimpleDataModelWithComplexMetadata(DataModel dataModel) {
+    void verifySimpleDataModelWithComplexMetadata(DataModel dataModel) {
         verifySimpleDataModel dataModel, 4
         verifyMetadata dataModel, 'uk.ac.ox.softeng.maurodatamapper.plugins.database|dialect', 'test'
     }
 
-    protected void verifyDataFlowDataModel(DataModel dataModel) {
+    void verifyDataFlowDataModel(DataModel dataModel) {
         assertNotNull 'DataFlow DataModel must exist', dataModel
 
         assertEquals 'DataModel Name', 'Another Model', dataModel.label
@@ -125,7 +148,7 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         verifyEnumerationType dataModel, 'yesno', 'an enumeration', [y: 'yes', n: 'no']
     }
 
-    protected void verifyComplexDataModel(DataModel dataModel) {
+    void verifyComplexDataModel(DataModel dataModel) {
         assertNotNull 'Complex DataModel must exist', dataModel
 
         assertEquals 'DataModel Name', 'complex.xsd', dataModel.label
@@ -158,7 +181,7 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         verifyEnumerationType dataModel, 'elementC', null, ['1': 'Possible', '2': 'Not Possible', '3': 'Probable']
     }
 
-    protected void verifySimpleDataModelContent(DataModel dataModel) {
+    void verifySimpleDataModelContent(DataModel dataModel) {
         DataClass top = verifyDataClass(dataModel, 'top', 3, 'tops description', 1, 1, ['extra info': 'some extra info'])
         verifyDataElement top, 'info', 'info description', 'string', 1, 1, ['different info': 'info']
         verifyDataElement top, 'another', null, 'int', 0, 1, ['extra info': 'some extra info', 'different info': 'info']
@@ -175,7 +198,7 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         verifyDataElement brother, 'sibling', 'reference to the other child', 'child', 1, -1, ['extra info': 'some extra info']
     }
 
-    protected void verifySimpleDataModelWithComplexMetadataContent(DataModel dataModel) {
+    void verifySimpleDataModelWithComplexMetadataContent(DataModel dataModel) {
         DataClass top = verifyDataClass(dataModel, 'top', 3, 'tops description', 1, 1, [
             'extra info'                                : 'some extra info',
             'uk.ac.ox.softeng.maurodatamapper.test|blob': 'hello'])
@@ -208,7 +231,7 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         verifyDataElement brother, 'sibling', 'reference to the other child', 'child', 1, -1, ['extra info': 'some extra info']
     }
 
-    protected void verifyDataFlowDataModelContent(DataModel dataModel) {
+    void verifyDataFlowDataModelContent(DataModel dataModel) {
         DataClass top = verifyDataClass(dataModel, 'top', 3, 'tops description', 1, 1, ['extra info': 'some extra info'])
         verifyDataElement top, 'info', 'info description', 'string', 1, 1, ['different info': 'info']
         verifyDataElement top, 'another', null, 'int', 0, 1, ['extra info': 'some extra info', 'different info': 'info']
@@ -225,7 +248,7 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         verifyDataElement brother, 'twin_sibling', 'reference to the other child', 'child', 0, -1
     }
 
-    protected void verifyComplexDataModelContent(DataModel dataModel) {
+    void verifyComplexDataModelContent(DataModel dataModel) {
         DataClass choiceB = verifyDataClass(dataModel, 'choiceB', 3, 'A choice complex type')
         verifyDataElement choiceB, 'elementE', 'The choice for date', 'date', 1, 1, ['XSD Choice Group': 'choice']
         verifyDataElement choiceB, 'elementF', 'The choice for datetime', 'dateTime', 1, 1, ['XSD Choice Group': 'choice']
@@ -267,9 +290,13 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         verifyDataElement complexTypeQ, 'elementY', null, 'choiceB', 0
     }
 
-    private void verifyMetadata(CatalogueItem catalogueItem, String fullKeyName, String value) {
-        String[] keyNameParts = fullKeyName.split(/[:|]/)
-        String namespace = keyNameParts.size() > 1 ? keyNameParts[0] : importerInstance.namespace
+    String getMetadataKeySplit() {
+        '\\|'
+    }
+
+    void verifyMetadata(CatalogueItem catalogueItem, String fullKeyName, String value) {
+        String[] keyNameParts = fullKeyName.split(getMetadataKeySplit())
+        String namespace = keyNameParts.size() > 1 ? keyNameParts[0] : dataModelImporterProviderService.namespace
         String key = keyNameParts[-1]
 
         Metadata metadata = catalogueItem.id
@@ -280,11 +307,11 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         assertEquals "${catalogueItem.label} Metadata ${fullKeyName} value", value, metadata.value
     }
 
-    private DataClass verifyDataClass(CatalogueItem catalogueItem, String label, int dataElementCount, String description = null,
-                                      int minMultiplicity = 1, int maxMultiplicity = 1, Map<String, String> metadata = [:]) {
+    DataClass verifyDataClass(CatalogueItem catalogueItem, String label, int dataElementCount, String description = null,
+                              int minMultiplicity = 1, int maxMultiplicity = 1, Map<String, String> metadata = [:]) {
         DataClass dataClass = catalogueItem instanceof DataModel
-            ? catalogueItem.dataClasses.find { it.label == label && !it.parentDataClass }
-            : (catalogueItem as DataClass).dataClasses.find { it.label == label }
+            ? DataClass.findByDataModelAndLabel(catalogueItem as DataModel, label)
+            : DataClass.findByParentDataClassAndLabel(catalogueItem as DataClass, label)
 
         assertNotNull "DataClass ${label} must exist", dataClass
         assertEquals "DataClass ${label} Description", description, dataClass.description
@@ -293,14 +320,14 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         assertEquals "DataClass ${label} Number of DataElements", dataElementCount, dataClass.dataElements.size()
 
         if (dataClass.id) assertEquals "DataClass ${label} Metadata count", metadata.size(), countMetadataById(dataClass.id)
-        metadata.each { String key, String value -> verifyMetadata(dataClass, key, value) }
+        metadata.each {String key, String value -> verifyMetadata(dataClass, key, value)}
 
         dataClass
     }
 
-    private void verifyDataElement(DataClass parent, String label, String description, String dataType,
-                                   int minMultiplicity = 1, int maxMultiplicity = 1, Map<String, String> metadata = [:]) {
-        DataElement dataElement = parent.dataElements.find { it.label == label }
+    void verifyDataElement(DataClass parent, String label, String description, String dataType,
+                           int minMultiplicity = 1, int maxMultiplicity = 1, Map<String, String> metadata = [:]) {
+        DataElement dataElement = parent.dataElements.find {it.label == label}
 
         assertNotNull "DataElement ${label} must exist", dataElement
         assertEquals "DataElement ${label} Description", description, dataElement.description
@@ -309,43 +336,109 @@ abstract class BaseExcelSimpleDataModelImporterExporterProviderServiceTest
         assertEquals "DataElement ${label} DataType", dataType, dataElement.dataType.label
 
         if (dataElement.id) assertEquals "DataElement ${label} Metadata count", metadata.size(), countMetadataById(dataElement.id)
-        metadata.each { String key, String value -> verifyMetadata(dataElement, key, value) }
+        metadata.each {String key, String value -> verifyMetadata(dataElement, key, value)}
     }
 
-    private void verifyReferenceType(DataModel dataModel, String label, String description, String referenceClassPath) {
+    void verifyReferenceType(DataModel dataModel, String label, String description, String referenceClassPath) {
         ReferenceType referenceType = verifyDataType(dataModel, label, description) as ReferenceType
         assertNotNull "ReferenceType ${label} must exist", referenceType
         assertEquals "ReferenceType ${label} Reference to DataClass Path",
                      referenceClassPath, dataModelService.dataClassService.buildPath(referenceType.referenceClass)
     }
 
-    private static void verifyEnumerationType(DataModel dataModel, String label, String description, Map<String, String> enumerationValues) {
+    void verifyEnumerationType(DataModel dataModel, String label, String description, Map<String, String> enumerationValues) {
         EnumerationType enumerationType = verifyDataType(dataModel, label, description) as EnumerationType
         assertEquals "EnumerationType ${label} Enumerations count", enumerationValues.size(), enumerationType.enumerationValues.size()
-        enumerationValues.each { String key, String value ->
+        enumerationValues.each {String key, String value ->
             assertEquals "EnumerationType ${label} Enumeration ${key}", value, enumerationType.findEnumerationValueByKey(key).value
         }
     }
 
-    private static DataType verifyDataType(DataModel dataModel, String label, String description = null) {
-        DataType dataType = dataModel.dataTypes.find { it.label == label }
+    DataType verifyDataType(DataModel dataModel, String label, String description = null) {
+        DataType dataType = dataModel.dataTypes.find {it.label == label}
         assertNotNull "DataType ${label} must exist", dataType
-        // assertEquals "DataType ${label} Description", dataType.description, description
+        if (!isSimpleImport()) {
+            assertEquals "DataType ${label} Description", description, dataType.description
+        }
         dataType
     }
 
-    @CompileDynamic
-    private static Metadata findMetadataByValues(UUID catalogueItemId, String namespace, String key) {
+    static Metadata findMetadataByValues(UUID catalogueItemId, String namespace, String key) {
         Metadata.findByMultiFacetAwareItemIdAndNamespaceAndKey(catalogueItemId, namespace, key)
     }
 
-    @CompileDynamic
-    private static Metadata findMetadataByValues(String namespace, String key, String value) {
+    static Metadata findMetadataByValues(String namespace, String key, String value) {
         Metadata.findByNamespaceAndKeyAndValue(namespace, key, value)
     }
 
-    @CompileDynamic
-    private static int countMetadataById(UUID catalogueItemId) {
+    static int countMetadataById(UUID catalogueItemId) {
         Metadata.countByMultiFacetAwareItemId(catalogueItemId)
+    }
+
+    DataModel importAndValidateModel(ExcelDataModelFileImporterProviderServiceParameters parameters) {
+        DataModel dataModel = dataModelImporterProviderService.importDomain(admin, parameters) as DataModel
+        validateAndSave(dataModel)
+    }
+
+    DataModel validateAndSave(DataModel dataModel) {
+        assert dataModel
+        dataModel.folder = folder
+        dataModelService.validate(dataModel)
+        if (dataModel.errors.hasErrors()) {
+            GormUtils.outputDomainErrors(messageSource, dataModel)
+            throw new ValidationException("Domain object is not valid. Has ${dataModel.errors.errorCount} errors", dataModel.errors)
+        }
+        dataModelService.saveModelWithContent(dataModel)
+        dataModelService.get(dataModel.id)
+    }
+
+    List<DataModel> importAndValidateModels(ExcelDataModelFileImporterProviderServiceParameters parameters) {
+        List<DataModel> dataModels = dataModelImporterProviderService.importDomains(admin, parameters) as List<DataModel>
+        assert dataModels
+        dataModels.each {dataModel ->
+            validateAndSave(dataModel)
+        }
+
+        dataModels.collect {dataModelService.get(it.id)}
+    }
+
+    Path writeByteArrayOutputStream(ByteArrayOutputStream byteArrayOutputStream, String exportFilename){
+        assertNotNull 'Should have exported DataModel(s)', byteArrayOutputStream
+        assertFalse 'Should have exported DataModel string', Strings.isNullOrEmpty(byteArrayOutputStream.toString('ISO-8859-1'))
+        Path exportFilepath = Paths.get(EXPORT_FILEPATH, exportFilename)
+        Files.write(exportFilepath, byteArrayOutputStream.toByteArray())
+        exportFilepath
+    }
+
+    Path exportDataModel(DataModel dataModel, String exportFilename){
+        // Export what has been saved into the database
+        ByteArrayOutputStream byteArrayOutputStream = dataModelExporterProviderService.exportDomain(admin,dataModel.id)
+        writeByteArrayOutputStream(byteArrayOutputStream, exportFilename)
+    }
+
+    Path exportDataModels(List<DataModel> dataModels, String exportFilename){
+        // Export what has been saved into the database
+        ByteArrayOutputStream byteArrayOutputStream = dataModelExporterProviderService.exportDomains(admin,dataModels*.id)
+        writeByteArrayOutputStream(byteArrayOutputStream, exportFilename)
+    }
+
+    def importThenExportWorkbook(String importFilename, String exportFilename) throws IOException, ApiException {
+        // Import DataModels under test first
+        List<DataModel> importedDataModels = importAndValidateModels(createImportParameters(importFilename))
+        log.debug('DataModel(s) to export: {}', importedDataModels.size() == 1 ? importedDataModels.first().id : importedDataModels.id)
+
+        log.info('>>> Exporting {}', importedDataModels.size() == 1 ? 'Single' : 'Multiple')
+        Path exportPath = importedDataModels.size() == 1 ? exportDataModel(importedDataModels.first(), exportFilename) : exportDataModels(importedDataModels, exportFilename)
+
+        // Test using the exported DataModels instead of the ones from the first import
+        log.info('>>> Importing')
+        List<DataModel> importedExportedDataModels = importAndValidateModels(createImportParameters(exportPath).tap {
+            it.importAsNewBranchModelVersion = true
+        })
+        importedExportedDataModels.size() == 1 ? importedExportedDataModels.first() : importedExportedDataModels
+    }
+
+    static DataModel findByLabel(List<DataModel> dataModels, String label) {
+        dataModels.find {it.label == label}
     }
 }
