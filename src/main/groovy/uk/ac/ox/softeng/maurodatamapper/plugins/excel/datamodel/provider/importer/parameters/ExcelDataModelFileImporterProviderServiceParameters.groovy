@@ -22,6 +22,6 @@ import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.parameter.DataModelFileImporterProviderServiceParameters
 
 class ExcelDataModelFileImporterProviderServiceParameters extends DataModelFileImporterProviderServiceParameters {
-    @ImportParameterConfig(hidden = true)
+    @ImportParameterConfig(hidden = true, optional = false)
     String modelName
 }
