@@ -23,7 +23,7 @@ import grails.plugins.Plugin
 class MdmPluginExcelGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "4.0.1 > *"
+    def grailsVersion = '5.1.2 > *'
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
         "grails-app/views/error.gsp"
@@ -58,8 +58,8 @@ The Excel importer and exporter services for the Mauro Data Mapper backend.
     def scm = [url: "https://github.com/mauroDataMapper-plugins/mdm-plugin-fhir"]
 
     def dependsOn = [
-        mdmCore           : '4.5.0 > *',
-        mdmPluginDatamodel: '4.5.0 > *',
+        mdmCore : '5.0.0 > *',
+        mdmPluginDatamodel : '5.0.0 > *',
     ]
 
     Closure doWithSpring() {
