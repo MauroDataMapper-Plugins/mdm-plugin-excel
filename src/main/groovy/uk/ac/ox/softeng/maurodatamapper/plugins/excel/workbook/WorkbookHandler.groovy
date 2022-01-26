@@ -23,6 +23,7 @@ import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FilePar
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.CellHandler
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow.StandardDataRow
 
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.poi.EncryptedDocumentException
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException
@@ -66,6 +67,7 @@ trait WorkbookHandler extends CellHandler {
         }
     }
 
+    @CompileDynamic
     public <K extends StandardDataRow> List<K> loadDataRows(Workbook workbook, Class<K> dataRowClass, String filename, String sheetName,
                                                             int numberOfHeaderRows, int idCellIndex) throws ApiException {
         Sheet sheet = workbook.getSheet(sheetName)

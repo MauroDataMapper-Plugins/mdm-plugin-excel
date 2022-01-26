@@ -185,7 +185,7 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     private void addMetadataToCatalogueItem(CatalogueItem catalogueItem, List<MetadataColumn> metadata, User currentUser) {
         metadata.each {MetadataColumn metadataColumn ->
             getLog().debug('Adding Metadata [{}] to CatalogueItem [{}]', metadataColumn.key, catalogueItem.label)
-            catalogueItem.addToMetadata(metadataColumn.namespace ?: namespace, metadataColumn.key, metadataColumn.value, currentUser)
+            catalogueItem.addToMetadata(metadataColumn.namespace ?: namespace, metadataColumn.key, metadataColumn.value, currentUser.emailAddress)
         }
     }
 
