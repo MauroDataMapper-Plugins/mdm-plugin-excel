@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2022 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import grails.plugins.Plugin
 class MdmPluginExcelGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "4.0.1 > *"
+    def grailsVersion = '5.1.2 > *'
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
         "grails-app/views/error.gsp"
@@ -58,8 +58,8 @@ The Excel importer and exporter services for the Mauro Data Mapper backend.
     def scm = [url: "https://github.com/mauroDataMapper-plugins/mdm-plugin-fhir"]
 
     def dependsOn = [
-        mdmCore           : '4.5.0 > *',
-        mdmPluginDatamodel: '4.5.0 > *',
+        mdmCore : '5.0.0 > *',
+        mdmPluginDatamodel : '5.0.0 > *',
     ]
 
     Closure doWithSpring() {
