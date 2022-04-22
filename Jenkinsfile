@@ -109,7 +109,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "./gradlew artifactoryPublish"
+                    sh "./gradlew publish"
                 }
             }
         }
