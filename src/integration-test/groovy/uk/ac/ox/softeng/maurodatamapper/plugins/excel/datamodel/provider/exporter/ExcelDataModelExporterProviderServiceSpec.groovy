@@ -17,7 +17,6 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter
 
-
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.FileParameter
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
@@ -30,7 +29,6 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.excel.BaseExcelDataModelImporter
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.ExcelDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
-import com.google.common.base.Strings
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import groovy.util.logging.Slf4j
@@ -41,7 +39,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertNotNull
 
 @Slf4j

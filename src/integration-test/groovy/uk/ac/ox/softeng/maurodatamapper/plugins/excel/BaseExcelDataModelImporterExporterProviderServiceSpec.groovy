@@ -40,7 +40,6 @@ import com.google.common.base.Strings
 import grails.validation.ValidationException
 import groovy.util.logging.Slf4j
 import org.grails.orm.hibernate.proxy.HibernateProxyHandler
-import org.hibernate.proxy.HibernateProxyHelper
 
 import java.nio.file.Files
 import java.nio.file.Path
