@@ -145,8 +145,7 @@ trait WorkbookExporter extends WorkbookHandler {
             setRowStyle(row, isRowColoured, metadataColumnIndex, 0, lastColumnIndex)
 
             CellRangeAddress enumRowsRegion = getMergeRegion(row.getCell(0))
-            if (!enumRowsRegion) rowIndex = row.rowNum
-            else {
+            if (enumRowsRegion) {
                 boolean isEnumRowColoured = isRowColoured
                 (enumRowsRegion.firstRow..enumRowsRegion.lastRow).each {int enumRowIndex ->
                     Closure setEnumRowStyle = {int start, int finish ->
@@ -158,6 +157,8 @@ trait WorkbookExporter extends WorkbookHandler {
                     isEnumRowColoured = !isEnumRowColoured
                 }
                 rowIndex = enumRowsRegion.lastRow
+            } else {
+                rowIndex = row.rowNum
             }
 
             isRowColoured = !isRowColoured

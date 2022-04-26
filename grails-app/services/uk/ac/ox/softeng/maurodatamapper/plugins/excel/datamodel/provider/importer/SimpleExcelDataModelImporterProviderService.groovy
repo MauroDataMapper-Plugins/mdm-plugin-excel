@@ -127,15 +127,13 @@ class SimpleExcelDataModelImporterProviderService
             if (!dataModelsSheet) {
                 throw new ApiInternalException('EFS02', 'The Excel file does not include a sheet called [DataModels]')
             }
-            Map<String, DataType> dataTypes = [:]
-            List<Map<String, String>> sheetValues = []
             Map<String, Map<String, EnumerationType>> enumerationTypes = [:]
             if (enumerationsSheet) {
                 enumerationTypes = calculateEnumerationTypes(currentUser, getSheetValues(ENUM_SHEET_COLUMNS, enumerationsSheet))
             }
 
             List<DataModel> dataModels = []
-            sheetValues = getSheetValues(DATAMODEL_SHEET_COLUMNS, dataModelsSheet)
+            List<Map<String, String>> sheetValues = getSheetValues(DATAMODEL_SHEET_COLUMNS, dataModelsSheet)
             sheetValues.each {row ->
                 DataModel dataModel = dataModelFromRow(currentUser, row)
                 addMetadataFromExtraColumns(dataModel, DATAMODEL_SHEET_COLUMNS, row)
@@ -362,7 +360,6 @@ class SimpleExcelDataModelImporterProviderService
         String typeName = row.dataTypeName
         String typeReference = row.dataTypeReference
         // We're dealing with a data element
-        DataElement newDataElement = new DataElement(label: name, description: description)
         DataType elementDataType
         if (enumerationTypes[typeName]) {
             elementDataType = enumerationTypes[typeName]
