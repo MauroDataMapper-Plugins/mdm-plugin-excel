@@ -17,7 +17,7 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.excel.datarow
 
-import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
+
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 
 import groovy.transform.CompileStatic

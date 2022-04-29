@@ -176,7 +176,7 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
 
         List<Map<String, String>> dataClassSheetArray = []
 
-        String dataClassPath = (!path) ? dataClass.label : ("${path} | ${dataClass.label}")
+        String dataClassPath = path ? "${path} | ${dataClass.label}" : dataClass.label
 
         Map<String, String> dataRow = [
             'DataClass Path'          : dataClassPath,

@@ -22,13 +22,10 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelExp
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.importer.DataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.BaseExcelDataModelImporterExporterProviderServiceSpec
 import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.exporter.SimpleExcelDataModelExporterProviderService
-import uk.ac.ox.softeng.maurodatamapper.plugins.excel.datamodel.provider.importer.SimpleExcelDataModelImporterProviderService
 
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import groovy.util.logging.Slf4j
-
-import static org.junit.Assert.assertEquals
 
 @Slf4j
 @Integration
