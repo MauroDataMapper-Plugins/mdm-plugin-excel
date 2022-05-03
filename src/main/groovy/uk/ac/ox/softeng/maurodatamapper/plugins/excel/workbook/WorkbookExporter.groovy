@@ -105,7 +105,7 @@ trait WorkbookExporter extends WorkbookHandler {
 
     void loadWorkbookCellAndBorderStyles() {
         defaultCellStyle = workbook.createCellStyle().tap {
-            XSSFColor borderColour = new XSSFColor(BORDER_COLOUR).tap {
+            XSSFColor borderColour = new XSSFColor(BORDER_COLOUR, null).tap {
                 setTint BORDER_COLOUR_TINT
             }
             setBorderTop BorderStyle.THIN
@@ -119,7 +119,7 @@ trait WorkbookExporter extends WorkbookHandler {
         }
         colouredCellStyle = workbook.createCellStyle().tap {
             cloneStyleFrom defaultCellStyle
-            setFillForegroundColor new XSSFColor(CELL_COLOUR).tap {
+            setFillForegroundColor new XSSFColor(CELL_COLOUR, null).tap {
                 setTint CELL_COLOUR_TINT
             }
             setFillPattern FillPatternType.SOLID_FOREGROUND
@@ -229,7 +229,7 @@ trait WorkbookExporter extends WorkbookHandler {
     }
 
     private void copyCellStyleInto(Cell cell, XSSFCellStyle style) {
-        if (style.fillPatternEnum == FillPatternType.SOLID_FOREGROUND) {
+        if (style.getFillPattern() == FillPatternType.SOLID_FOREGROUND) {
             CellUtil.setCellStyleProperty(cell, CellUtil.FILL_PATTERN, FillPatternType.SOLID_FOREGROUND)
             (cell.cellStyle as XSSFCellStyle).setFillForegroundColor(style.fillForegroundColorColor)
         }
