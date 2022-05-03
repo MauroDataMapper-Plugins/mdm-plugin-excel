@@ -302,36 +302,42 @@ class SimpleExcelDataModelImporterProviderService
         DataClass dataClass
         String previousDataClassPath
         (sheetValues - referenceTypeDataElementRows).each {row ->
-            String dataClassPath = row.dataClassPath
-            String name = row.dataElementName
-            MetadataAware createdElement = null
+            // Dont try an import any rows without a dataClasspath as we dont know where to place them
+            if (row.dataClassPath) {
+                String dataClassPath = row.dataClassPath
+                String name = row.dataElementName
+                MetadataAware createdElement = null
 
-            if (!previousDataClassPath?.equals(dataClassPath) && name || !name) {
-                // We're dealing with a data class
-                previousDataClassPath = dataClassPath
+                if (!previousDataClassPath?.equals(dataClassPath) && name || !name) {
+                    // We're dealing with a data class
+                    previousDataClassPath = dataClassPath
+                    String description = row.description
+                    String minMult = row.minMultiplicity
+                    String maxMult = row.maxMultiplicity
+                    dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, name ? '' : description,
+                                                         name ? 1 : minMult ? Integer.parseInt(minMult) : 1,
+                                                         name ? 1 : maxMult ? maxMult == '*' ? -1 : Integer.parseInt(maxMult) : 1)
+                    createdElement = name ? addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row) : dataClass
+                } else {
+                    createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
+                }
+                addMetadataFromExtraColumns(createdElement, MODEL_SHEET_COLUMNS, row)
+            }
+        }
+        referenceTypeDataElementRows.each {row ->
+            // Dont try an import any rows without a dataClasspath as we dont know where to place them
+            if (row.dataClassPath) {
+                String dataClassPath = row.dataClassPath
                 String description = row.description
                 String minMult = row.minMultiplicity
                 String maxMult = row.maxMultiplicity
-                dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, name ? '' : description,
-                                                     name ? 1 : minMult ? Integer.parseInt(minMult) : 1,
-                                                     name ? 1 : maxMult ? maxMult == '*' ? -1 : Integer.parseInt(maxMult) : 1)
-                createdElement = name ? addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row) : dataClass
-            } else {
+                MetadataAware createdElement = null
+                dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, description,
+                                                     minMult ? Integer.parseInt(minMult) : 1,
+                                                     maxMult ? maxMult == '*' ? -1 : Integer.parseInt(maxMult) : 1)
                 createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
+                addMetadataFromExtraColumns(createdElement, MODEL_SHEET_COLUMNS, row)
             }
-            addMetadataFromExtraColumns(createdElement, MODEL_SHEET_COLUMNS, row)
-        }
-        referenceTypeDataElementRows.each {row ->
-            String dataClassPath = row.dataClassPath
-            String description = row.description
-            String minMult = row.minMultiplicity
-            String maxMult = row.maxMultiplicity
-            MetadataAware createdElement = null
-            dataClass = getOrCreateClassFromPath(currentUser, dataModel, dataClassPath, description,
-                                                 minMult ? Integer.parseInt(minMult) : 1,
-                                                 maxMult ? maxMult == '*' ? -1 : Integer.parseInt(maxMult) : 1)
-            createdElement = addDataElement(currentUser, dataModel, dataClass, modelDataTypes, enumerationTypes, row)
-            addMetadataFromExtraColumns(createdElement, MODEL_SHEET_COLUMNS, row)
         }
         modelDataTypes.values().each {
             dataModel.addToDataTypes(it)
