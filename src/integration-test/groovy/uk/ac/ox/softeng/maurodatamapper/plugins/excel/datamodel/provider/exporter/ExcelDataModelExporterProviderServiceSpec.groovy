@@ -125,7 +125,7 @@ class ExcelDataModelExporterProviderServiceSpec extends BaseExcelDataModelImport
         DataModel dataModel = dataModelXmlImporterService.importModel(admin, importParameters)
 
         // Export Data Model as Excel file
-        ByteArrayOutputStream exportedDataModel =excelDataModelExporterProviderService.exportDataModel(admin, dataModel)
+        ByteArrayOutputStream exportedDataModel = excelDataModelExporterProviderService.exportDataModel(admin, dataModel, [:])
         Path exportFilepath = Paths.get(EXPORT_FILEPATH, 'unsetMultiplicities_export.xlsx')
         Files.write(exportFilepath, exportedDataModel.toByteArray())
 

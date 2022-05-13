@@ -81,17 +81,17 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
     }
 
     @Override
-    ByteArrayOutputStream exportDataModel(User currentUser, DataModel dataModel) throws ApiException {
-        exportDataModels(currentUser, [dataModel])
+    ByteArrayOutputStream exportDataModel(User currentUser, DataModel dataModel, Map<String, Object> parameters) throws ApiException {
+        exportDataModels(currentUser, [dataModel], parameters)
     }
 
     @Override
-    ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
+    ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels, Map<String, Object> parameters) throws ApiException {
         log.info('Exporting DataModels to Excel')
         workbook = loadWorkbookFromFilename(DATAMODELS_IMPORT_TEMPLATE_FILENAME) as XSSFWorkbook
-        loadDataModelsIntoWorkbook(dataModels).withCloseable { XSSFWorkbook workbook ->
+        loadDataModelsIntoWorkbook(dataModels).withCloseable {XSSFWorkbook workbook ->
             if (!workbook) return null
-            new ByteArrayOutputStream().tap { ByteArrayOutputStream exportStream ->
+            new ByteArrayOutputStream().tap {ByteArrayOutputStream exportStream ->
                 workbook.write(exportStream)
                 log.info('DataModels exported')
             }
