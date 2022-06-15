@@ -46,6 +46,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 @Slf4j
 class SimpleExcelDataModelExporterProviderService extends DataModelExporterProviderService {
 
+    public static final String CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
     DataElementService dataElementService
     DataClassService dataClassService
     MetadataService metadataService
@@ -61,8 +63,8 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
     }
 
     @Override
-    String getFileType() {
-        'application/vnd.ms-excel'
+    String getContentType() {
+        CONTENT_TYPE
     }
 
     @Override

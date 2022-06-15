@@ -39,6 +39,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 @CompileStatic
 class ExcelDataModelExporterProviderService extends DataModelExporterProviderService implements WorkbookExporter {
 
+    public static final String CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
     static final String DATAMODELS_IMPORT_TEMPLATE_FILENAME = 'Template_DataModel_Import_File.xlsx'
 
     static final int DATAMODELS_NUM_HEADER_ROWS = 2
@@ -61,8 +63,8 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
     }
 
     @Override
-    String getFileType() {
-        'application/vnd.ms-excel'
+    String getContentType() {
+        CONTENT_TYPE
     }
 
     @Override

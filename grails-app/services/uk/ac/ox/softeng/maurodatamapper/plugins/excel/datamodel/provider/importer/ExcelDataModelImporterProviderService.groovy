@@ -79,6 +79,11 @@ class ExcelDataModelImporterProviderService extends DataModelImporterProviderSer
     }
 
     @Override
+    Boolean handlesContentType(String contentType) {
+        contentType.equalsIgnoreCase(ExcelDataModelExporterProviderService.CONTENT_TYPE)
+    }
+
+    @Override
     DataModel importModel(User currentUser, ExcelDataModelFileImporterProviderServiceParameters importParameters) {
         importModels(currentUser, importParameters)?.first()
     }
