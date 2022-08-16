@@ -46,6 +46,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 @Slf4j
 class SimpleExcelDataModelExporterProviderService extends DataModelExporterProviderService {
 
+    public static final String CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
     DataElementService dataElementService
     DataClassService dataClassService
     MetadataService metadataService
@@ -61,8 +63,8 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
     }
 
     @Override
-    String getFileType() {
-        'application/vnd.ms-excel'
+    String getContentType() {
+        CONTENT_TYPE
     }
 
     @Override
@@ -81,12 +83,12 @@ class SimpleExcelDataModelExporterProviderService extends DataModelExporterProvi
     }
 
     @Override
-    ByteArrayOutputStream exportDataModel(User currentUser, DataModel dataModel) throws ApiException {
-        exportDataModels(currentUser, [dataModel])
+    ByteArrayOutputStream exportDataModel(User currentUser, DataModel dataModel, Map<String, Object> parameters) throws ApiException {
+        exportDataModels(currentUser, [dataModel], parameters)
     }
 
     @Override
-    ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
+    ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels, Map<String, Object> parameters) throws ApiException {
 
         log.info('Exporting DataModels to Excel')
         XSSFWorkbook workbook = null

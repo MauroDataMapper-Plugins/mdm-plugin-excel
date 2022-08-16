@@ -39,6 +39,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 @CompileStatic
 class ExcelDataModelExporterProviderService extends DataModelExporterProviderService implements WorkbookExporter {
 
+    public static final String CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
     static final String DATAMODELS_IMPORT_TEMPLATE_FILENAME = 'Template_DataModel_Import_File.xlsx'
 
     static final int DATAMODELS_NUM_HEADER_ROWS = 2
@@ -61,8 +63,8 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
     }
 
     @Override
-    String getFileType() {
-        'application/vnd.ms-excel'
+    String getContentType() {
+        CONTENT_TYPE
     }
 
     @Override
@@ -81,17 +83,17 @@ class ExcelDataModelExporterProviderService extends DataModelExporterProviderSer
     }
 
     @Override
-    ByteArrayOutputStream exportDataModel(User currentUser, DataModel dataModel) throws ApiException {
-        exportDataModels(currentUser, [dataModel])
+    ByteArrayOutputStream exportDataModel(User currentUser, DataModel dataModel, Map<String, Object> parameters) throws ApiException {
+        exportDataModels(currentUser, [dataModel], parameters)
     }
 
     @Override
-    ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels) throws ApiException {
+    ByteArrayOutputStream exportDataModels(User currentUser, List<DataModel> dataModels, Map<String, Object> parameters) throws ApiException {
         log.info('Exporting DataModels to Excel')
         workbook = loadWorkbookFromFilename(DATAMODELS_IMPORT_TEMPLATE_FILENAME) as XSSFWorkbook
-        loadDataModelsIntoWorkbook(dataModels).withCloseable { XSSFWorkbook workbook ->
+        loadDataModelsIntoWorkbook(dataModels).withCloseable {XSSFWorkbook workbook ->
             if (!workbook) return null
-            new ByteArrayOutputStream().tap { ByteArrayOutputStream exportStream ->
+            new ByteArrayOutputStream().tap {ByteArrayOutputStream exportStream ->
                 workbook.write(exportStream)
                 log.info('DataModels exported')
             }
